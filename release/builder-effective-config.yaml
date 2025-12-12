@@ -1,0 +1,15 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.weave.app
+productName: Weave
+files:
+  - filter:
+      - dist/**/*
+      - dist-electron/**/*
+      - package.json
+win:
+  target:
+    - nsis
+    - dir
+electronVersion: 39.2.4
