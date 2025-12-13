@@ -1,160 +1,98 @@
-# Weave - Desktop Application
+# 🕸️ Weave: Advanced Schematic Designer
 
-Weave is a powerful visual circuit design and documentation tool, now available as a desktop application built with Electron.
+**Weave** is a powerful desktop application for designing system schematics, wiring diagrams, and connection flows. Built with **Electron** and **React**, it offers a native desktop experience with high-performance canvas rendering.
 
-## Features
+![Status](https://img.shields.io/badge/Status-Stable-success)
+![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+![Tech](https://img.shields.io/badge/Tech-Electron%20%7C%20React%20%7C%20SVG-black)
 
-- **Visual Circuit Design**: Create and manage complex circuit diagrams with an intuitive canvas interface
-- **Product Library**: Manage components and blocks with custom templates
-- **Smart Routing**: Automatic connection routing with collision detection
-- **PDF Support**: Import and work with PDF schematics
-- **AI Integration**: Gemini AI-powered features for smart part extraction
-- **Export Options**: Export your designs as images or PDFs
-- **Desktop Native**: Runs as a native desktop application on Windows
+## ✨ Key Features
 
-## Installation
+- **🎨 Infinite Canvas**: High-performance SVG-based canvas with infinite panning and smooth zooming.
+- **Drag & Drop Design**:
+  - **Library Integration**: Seamlessly drag components from the side library and drop them directly onto the canvas.
+  - **Smart Snapping**: Auto-alignment to grid and other components for precise layouts.
+- **🔗 Intelligent Connection Routing**:
+  - **Auto-Route**: Algorithms to automatically calculate orthogonal paths between ports, avoiding obstacles.
+  - **Manual Routing**: Full control over connection paths with waypoint support.
+- **📦 Component Models**: Support for complex components with defined Input/Output ports, physical dimensions, and metadata.
+- **Export & Integration**:
+  - **UPH Export**: One-click export of project data (BOM and Design files) to the Unified Project Hub.
+  - **Image Export**: High-resolution PNG export for documentation.
+
+## 🛠️ Technology Stack
+
+- **Runtime**: [Electron](https://www.electronjs.org/)
+- **Frontend**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Canvas Engine**: Custom SVG React Renderer
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- npm or pnpm package manager
+- **Node.js** (v18+)
+- **pnpm**
 
-### Setup
+### Installation
 
-```bash
-# Install dependencies
-npm install
+1.  **Clone the repository:**
 
-# Run in development mode
-npm run electron:dev
+    ```bash
+    git clone <repository-url>
+    cd Weave-main
+    ```
 
-# Build for production
-npm run electron:build
-```
+2.  **Install dependencies:**
 
-## Development
+    ```bash
+    pnpm install
+    ```
 
-### Project Structure
+3.  **Run in Development Mode:**
+    Start the Vite dev server and Electron wrapper simultaneously:
 
-```
-Weave Final/
-├── electron/           # Electron main process files
-│   ├── main.ts        # Main process entry point
-│   ├── preload.ts     # Preload script for secure IPC
-│   └── tsconfig.json  # TypeScript config for Electron
-├── components/         # React components
-├── hooks/             # Custom React hooks
-├── services/          # Business logic and services
-├── utils/             # Utility functions
-├── types.ts           # TypeScript type definitions
-└── App.tsx            # Main React application
-```
+    ```bash
+    pnpm electron:dev
+    ```
 
-### Available Scripts
+4.  **Build for Production:**
+    Create a distributable installer (exe/dmg):
+    ```bash
+    pnpm electron:build
+    ```
 
-- `npm run dev` - Start Vite dev server (web only)
-- `npm run build` - Build web application
-- `npm run electron:compile` - Compile Electron TypeScript files
-- `npm run electron:dev` - Run Electron app in development mode
-- `npm run electron:build` - Build production Electron app
-
-### Technologies Used
-
-- **Frontend**: React 19, TypeScript
-- **Build Tool**: Vite 6
-- **Desktop Framework**: Electron
-- **UI Icons**: Lucide React
-- **PDF Processing**: PDF.js
-- **AI**: Google Gemini API
-- **Canvas Rendering**: HTML2Canvas
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env.local` file in the root directory:
+## 📂 Project Structure
 
 ```
-GEMINI_API_KEY=your_api_key_here
+Weave-main/
+├── components/          # React Components
+│   ├── canvas/          # Canvas specific nodes (ProductNode, ConnectionLine)
+│   ├── layout/          # App Shell (LeftSidebar, Toolbar)
+│   ├── modals/          # Dialogs (Settings, Export)
+│   └── Canvas.tsx       # Main Canvas Engine & Event Handlers
+├── electron/            # Electron Main Process code
+├── hooks/               # Custom React Hooks (useHistory, useCanvasView)
+├── services/            # Core Logic (Pathfinding, Analyzers)
+├── types/               # TypeScript Interfaces
+├── utils/               # Geometry & Helper functions
+└── App.tsx              # Application Entry Point
 ```
 
-### Vite Configuration
+## 🎮 Controls
 
-The project uses a custom Vite configuration optimized for Electron:
+- **Pan**: Middle Mouse Button (Drag) or Space + Drag
+- **Zoom**: Mouse Wheel
+- **Select**: Left Click
+- **Multi-Select**: Shift + Click or Drag Selection Box
+- **ContextMenu**: Right Click on items
+- **Drag & Drop**: Drag items from the Left Sidebar onto the Canvas.
 
-- Build target: `esnext` (supports top-level await)
-- Output format: ES modules
-- Dev server: Port 3000
+## 🤝 Integration with UPH
 
-### Electron Builder
+Weave is designed to work hand-in-hand with UPH. Use the **"UPH'a Gönder"** button in the top toolbar to sync your current design's Bill of Materials and snapshot directly to a specific UPH project.
 
-Configured for Windows builds with NSIS installer. Customize in `package.json` under the `build` section.
+## 📄 License
 
-## Building for Distribution
-
-To create a distributable Windows executable:
-
-```bash
-npm run electron:build
-```
-
-The installer will be created in the `release/` directory.
-
-### Custom Icon
-
-To use a custom application icon:
-
-1. Create a `build/` directory in the project root
-2. Add your icon as `build/icon.ico`
-3. Run the build command
-
-## Usage
-
-### Running the App
-
-1. Launch the application
-2. Use the left sidebar to manage your component library
-3. Drag components onto the canvas
-4. Create connections between components
-5. Use the right sidebar to adjust properties
-6. Save your project or export as image/PDF
-
-### Keyboard Shortcuts
-
-- `Ctrl+S` - Save project
-- `Ctrl+Z` - Undo
-- `Ctrl+Y` - Redo
-- `Delete` - Delete selected items
-- `Ctrl+C` - Copy selected items
-- `Ctrl+V` - Paste items
-
-## Troubleshooting
-
-### App Won't Start
-
-- Ensure all dependencies are installed: `npm install`
-- Check that Node.js version is 18 or higher
-- Try deleting `node_modules` and reinstalling
-
-### Build Errors
-
-- Clear the dist folders: `rm -rf dist dist-electron`
-- Rebuild: `npm run build && npm run electron:compile`
-
-### Development Mode Issues
-
-- Ensure port 3000 is not in use
-- Check that the Vite dev server starts successfully
-- Look for errors in the Electron DevTools console
-
-## License
-
-This project is private and proprietary.
-
-## Version
-
-v1.0.0 - Electron Desktop Application
-
----
-
-**Note**: This application requires a valid Gemini API key for AI-powered features. Configure it in the `.env.local` file before running.
+This project is licensed under the MIT License.
