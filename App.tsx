@@ -514,15 +514,15 @@ export default function App() {
     setTemplates(prev => prev.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
   };
 
-  const addToCanvas = (templateId: string) => {
+  const addToCanvas = (templateId: string, position?: { x: number, y: number }) => {
     performCheckpoint();
     const template = templates.find(t => t.id === templateId);
     if (template) {
       const newInstance: ProductInstance = {
         id: crypto.randomUUID(),
         templateId,
-        x: 100 + (instances.length * 50),
-        y: 100 + (instances.length * 50),
+        x: position ? position.x : 100 + (instances.length * 50),
+        y: position ? position.y : 100 + (instances.length * 50),
         width: template.width,
         height: template.height,
         labelConfig: { visible: true, fontSize: 14, color: '#ffffff', backgroundColor: '#000000', position: 'bottom' }
@@ -856,6 +856,7 @@ export default function App() {
                         totalPages={pages.length}
                         activeTool={activeTool}
                         onSetActiveTool={setActiveTool}
+                        onAddInstance={addToCanvas}
                     />
                )}
           </div>

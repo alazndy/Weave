@@ -56,6 +56,7 @@ interface CanvasProps {
   totalPages?: number;
   activeTool: ActiveTool;
   onSetActiveTool: (tool: ActiveTool) => void;
+  onAddInstance?: (templateId: string, position: { x: number, y: number }) => void;
 }
 
 const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
@@ -73,7 +74,8 @@ export const Canvas: React.FC<CanvasProps> = ({
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
   activePageName = 'Sayfa 1', activePageNumber = 1, totalPages = 1,
-  activeTool, onSetActiveTool
+  activeTool, onSetActiveTool,
+  onAddInstance
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -536,10 +538,27 @@ export const Canvas: React.FC<CanvasProps> = ({
                       activeTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 
                       activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route' ? 'cursor-crosshair' : 'cursor-default';
 
+  const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      const templateId = e.dataTransfer.getData("application/weave-template");
+      if (templateId && onAddInstance) {
+          const { x, y } = getMouseCoords(e as unknown as React.MouseEvent);
+          let dropX = x;
+          let dropY = y;
+          if (isGridSnapEnabled) {
+              dropX = snapToGrid(dropX);
+              dropY = snapToGrid(dropY);
+          }
+          onAddInstance(templateId, { x: dropX, y: dropY });
+      }
+  };
+
   return (
     <div 
       className={`relative w-full h-full overflow-hidden bg-zinc-950 select-none print:overflow-visible print:bg-white ${cursorClass}`}
       onWheel={(e) => handleWheel(e, containerRef.current!.getBoundingClientRect())}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
     >
       <div 
         ref={containerRef}

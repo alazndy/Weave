@@ -127,13 +127,18 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const renderTemplateCard = (t: ProductTemplate) => (
     <div
       key={t.id}
+      draggable={true}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("application/weave-template", t.id);
+        e.dataTransfer.effectAllowed = "copy";
+      }}
       onClick={() => addToCanvas(t.id)}
       onContextMenu={(e) => {
         e.preventDefault();
         setEditingTemplate(t);
         setIsEditorOpen(true);
       }}
-      className="group relative bg-black/40 border border-white/5 rounded-xl p-2.5 cursor-pointer hover:border-paprika/40 hover:bg-ink hover:shadow-lg hover:shadow-paprika/10 transition-all duration-200 active:scale-95 overflow-hidden"
+      className="group relative bg-black/40 border border-white/5 rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:border-paprika/40 hover:bg-ink hover:shadow-lg hover:shadow-paprika/10 transition-all duration-200 active:scale-95 overflow-hidden"
       title={t.name}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-paprika/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
