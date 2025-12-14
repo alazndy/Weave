@@ -1,0 +1,50 @@
+{
+  "name": "weave",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:compile": "tsc -p electron/tsconfig.json && move /Y dist-electron\\main.js dist-electron\\main.cjs && move /Y dist-electron\\preload.js dist-electron\\preload.cjs",
+    "electron:dev": "concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && npm run electron:compile && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && npm run electron:compile && electron-builder"
+  },
+  "dependencies": {
+    "@google/genai": "^1.30.0",
+    "firebase": "^11.0.0",
+    "html2canvas": "^1.4.1",
+    "lucide-react": "^0.554.0",
+    "pdfjs-dist": "4.0.379",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "concurrently": "^9.0.0",
+    "wait-on": "^8.0.0",
+    "cross-env": "^7.0.0"
+  },
+  "build": {
+    "appId": "com.weave.app",
+    "productName": "Weave",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "C:/Users/turha/Desktop/Weave-Release"
+    },
+    "win": {
+      "target": ["nsis", "dir"]
+    }
+  }
+}
