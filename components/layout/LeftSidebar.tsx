@@ -224,7 +224,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {/* Header Section */}
         <div className="p-6 border-b border-white/5">
           <h1 className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-paprika via-apricot to-vanilla flex items-center gap-3 mb-6 tracking-tight">
-            <Cable className="w-7 h-7 text-paprika" /> Weave
+            <Cable className="w-7 h-7 text-paprika" /> T-Weave
           </h1>
           <div className="flex gap-2">
             <button
@@ -520,7 +520,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         <div className="p-2 bg-black/40 text-[9px] font-medium text-zinc-700 text-center">
-          Weave v1.0 • Pro
+          T-Weave v1.0 • TEK Ekosistemi
         </div>
       </div>
     </div>
