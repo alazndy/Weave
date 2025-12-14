@@ -1,6 +1,6 @@
-# 🕸️ Weave: Advanced Schematic Designer
+# 🕸️ T-Weave: Advanced Schematic Designer
 
-**Weave** is a powerful desktop application for designing system schematics, wiring diagrams, and connection flows. Built with **Electron** and **React**, it offers a native desktop experience with high-performance canvas rendering.
+**TEK Ekosistemi**'nin şematik tasarım uygulaması olan **T-Weave**, sistem şemaları, kablo diyagramları ve bağlantı akışları tasarlamak için güçlü bir masaüstü uygulamasıdır. **Electron** ve **React** ile inşa edilmiştir.
 
 ![Status](https://img.shields.io/badge/Status-Stable-success)
 ![Version](https://img.shields.io/badge/Version-1.0.0-orange)
