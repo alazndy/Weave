@@ -56,6 +56,8 @@ interface LeftSidebarProps {
   onOpenSettings?: () => void;
   onOpenInventoryImport?: () => void;
   onOpenUPHExport?: () => void;
+  onSaveToDrive?: () => void;
+  onExportBOM?: () => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -81,6 +83,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onOpenSettings,
   onOpenInventoryImport,
   onOpenUPHExport,
+  onSaveToDrive,
+  onExportBOM,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
@@ -261,13 +265,31 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               title="Proje dosyası seç"
             />
           </div>
-          <div className="mt-2">
-            <button
-               onClick={onOpenUPHExport}
-               className="w-full bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-blue-500/20 transition-all active:scale-95"
-            >
-              <Send size={14} /> {t('sidebar.sendToUPH')}
-            </button>
+          <div className="mt-2 space-y-2">
+            {onOpenUPHExport && (
+                <button
+                onClick={onOpenUPHExport}
+                className="w-full bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-blue-500/20 transition-all active:scale-95"
+                >
+                <Send size={14} /> {t('sidebar.sendToUPH')}
+                </button>
+            )}
+            {onSaveToDrive && (
+                <button
+                onClick={onSaveToDrive}
+                className="w-full bg-green-600/10 hover:bg-green-600/20 text-green-400 hover:text-green-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-green-500/20 transition-all active:scale-95"
+                >
+                <Download size={14} /> {t('sidebar.saveToDrive')}
+                </button>
+            )}
+            {onExportBOM && (
+                <button
+                onClick={onExportBOM}
+                className="w-full bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 hover:text-orange-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-orange-500/20 transition-all active:scale-95"
+                >
+                <FileUp size={14} /> {t('sidebar.exportBOM')}
+                </button>
+            )}
           </div>
         </div>
 

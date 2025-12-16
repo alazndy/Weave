@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppSettings } from '../../types';
-import { Settings, X, Moon, Sun, Monitor, Globe, Palette, Check } from 'lucide-react';
+import { Settings, X, Moon, Sun, Monitor, Globe, Palette, Check, Users, Plus, Trash2 } from 'lucide-react';
 
 interface AppSettingsModalProps {
   isOpen: boolean;
@@ -141,6 +141,121 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                             {settings.palette === p.id && <Check className="absolute right-3 text-paprika" size={20}/>}
                         </button>
                     ))}
+                </div>
+            </section>
+
+            {/* Integrations Section */}
+            <section>
+                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Globe size={16}/> Entegrasyonlar
+                </h4>
+                 <div className="grid grid-cols-1 gap-4">
+                    <button 
+                        onClick={() => onUpdateSettings({ ...settings, enableUPHIntegration: !settings.enableUPHIntegration })}
+                        className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${settings.enableUPHIntegration ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                    >
+                        <div className="text-left">
+                            <span className={`block font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>UPH Entegrasyonu</span>
+                            <span className="text-xs text-zinc-500">Projeleri doğrudan Unified Project Hub'a gönder</span>
+                        </div>
+                         <div className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.enableUPHIntegration ? 'bg-paprika' : 'bg-zinc-600'}`}>
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${settings.enableUPHIntegration ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={() => onUpdateSettings({ ...settings, enableGoogleDrive: !settings.enableGoogleDrive })}
+                        className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${settings.enableGoogleDrive ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                    >
+                        <div className="text-left">
+                            <span className={`block font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>Google Drive</span>
+                            <span className="text-xs text-zinc-500">Projeleri Google Drive'a yedekle</span>
+                        </div>
+                         <div className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.enableGoogleDrive ? 'bg-paprika' : 'bg-zinc-600'}`}>
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${settings.enableGoogleDrive ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </div>
+                    </button>
+                </div>
+            </section>
+            
+            {/* Team Section (Local) */}
+            <section>
+                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Users size={16}/> Yerel Ekip (İmza/Onay)
+                </h4>
+                <div className="space-y-4">
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            placeholder="Ad Soyad"
+                            id="new-member-name"
+                            className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                        />
+                         <input 
+                            type="email" 
+                            placeholder="E-posta"
+                            id="new-member-email"
+                            className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                        />
+                         <select 
+                             id="new-member-role"
+                             className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                         >
+                             <option value="viewer">Viewer</option>
+                             <option value="manager">Manager</option>
+                             <option value="admin">Admin</option>
+                         </select>
+                        <button 
+                            onClick={() => {
+                                const nameInput = document.getElementById('new-member-name') as HTMLInputElement;
+                                const emailInput = document.getElementById('new-member-email') as HTMLInputElement;
+                                const roleInput = document.getElementById('new-member-role') as HTMLSelectElement;
+                                
+                                if (nameInput.value && emailInput.value) {
+                                    const newMember = {
+                                        id: crypto.randomUUID(),
+                                        name: nameInput.value,
+                                        email: emailInput.value,
+                                        role: roleInput.value as any
+                                    };
+                                    onUpdateSettings({ 
+                                        ...settings, 
+                                        teamMembers: [...(settings.teamMembers || []), newMember] 
+                                    });
+                                    nameInput.value = '';
+                                    emailInput.value = '';
+                                }
+                            }}
+                            className="bg-paprika text-white p-2 rounded-lg hover:bg-paprika/80 transition-colors"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {settings.teamMembers?.map(member => (
+                            <div key={member.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                                <div>
+                                    <div className="font-bold text-white">{member.name}</div>
+                                    <div className="text-xs text-zinc-500">{member.email} • <span className="uppercase text-paprika">{member.role}</span></div>
+                                </div>
+                                <button 
+                                    onClick={() => onUpdateSettings({
+                                        ...settings,
+                                        teamMembers: settings.teamMembers?.filter(m => m.id !== member.id)
+                                    })}
+                                    className="text-zinc-500 hover:text-red-500 p-2"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
+                        {(!settings.teamMembers || settings.teamMembers.length === 0) && (
+                            <div className="text-center py-4 text-zinc-500 text-sm border border-dashed border-zinc-700 rounded-lg">
+                                Henüz ekip üyesi eklenmemiş.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
         </div>

@@ -263,6 +263,9 @@ export interface AppSettings {
     theme: 'light' | 'dark';
     language: 'tr' | 'en';
     palette: string; // ID of the color palette
+    enableUPHIntegration?: boolean;
+    enableGoogleDrive?: boolean;
+    teamMembers?: { id: string; name: string; email: string; role: 'admin'|'manager'|'viewer' }[];
 }
 
 // Complete Project Data Structure for Export/Save

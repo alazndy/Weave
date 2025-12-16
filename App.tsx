@@ -26,13 +26,17 @@ import { ShortcutsModal } from './components/modals/ShortcutsModal';
 import { PinoutModal } from './components/modals/PinoutModal';
 import { HistoryModal } from './components/modals/HistoryModal';
 import { AppSettingsModal, PALETTES } from './components/modals/AppSettingsModal';
-import { AlertTriangle, CheckCircle2, Wand2, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2,    Cable,
+    Share2,
+    Cloud, Wand2, Loader2 } from 'lucide-react';
+import { GoogleDriveService } from './services/google-drive-service';
 import * as html2canvas from 'html2canvas';
 import { getPortPosition, getPortNormal, findSmartPath, getInstanceRect } from './utils/canvasHelpers';
 import { useLibraryManager } from './hooks/useLibraryManager';
 import { useHistory } from './hooks/useHistory';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
 import { ActiveTool } from './components/canvas/CanvasToolbar';
+import { exportBOM } from './utils/bom-exporter';
 
 // Lazy load heavy components
 const ProductEditor = React.lazy(() => import('./components/ProductEditor').then(module => ({ default: module.ProductEditor })));
@@ -80,7 +84,9 @@ const createNewPage = (order: number): Page => ({
 const DEFAULT_SETTINGS: AppSettings = {
     theme: 'dark',
     language: 'tr',
-    palette: 'weave'
+    palette: 'weave',
+    enableUPHIntegration: true,
+    enableGoogleDrive: false
 };
 
 const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
@@ -791,7 +797,37 @@ export default function App() {
                 onRenameLibrary={handleRenameLibrary}
                 onOpenSettings={() => setIsAppSettingsOpen(true)}
                 onOpenInventoryImport={() => setIsInventoryImportOpen(true)}
-                onOpenUPHExport={() => setIsUPHExportOpen(true)}
+                onOpenUPHExport={appSettings.enableUPHIntegration ? () => setIsUPHExportOpen(true) : undefined}
+                onSaveToDrive={appSettings.enableGoogleDrive ? async () => {
+                    const confirmSave = confirm("Projeyi Google Drive'a yedeklemek istiyor musunuz?");
+                    if (!confirmSave) return;
+
+                    // Mock Connect if not auth
+                    if (!GoogleDriveService.isAuthenticated) {
+                        const res = await GoogleDriveService.connect();
+                        if (!res.success) {
+                            alert("Google Drive bağlantısı başarısız.");
+                            return;
+                        }
+                    }
+
+                    // Prepare data
+                    const projectData: ProjectData = {
+                         metadata: projectMetadata,
+                         pages: pages, // Use current pages state
+                         templates: library // Use current library
+                    };
+                    const json = JSON.stringify(projectData, null, 2);
+                    
+                    try {
+                        await GoogleDriveService.uploadFile(`Weave_Project_${projectMetadata.name}.json`, json);
+                        alert("Proje başarıyla Google Drive'a yedeklendi!");
+                    } catch (e) {
+                         alert("Yedekleme sırasında bir hata oluştu.");
+                         console.error(e);
+                    }
+                } : undefined}
+                onExportBOM={() => exportBOM(activePage.instances, projectMetadata.projectName)}
             />
             
             <UPHExportModal 
