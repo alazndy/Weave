@@ -43,6 +43,7 @@ const ProductEditor = React.lazy(() => import('./components/ProductEditor').then
 const ProjectSettingsModal = React.lazy(() => import('./components/modals/ProjectSettingsModal').then(module => ({ default: module.ProjectSettingsModal })));
 const InventoryImportModal = React.lazy(() => import('./components/modals/InventoryImportModal').then(module => ({ default: module.InventoryImportModal })));
 const UPHExportModal = React.lazy(() => import('./components/modals/UPHExportModal').then(module => ({ default: module.UPHExportModal })));
+const SendToEnvModal = React.lazy(() => import('./components/modals/SendToEnvModal').then(module => ({ default: module.SendToEnvModal })));
 
 const generateDocNo = (projectName: string = 'Weave Project', revision: string = 'R01') => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -138,11 +139,23 @@ export default function App() {
   const [editingTemplate, setEditingTemplate] = useState<ProductTemplate | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAppSettingsOpen, setIsAppSettingsOpen] = useState(false);
+  
+  // Theme Toggle Effect
+  useEffect(() => {
+    if (appSettings.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [appSettings.theme]);
+
+  const [isInventoryImportOpen, setIsInventoryImportOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isPinoutOpen, setIsPinoutOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isInventoryImportOpen, setIsInventoryImportOpen] = useState(false);
+  const [isSendToEnvModalOpen, setIsSendToEnvModalOpen] = useState(false);
+  const [templateToSend, setTemplateToSend] = useState<ProductTemplate | null>(null);
   const [isUPHExportOpen, setIsUPHExportOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -548,7 +561,13 @@ export default function App() {
   const updateInstanceLabelConfig = (key: string, value: any) => {
       if (!selectedInstanceId) return;
       performCheckpoint();
-      setInstances(prev => prev.map(inst => inst.id === selectedInstanceId ? { ...inst, labelConfig: { ...inst.labelConfig, [key]: value } } : inst));
+      setInstances((prev) => prev.map(inst => {
+        if (inst.id === selectedInstanceId) {
+             const oldConfig = inst.labelConfig || { visible: true, fontSize: 14, color: '#FFFFFF', backgroundColor: '#000000', position: 'bottom' };
+             return { ...inst, labelConfig: { ...oldConfig, [key]: value } as any }; 
+        }
+        return inst;
+      }));
   };
 
   const handleRescaleAll = (newPixelScale: number) => {
@@ -773,9 +792,11 @@ export default function App() {
   };
 
   return (
-    <div className={`h-screen w-screen flex flex-col bg-[#1e1e1e] text-gray-200 overflow-hidden ${appSettings.theme}`}>
+    <div className="flex h-screen w-full bg-ink text-alabaster overflow-hidden font-sans select-none transition-colors duration-300">
          <div className="flex-1 flex overflow-hidden relative">
             <LeftSidebar
+                activeTool={activeTool}
+                onSetActiveTool={setActiveTool}
                 projectMetadata={projectMetadata}
                 setProjectMetadata={setProjectMetadata}
                 templates={templates}
@@ -812,15 +833,16 @@ export default function App() {
                     }
 
                     // Prepare data
-                    const projectData: ProjectData = {
+                    const projectData: any = { // Using any temporarily or need to import ProjectData if available
                          metadata: projectMetadata,
-                         pages: pages, // Use current pages state
-                         templates: library // Use current library
+                         pages: pages, 
+                         templates: templates, // library was undefined, using templates
+                         version: "1.0.0"
                     };
                     const json = JSON.stringify(projectData, null, 2);
                     
                     try {
-                        await GoogleDriveService.uploadFile(`Weave_Project_${projectMetadata.name}.json`, json);
+                        await GoogleDriveService.uploadFile(`Weave_Project_${projectMetadata.projectName}.json`, json);
                         alert("Proje başarıyla Google Drive'a yedeklendi!");
                     } catch (e) {
                          alert("Yedekleme sırasında bir hata oluştu.");
@@ -828,6 +850,20 @@ export default function App() {
                     }
                 } : undefined}
                 onExportBOM={() => exportBOM(activePage.instances, projectMetadata.projectName)}
+                onSingleExport={(template) => {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template, null, 2));
+                    const link = document.createElement('a');
+                    link.setAttribute("href", dataStr);
+                    link.setAttribute("download", `${template.name.replace(/\s/g, '_')}.weave`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                }}
+                onSendToEnv={(template) => {
+                    // Always open modal to select/confirm target product
+                    setTemplateToSend(template);
+                    setIsSendToEnvModalOpen(true);
+                }}
             />
             
             <UPHExportModal 
@@ -840,6 +876,43 @@ export default function App() {
                     version: "1.0.0"
                 }}
                 projectName={projectMetadata.projectName}
+            />
+
+            <SendToEnvModal
+                isOpen={isSendToEnvModalOpen}
+                onClose={() => {
+                    setIsSendToEnvModalOpen(false);
+                    setTemplateToSend(null);
+                }}
+                template={templateToSend}
+                templates={templates}
+                setTemplates={setTemplates}
+                onLinkComplete={async (template, targetProduct) => {
+                    // Update the template with ENV-I IDs
+                    const updatedTemplate = {
+                        ...template,
+                        envInventoryId: targetProduct.id,
+                        externalId: targetProduct.externalId || targetProduct.id
+                    };
+                    
+                    // Update local state
+                    setTemplates(prev => prev.map(t => t.id === template.id ? updatedTemplate : t));
+                    
+                    // Sync to ENV
+                    try {
+                        const { syncTemplateToEnv } = await import('./hooks/useInventorySync');
+                        const result = await syncTemplateToEnv(updatedTemplate);
+                        
+                        if (result.success) {
+                             setTimeout(() => alert(`✅ Başarılı!\n\n"${template.name}" ürünü "${targetProduct.name}" ile eşleştirildi ve ENV-I'a gönderildi.`), 100);
+                        } else {
+                             setTimeout(() => alert(`❌ Hata!\n\n${result.error}`), 100);
+                        }
+                    } catch (e) {
+                        console.error("Link & Send failed", e);
+                        setTimeout(() => alert("❌ ENV-I'a gönderilirken bir hata oluştu."), 100);
+                    }
+                }}
             />
 
       <div className="flex-1 relative h-full w-full overflow-hidden print:block print:h-auto print:w-auto print:overflow-visible">
@@ -1021,6 +1094,20 @@ export default function App() {
           onClose={() => setIsInventoryImportOpen(false)}
           templates={templates}
           setTemplates={setTemplates}
+          onImportComplete={(template) => {
+              if (!template.imageUrl && !template.weaveFileUrl) {
+                  // If no visual, open editor immediately
+                  setEditingTemplate(template);
+                  setIsEditorOpen(true);
+                  setIsInventoryImportOpen(false);
+              } else {
+                  // If has visual, maybe just add to sidebar or canvas?
+                  // For now, let's just make it available in the sidebar (which is what setTemplates does)
+                  // and maybe select it?
+                  setIsInventoryImportOpen(false);
+                  alert(`${template.name} kütüphaneye eklendi.`);
+              }
+          }}
         />
         <UPHExportModal
             isOpen={isUPHExportOpen}
@@ -1032,6 +1119,42 @@ export default function App() {
                 version: "1.0.0"
             }}
             projectName={projectMetadata.projectName || "Sistem Şeması"}
+        />
+        <SendToEnvModal
+            isOpen={isSendToEnvModalOpen}
+            onClose={() => {
+                setIsSendToEnvModalOpen(false);
+                setTemplateToSend(null);
+            }}
+            template={templateToSend}
+            templates={templates}
+            setTemplates={setTemplates}
+            onLinkComplete={async (template, targetProduct) => {
+                // Update the template with ENV-I IDs
+                const updatedTemplate = {
+                    ...template,
+                    envInventoryId: targetProduct.id,
+                    externalId: targetProduct.externalId || targetProduct.id
+                };
+                
+                // Update local state
+                setTemplates(prev => prev.map(t => t.id === template.id ? updatedTemplate : t));
+                
+                // Sync to ENV
+                try {
+                    const { syncTemplateToEnv } = await import('./hooks/useInventorySync');
+                    const result = await syncTemplateToEnv(updatedTemplate);
+                    
+                    if (result.success) {
+                         setTimeout(() => alert(`✅ Başarılı!\n\n"${template.name}" ürünü "${targetProduct.name}" ile eşleştirildi ve ENV-I'a gönderildi.`), 100);
+                    } else {
+                         setTimeout(() => alert(`❌ Hata!\n\n${result.error}`), 100);
+                    }
+                } catch (e) {
+                    console.error("Link & Send failed", e);
+                    setTimeout(() => alert("❌ ENV-I'a gönderilirken bir hata oluştu."), 100);
+                }
+            }}
         />
       </Suspense>
 

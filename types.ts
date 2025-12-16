@@ -105,6 +105,7 @@ export interface ProductTemplate {
   externalId?: string;        // Shared ID across ecosystem
   isConfigured?: boolean;     // Whether ports are configured (false = basic template from ENV-I)
   stockCount?: number;        // Synced stock count from ENV-I (readonly)
+  weaveFileUrl?: string;      // Link to the .weave file (if available)
 }
 
 export interface LibraryMetadata {

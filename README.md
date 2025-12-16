@@ -89,6 +89,23 @@ Weave-main/
 - **ContextMenu**: Right Click on items
 - **Drag & Drop**: Drag items from the Left Sidebar onto the Canvas.
 
+## 🤝 Integration with ENV-I
+
+Weave seamlessly integrates with ENV-I inventory system:
+
+- **🔗 Product Linking**: Link Weave templates directly to ENV-I products
+- **📤 Send to ENV**: Upload template designs to corresponding ENV-I products
+- **☁️ Firebase Storage**: Images are automatically uploaded to Firebase Storage (avoids Firestore size limits)
+- **🔄 Two-way Sync**: Product data stays synchronized between Weave and ENV-I
+
+**How to use**: Right-click a template → "ENV'e Gönder" → Select target product → Confirm
+
+## 🎨 Theme Support
+
+- **Light/Dark Mode**: Toggle between light and dark themes from the toolbar
+- **Global Theme**: Theme affects the entire UI (sidebar, toolbar, canvas)
+- **Persistent Settings**: Theme preference is saved locally
+
 ## 🤝 Integration with UPH
 
 Weave is designed to work hand-in-hand with UPH. Use the **"UPH'a Gönder"** button in the top toolbar to sync your current design's Bill of Materials and snapshot directly to a specific UPH project.

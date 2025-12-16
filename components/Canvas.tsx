@@ -132,15 +132,19 @@ export const Canvas: React.FC<CanvasProps> = ({
   // Canvas View Hook
   const { scale, pan, setPan, handleWheel, handleFitScreen, handleZoomIn, handleZoomOut } = useCanvasView(window.innerWidth, window.innerHeight);
 
-  // Coordinate Helpers
+    // Coordinate Helpers
   const getMouseCoords = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return { x: 0, y: 0 };
     const rect = containerRef.current.getBoundingClientRect();
+    // Since containerRef is the transformed element, its rect already accounts for pan/zoom on screen.
+    // The relative position inside the element (clientX - rect.left) is the SCALED distance.
+    // We just need to divide by scale to get the local coordinate.
+    // No need to subtract pan again.
     return {
-      x: (e.clientX - rect.left - pan.x) / scale,
-      y: (e.clientY - rect.top - pan.y) / scale
+      x: (e.clientX - rect.left) / scale,
+      y: (e.clientY - rect.top) / scale
     };
-  }, [pan, scale]);
+  }, [scale]);
 
   // Identify source port for validation highlighting
   const startPort = useMemo(() => {
@@ -519,6 +523,16 @@ export const Canvas: React.FC<CanvasProps> = ({
           const { x, y } = getMouseCoords(e);
           let pX = x;
           let pY = y;
+          
+          // Clamp to canvas bounds
+          const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
+          const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
+          const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
+          const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
+          
+          pX = Math.max(0, Math.min(pX, finalW));
+          pY = Math.max(0, Math.min(pY, finalH));
+
           if (isGridSnapEnabled) {
               pX = snapToGrid(pX);
               pY = snapToGrid(pY);

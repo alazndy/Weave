@@ -87,7 +87,12 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
             setPhysicalWidth(parseFloat((initialTemplate.width / pixelScale).toFixed(1)));
         }
         
-        setMode('ports');
+        // Only skip to ports if we actually have an image
+        if (initialTemplate.imageUrl) {
+            setMode('ports');
+        } else {
+            setMode('upload');
+        }
     }
   }, [initialTemplate, pixelScale]);
 
@@ -635,6 +640,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     }
 
     const newTemplate: ProductTemplate = {
+      ...(initialTemplate || {}), // Preserve existing properties like envInventoryId
       id: initialTemplate ? initialTemplate.id : crypto.randomUUID(),
       name,
       modelNumber,

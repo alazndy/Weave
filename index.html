@@ -25,7 +25,20 @@
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap");
 
       :root {
-        /* Default Weave Palette (RGB values for Tailwind opacity support) */
+        /* LIGHT THEME (Default) */
+        --color-ink: 248 250 252; /* Slate-50 - Light BG */
+        --color-paprika: 207 92 54; /* #cf5c36 */
+        --color-apricot: 239 200 139; /* #efc88b */
+        --color-vanilla: 244 227 178; /* #f4e3b2 */
+        --color-alabaster: 15 23 42; /* Slate-900 - Dark Text */
+
+        --glass-border: rgba(15, 23, 42, 0.08); /* Dark border for light mode */
+        --glass-bg: rgba(255, 255, 255, 0.65);
+        --glass-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+      }
+
+      .dark {
+        /* DARK THEME */
         --color-ink: 5 5 23; /* #050517 */
         --color-paprika: 207 92 54; /* #cf5c36 */
         --color-apricot: 239 200 139; /* #efc88b */

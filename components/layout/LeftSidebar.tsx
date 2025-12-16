@@ -58,6 +58,8 @@ interface LeftSidebarProps {
   onOpenUPHExport?: () => void;
   onSaveToDrive?: () => void;
   onExportBOM?: () => void;
+  onSingleExport?: (template: ProductTemplate) => void;
+  onSendToEnv?: (template: ProductTemplate) => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -85,11 +87,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onOpenUPHExport,
   onSaveToDrive,
   onExportBOM,
+  onSingleExport,
+  onSendToEnv,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
   const [isRenamingLib, setIsRenamingLib] = useState(false);
   const [tempLibName, setTempLibName] = useState("");
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; template: ProductTemplate } | null>(null);
 
   // Independent open states for sections
   const [openSections, setOpenSections] = useState({
@@ -141,10 +146,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       onClick={() => addToCanvas(template.id)}
       onContextMenu={(e) => {
         e.preventDefault();
-        setEditingTemplate(template);
-        setIsEditorOpen(true);
+        setContextMenu({ x: e.clientX, y: e.clientY, template });
       }}
-      className="group relative bg-black/40 border border-white/5 rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:border-paprika/40 hover:bg-ink hover:shadow-lg hover:shadow-paprika/10 transition-all duration-200 active:scale-95 overflow-hidden"
+      className="group relative bg-white dark:bg-black/40 border border-zinc-200 dark:border-white/5 rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:border-paprika/40 hover:bg-zinc-50 dark:hover:bg-ink hover:shadow-lg hover:shadow-paprika/10 transition-all duration-200 active:scale-95 overflow-hidden"
       title={template.name}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-paprika/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -218,14 +222,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
     <div
       className={`relative h-full transition-all duration-300 ease-in-out flex flex-col shadow-2xl z-30 no-print ${
         isOpen
-          ? "w-80 bg-ink/90 backdrop-blur-xl border-r border-white/5"
+          ? "w-80 bg-white/90 dark:bg-ink/90 backdrop-blur-xl border-r border-zinc-200 dark:border-white/5"
           : "w-0 border-none"
       }`}
     >
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="absolute -right-8 top-6 bg-ink/90 backdrop-blur-xl border border-white/5 border-l-0 text-zinc-400 hover:text-paprika p-1.5 rounded-r-lg shadow-lg cursor-pointer z-50 flex items-center justify-center h-10 w-8 transition-colors"
+        className="absolute -right-8 top-6 bg-white/90 dark:bg-ink/90 backdrop-blur-xl border border-zinc-200 dark:border-white/5 border-l-0 text-zinc-500 dark:text-zinc-400 hover:text-paprika p-1.5 rounded-r-lg shadow-lg cursor-pointer z-50 flex items-center justify-center h-10 w-8 transition-colors"
         title={isOpen ? t('sidebar.hideMenu') : t('sidebar.showMenu')}
       >
         {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
@@ -238,20 +242,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         }`}
       >
         {/* Header Section */}
-        <div className="p-6 border-b border-white/5">
+        <div className="p-6 border-b border-zinc-200 dark:border-white/5">
           <h1 className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-paprika via-apricot to-vanilla flex items-center gap-3 mb-6 tracking-tight">
             <Cable className="w-7 h-7 text-paprika" /> {t('sidebar.appName')}
           </h1>
           <div className="flex gap-2">
             <button
               onClick={handleSaveProject}
-              className="flex-1 bg-white/5 hover:bg-paprika/10 text-alabaster hover:text-paprika py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-white/5 transition-all active:scale-95"
+              className="flex-1 bg-zinc-100 dark:bg-white/5 hover:bg-paprika/10 text-zinc-700 dark:text-alabaster hover:text-paprika py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-zinc-200 dark:border-white/5 transition-all active:scale-95"
             >
               <Save size={14} /> {t('sidebar.save')}
             </button>
             <button
               onClick={() => projectInputRef.current?.click()}
-              className="flex-1 bg-white/5 hover:bg-apricot/10 text-alabaster hover:text-apricot py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-white/5 transition-all active:scale-95"
+              className="flex-1 bg-zinc-100 dark:bg-white/5 hover:bg-apricot/10 text-zinc-700 dark:text-alabaster hover:text-apricot py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-zinc-200 dark:border-white/5 transition-all active:scale-95"
             >
               <FolderOpen size={14} /> {t('sidebar.open')}
             </button>
@@ -294,7 +298,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         {/* Library Selector */}
-        <div className="p-4 bg-black/20 border-b border-white/5">
+        <div className="p-4 bg-zinc-50 dark:bg-black/20 border-b border-zinc-200 dark:border-white/5">
           <div className="flex justify-between items-center mb-2 px-1">
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
               <Library size={12} /> {t('sidebar.library')}
@@ -333,7 +337,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   onChange={(e) =>
                     onSwitchLibrary && onSwitchLibrary(e.target.value)
                   }
-                  className="w-full appearance-none bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg pl-3 pr-8 py-2 text-sm font-semibold text-alabaster focus:border-paprika/50 outline-none transition-colors cursor-pointer"
+                  className="w-full appearance-none bg-white dark:bg-white/5 hover:bg-zinc-50 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/5 rounded-lg pl-3 pr-8 py-2 text-sm font-semibold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none transition-colors cursor-pointer"
                   title={t('sidebar.selectLibrary')}
                   aria-label={t('sidebar.selectLibrary')}
                 >
@@ -381,7 +385,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         {/* Page Settings */}
-        <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02]">
+        <div className="px-5 py-4 border-b border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
           <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
             {t('sidebar.canvasSettings')}
           </h2>
@@ -395,7 +399,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     paperSize: e.target.value as PaperSize,
                   })
                 }
-                className="w-full appearance-none bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-alabaster focus:border-paprika/50 outline-none hover:bg-black/40 transition-colors"
+                className="w-full appearance-none bg-white dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-zinc-50 dark:hover:bg-black/40 transition-colors"
                 title={t('sidebar.paperSize')}
                 aria-label={t('sidebar.paperSize')}
               >
@@ -413,7 +417,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     orientation: e.target.value as Orientation,
                   })
                 }
-                className="w-full appearance-none bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-alabaster focus:border-paprika/50 outline-none hover:bg-black/40 transition-colors"
+                className="w-full appearance-none bg-white dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-zinc-50 dark:hover:bg-black/40 transition-colors"
                 title={t('sidebar.orientation')}
                 aria-label={t('sidebar.orientation')}
               >
@@ -425,7 +429,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         {/* Product List */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar bg-gradient-to-b from-transparent to-black/20">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar bg-gradient-to-b from-transparent to-zinc-50 dark:to-black/20">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
               {t('sidebar.libraryContent')}
@@ -543,7 +547,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           )}
         </div>
 
-        <div className="border-t border-white/5 bg-black/20 p-2">
+        <div className="border-t border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-black/20 p-2">
           <button
             onClick={onOpenSettings}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-white transition-colors text-xs font-bold"
@@ -552,10 +556,52 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </button>
         </div>
 
-        <div className="p-2 bg-black/40 text-[9px] font-medium text-zinc-700 text-center">
+        <div className="p-2 bg-zinc-100 dark:bg-black/40 text-[9px] font-medium text-zinc-500 dark:text-zinc-700 text-center">
           {t('sidebar.footer')}
         </div>
       </div>
+      
+      {/* Context Menu */}
+      {contextMenu && (
+        <div 
+          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+            onClick={(e) => { e.stopPropagation(); setContextMenu(null); setEditingTemplate(contextMenu.template); setIsEditorOpen(true); }}
+          >
+            <Edit2 size={14} /> Düzenle
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+            onClick={(e) => { e.stopPropagation(); setContextMenu(null); onSingleExport?.(contextMenu.template); }}
+          >
+            <Download size={14} /> Tekli Export
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-green-500/10 hover:text-green-300 flex items-center gap-2"
+            onClick={(e) => { e.stopPropagation(); setContextMenu(null); onSendToEnv?.(contextMenu.template); }}
+          >
+            <Send size={14} /> ENV'e Gönder
+          </button>
+          <div className="border-t border-white/10 my-1"></div>
+          <button
+            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2"
+            onClick={(e) => { e.stopPropagation(); setContextMenu(null); if (confirm("Silmek istediğinize emin misiniz?")) handleDeleteTemplate(contextMenu.template.id); }}
+          >
+            <Trash2 size={14} /> Sil
+          </button>
+        </div>
+      )}
+      
+      {/* Click outside to close context menu */}
+      {contextMenu && (
+        <div 
+          className="fixed inset-0 z-[99]" 
+          onClick={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };

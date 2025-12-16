@@ -52,12 +52,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="bg-ink/80 backdrop-blur-xl border border-white/10 p-1 rounded-full shadow-2xl flex gap-1 items-center no-print ring-1 ring-black/20 transition-all hover:bg-ink/95">
+    <div className="bg-white/80 dark:bg-ink/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 p-1 rounded-full shadow-2xl flex gap-1 items-center no-print ring-1 ring-black/5 dark:ring-black/20 transition-all hover:bg-white/95 dark:hover:bg-ink/95">
         <div className="flex gap-0.5 px-0.5">
             <button 
                 onClick={handleUndo}
                 disabled={!canUndo}
-                className="text-zinc-400 hover:text-white hover:bg-white/10 w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                 title={t('undo')}
             >
                 <Undo2 className="w-3.5 h-3.5" />
@@ -65,18 +65,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button 
                 onClick={handleRedo}
                 disabled={!canRedo}
-                className="text-zinc-400 hover:text-white hover:bg-white/10 w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                 title={t('redo')}
             >
                 <Redo2 className="w-3.5 h-3.5" />
             </button>
         </div>
         
-        <div className="w-px bg-white/10 h-4 mx-0.5"></div>
+        <div className="w-px bg-zinc-200 dark:bg-white/10 h-4 mx-0.5"></div>
         
         <button 
             onClick={openHistory}
-            className="w-7 h-7 rounded-full flex items-center justify-center transition-all text-zinc-400 hover:text-orange-400 hover:bg-white/10"
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all text-zinc-500 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-zinc-100 dark:hover:bg-white/10"
             title={t('history')}
         >
             <History className="w-3.5 h-3.5" />
@@ -143,7 +143,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         
         <button 
             onClick={handleExportImage}
-            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all border border-white/5"
+            className="bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all border border-zinc-300 dark:border-white/5"
             title={t('exportImage')}
         >
             <Printer className="w-3 h-3" />
@@ -168,7 +168,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <HelpCircle className="w-3.5 h-3.5" />
         </button>
 
-        <div className="flex items-center gap-2 px-2 border-l border-white/10 ml-0.5 pl-2">
+        <div className="flex items-center gap-2 px-2 border-l border-zinc-200 dark:border-white/10 ml-0.5 pl-2">
              <div className="flex items-center gap-1" title={t('inputPort')}><div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]"></div></div>
              <div className="flex items-center gap-1" title={t('outputPort')}><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]"></div></div>
              <div className="flex items-center gap-1" title={t('bidirectional')}><div className="w-1.5 h-1.5 rounded-full bg-paprika shadow-[0_0_6px_rgba(207,92,54,0.6)]"></div></div>
@@ -178,7 +178,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         
         <button 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="w-7 h-7 rounded-full flex items-center justify-center transition-all bg-black/40 text-zinc-400 hover:text-apricot hover:bg-black/60"
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all bg-zinc-100 dark:bg-black/40 text-zinc-500 dark:text-zinc-400 hover:text-apricot hover:bg-zinc-200 dark:hover:bg-black/60"
             title={theme === 'dark' ? t('switchToLight') : t('switchToDark')}
         >
             {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}

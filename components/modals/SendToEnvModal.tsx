@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, Search, Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Package, Search, Link as LinkIcon, RefreshCw, AlertCircle, ArrowRight } from 'lucide-react';
 import { useInventorySync, InventoryProduct } from '../../hooks/useInventorySync';
 import { ProductTemplate } from '../../types';
 
-interface InventoryImportModalProps {
+interface SendToEnvModalProps {
   isOpen: boolean;
   onClose: () => void;
+  template: ProductTemplate | null;
   templates: ProductTemplate[];
   setTemplates: (templates: ProductTemplate[]) => void;
-  onImportComplete?: (template: ProductTemplate) => void;
+  onLinkComplete: (template: ProductTemplate, targetProduct: InventoryProduct) => void;
 }
 
-export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
+export const SendToEnvModal: React.FC<SendToEnvModalProps> = ({
   isOpen,
   onClose,
+  template,
   templates,
   setTemplates,
-  onImportComplete,
+  onLinkComplete,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   const {
     products,
@@ -27,8 +29,6 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
     error,
     lastSyncTime,
     fetchProducts,
-    importProductAsTemplate,
-    getUnimportedProducts,
   } = useInventorySync({ templates, setTemplates });
 
   // Fetch products when modal opens
@@ -38,11 +38,16 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
     }
   }, [isOpen, products.length, fetchProducts]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm('');
+      setSelectedProductId(null);
+    }
+  }, [isOpen]);
 
-  const unimportedProducts = getUnimportedProducts();
-  
-  const filteredProducts = unimportedProducts.filter(product => {
+  if (!isOpen || !template) return null;
+
+  const filteredProducts = products.filter(product => {
     const term = searchTerm.toLowerCase();
     return (
       product.name.toLowerCase().includes(term) ||
@@ -52,54 +57,15 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
     );
   });
 
-  const toggleSelect = (productId: string) => {
-    setSelectedProducts(prev => {
-      const next = new Set(prev);
-      if (next.has(productId)) {
-        next.delete(productId);
-      } else {
-        next.add(productId);
-      }
-      return next;
-    });
-  };
+  const handleLink = () => {
+    if (!selectedProductId) return;
+    
+    const product = products.find(p => p.id === selectedProductId);
+    if (!product) return;
 
-  const handleImportSelected = () => {
-    selectedProducts.forEach(productId => {
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        const template = importProductAsTemplate(product);
-        if (template && onImportComplete) {
-          onImportComplete(template);
-        }
-      }
-    });
-    setSelectedProducts(new Set());
-    onClose();
-  };
-
-  const handleImportSingle = (product: InventoryProduct) => {
-    // If product has a weave file or is already configured in Weave (via template), import directly
-    if (product.weaveFileUrl || product.weaveTemplateId) {
-        const template = importProductAsTemplate(product);
-        if (template && onImportComplete) {
-            onImportComplete(template);
-        }
-    } else {
-        // No visual/file - Redirect to Editor to create/assign one
-        // Create a basic template from the product and open editor
-        const template = importProductAsTemplate(product); // This creates it in "unconfigured" state
-        if (template && onImportComplete) {
-            // Special flag or straight to onImportComplete which might handle "unconfigured" ?
-            // The requirement is "go to product add screen [ProductEditor], ask for visual"
-            // So we really want to pass this template to the Editor.
-            // If onImportComplete puts it on the canvas, that's one way.
-            // But we might want to open the MODAL editor.
-            onImportComplete(template); 
-            // NOTE: The parent component (App.tsx) needs to detect if this template is "incomplete" (mode='upload') and open the editor.
-            // However, the user request says "go to product add screen".
-            // Let's assume onImportComplete will eventually set it as the "active" template for the editor in App.tsx if we pass a flag.
-        }
+    if (confirm(`"${template.name}" şablonunu "${product.name}" ürünüyle eşleştirmek ve ENV-I'a göndermek üzeresiniz.\n\nEmin misiniz?`)) {
+      onLinkComplete(template, product);
+      onClose();
     }
   };
 
@@ -107,13 +73,13 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-ink border border-white/10 rounded-2xl shadow-2xl w-[600px] max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-paprika/10 to-transparent">
+        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-blue-900/20 to-transparent">
           <div className="flex items-center gap-3">
-            <Package className="text-paprika" size={24} />
+            <LinkIcon className="text-blue-400" size={24} />
             <div>
-              <h2 className="text-lg font-bold text-white">Envanterden Ekle</h2>
+              <h2 className="text-lg font-bold text-white">ENV-I ile Eşleştir ve Gönder</h2>
               <p className="text-xs text-zinc-500">
-                ENV-I envanterinden ürün seç ve Weave'e aktar
+                "{template.name}" şablonunu hangi ENV-I ürününe göndermek istersiniz?
               </p>
             </div>
           </div>
@@ -136,7 +102,7 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Ürün adı, model veya barkod ile ara..."
-              className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-paprika/50 outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-blue-500/50 outline-none"
             />
           </div>
           <button
@@ -146,7 +112,6 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
             title="Yenile"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            Yenile
           </button>
         </div>
 
@@ -168,43 +133,38 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
               <Package size={32} className="mb-3 opacity-50" />
               <span className="text-sm font-medium">
-                {searchTerm ? 'Arama sonucu bulunamadı' : 'Tüm ürünler zaten içe aktarılmış'}
+                {searchTerm ? 'Arama sonucu bulunamadı' : 'Envanterde ürün bulunamadı'}
               </span>
-              {products.length === 0 && !searchTerm && (
-                <span className="text-xs mt-1 opacity-70">
-                  Firebase bağlantısını kontrol edin
-                </span>
-              )}
             </div>
           ) : (
             <div className="grid gap-2">
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => toggleSelect(product.id)}
+                  onClick={() => setSelectedProductId(product.id)}
                   className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all ${
-                    selectedProducts.has(product.id)
-                      ? 'bg-paprika/20 border-paprika/50'
+                    selectedProductId === product.id
+                      ? 'bg-blue-600/20 border-blue-500/50'
                       : 'bg-white/5 border-white/5 hover:bg-white/10'
                   } border`}
                 >
-                  {/* Checkbox */}
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition ${
-                    selectedProducts.has(product.id)
-                      ? 'bg-paprika border-paprika'
+                  {/* Radio-like indicator */}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition ${
+                    selectedProductId === product.id
+                      ? 'border-blue-500'
                       : 'border-zinc-600'
                   }`}>
-                    {selectedProducts.has(product.id) && (
-                      <CheckCircle size={14} className="text-white" />
+                    {selectedProductId === product.id && (
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
                     )}
                   </div>
 
                   {/* Product Image or Placeholder */}
-                  <div className="w-12 h-12 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
+                  <div className="w-10 h-10 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
                     ) : (
-                      <Package size={20} className="text-zinc-600" />
+                      <Package size={16} className="text-zinc-600" />
                     )}
                   </div>
 
@@ -222,24 +182,19 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
                     </div>
                   </div>
 
+                   {/* Already Linked Warning */}
+                   {product.weaveTemplateId && product.weaveTemplateId !== template.id && (
+                    <div className="text-[10px] text-yellow-500 flex items-center gap-1 bg-yellow-500/10 px-2 py-0.5 rounded">
+                      <span>Başka şablona bağlı</span>
+                    </div>
+                  )}
+
                   {/* Stock Badge */}
                   <div className={`px-2 py-1 rounded-md text-xs font-bold ${
                     product.stock > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                   }`}>
-                    {product.stock} adet
+                    {product.stock}
                   </div>
-
-                  {/* Quick Import */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleImportSingle(product);
-                    }}
-                    className="px-3 py-1.5 bg-paprika/20 hover:bg-paprika text-paprika hover:text-white rounded-lg text-xs font-bold transition"
-                    title="Hemen içe aktar"
-                  >
-                    <Download size={14} />
-                  </button>
                 </div>
               ))}
             </div>
@@ -261,12 +216,12 @@ export const InventoryImportModal: React.FC<InventoryImportModalProps> = ({
               İptal
             </button>
             <button
-              onClick={handleImportSelected}
-              disabled={selectedProducts.size === 0}
-              className="px-4 py-2 bg-paprika hover:bg-paprika/80 text-white rounded-lg text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              onClick={handleLink}
+              disabled={!selectedProductId}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Download size={16} />
-              Seçilenleri Aktar ({selectedProducts.size})
+              Eşleştir ve Gönder
+              <ArrowRight size={16} />
             </button>
           </div>
         </div>

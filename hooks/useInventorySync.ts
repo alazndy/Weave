@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, doc, updateDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { ProductTemplate } from '../types';
+import { uploadImageToStorage } from '../utils/imageCompressor';
 
 // ENV-I Product type (simplified for sync purposes)
 export interface InventoryProduct {
@@ -18,6 +19,7 @@ export interface InventoryProduct {
   externalId?: string;
   weaveTemplateId?: string;
   weaveConfigured?: boolean;
+  weaveFileUrl?: string;
 }
 
 interface UseInventorySyncOptions {
@@ -48,10 +50,16 @@ export function useInventorySync({ templates, setTemplates }: UseInventorySyncOp
       const productsRef = collection(db, 'products');
       const snapshot = await getDocs(productsRef);
       
-      const products: InventoryProduct[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as InventoryProduct));
+      const productsMap = new Map<string, InventoryProduct>();
+      
+      snapshot.docs.forEach(doc => {
+        productsMap.set(doc.id, {
+          id: doc.id,
+          ...doc.data(),
+        } as InventoryProduct);
+      });
+      
+      const products = Array.from(productsMap.values());
 
       setState(prev => ({
         ...prev,
@@ -87,6 +95,7 @@ export function useInventorySync({ templates, setTemplates }: UseInventorySyncOp
       envInventoryId: product.id,
       externalId: product.externalId || product.id,
       stockCount: product.stock,
+      weaveFileUrl: product.weaveFileUrl,
     };
   }, []);
 
@@ -149,7 +158,7 @@ export function useInventorySync({ templates, setTemplates }: UseInventorySyncOp
       if (template.envInventoryId) {
         const product = productMap.get(template.envInventoryId);
         if (product) {
-          return { ...template, stockCount: product.stock };
+          return { ...template, stockCount: product.stock, weaveFileUrl: product.weaveFileUrl };
         }
       }
       return template;
@@ -168,6 +177,8 @@ export function useInventorySync({ templates, setTemplates }: UseInventorySyncOp
         weaveTemplateId: template.id,
         weaveConfigured: template.isConfigured ?? (template.ports.length > 0),
         imageUrl: template.imageUrl || null,
+        // Also update weaveFileUrl if available (assuming template.imageUrl is the file for now, or explicit field)
+        weaveFileUrl: template.weaveFileUrl || template.imageUrl || null
       });
     } catch (error) {
       console.error('Failed to sync template to ENV-I:', error);
@@ -183,4 +194,35 @@ export function useInventorySync({ templates, setTemplates }: UseInventorySyncOp
     syncStockCounts,
     syncTemplateToEnv,
   };
+}
+
+// Standalone function for sending template to ENV-I (can be imported directly without hook)
+export async function syncTemplateToEnv(template: ProductTemplate): Promise<{ success: boolean; error?: string }> {
+  if (!template.envInventoryId) {
+    return { success: false, error: "Bu şablon ENV-I'dan içe aktarılmadı." };
+  }
+
+  try {
+    // Upload image to Firebase Storage instead of storing base64 in Firestore
+    // This avoids the 1MB document size limit
+    const imageUrl = await uploadImageToStorage(
+      template.imageUrl || '',
+      template.envInventoryId
+    );
+    
+    const productRef = doc(db, 'products', template.envInventoryId);
+    // Use setDoc with merge to create document if it doesn't exist, or update if it does
+    await setDoc(productRef, {
+      weaveTemplateId: template.id,
+      weaveConfigured: template.isConfigured ?? (template.ports.length > 0),
+      imageUrl: imageUrl || null,
+      weaveFileUrl: template.weaveFileUrl || imageUrl || null,
+      name: template.name || 'Unnamed Product',
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to sync template to ENV-I:', error);
+    return { success: false, error: String(error) };
+  }
 }
