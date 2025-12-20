@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useLayoutEffect, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import {
   ProductTemplate,
@@ -564,8 +564,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       {/* Context Menu */}
       {contextMenu && (
         <div 
-          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150 dynamic-context-menu"
-          style={{ '--menu-top': `${contextMenu.y}px`, '--menu-left': `${contextMenu.x}px` } as React.CSSProperties}
+          ref={(node) => {
+            if (node) {
+              node.style.top = `${contextMenu.y}px`;
+              node.style.left = `${contextMenu.x}px`;
+            }
+          }}
+          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150"
         >
           <button
             className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
