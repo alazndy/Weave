@@ -564,8 +564,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       {/* Context Menu */}
       {contextMenu && (
         <div 
-          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150"
-          style={{ top: contextMenu.y, left: contextMenu.x }}
+          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150 dynamic-context-menu"
+          style={{ '--menu-top': `${contextMenu.y}px`, '--menu-left': `${contextMenu.x}px` } as React.CSSProperties}
         >
           <button
             className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
