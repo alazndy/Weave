@@ -8,11 +8,20 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron:compile": "tsc -p electron/tsconfig.json && move /Y dist-electron\\main.js dist-electron\\main.cjs && move /Y dist-electron\\preload.js dist-electron\\preload.cjs",
-    "electron:dev": "concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && npm run electron:compile && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "npm run build && npm run electron:compile && electron-builder"
+    "test": "vitest",
+    "electron:compile": "tsc -p electron/tsconfig.json && shx mv dist-electron/main.js dist-electron/main.cjs && shx mv dist-electron/preload.js dist-electron/preload.cjs",
+    "electron:dev": "concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3004 && npm run electron:compile && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && npm run electron:compile && electron-builder",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "mobile:build": "npm run build && npx cap sync"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
     "@google/genai": "^1.30.0",
     "firebase": "^11.0.0",
     "html2canvas": "^1.4.1",
@@ -26,6 +35,9 @@
     "react-i18next": "^16.5.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -34,8 +46,11 @@
     "cross-env": "^7.0.0",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "jsdom": "^27.3.0",
+    "shx": "^0.4.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
+    "vitest": "^4.0.16",
     "wait-on": "^8.0.0"
   },
   "build": {
@@ -54,6 +69,12 @@
         "nsis",
         "dir"
       ]
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
     }
   }
 }
