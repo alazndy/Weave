@@ -1,0 +1,410 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - button "Hide Menu" [ref=e6] [cursor=pointer]:
+      - img [ref=e7]
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "T-Weave" [level=1] [ref=e11]:
+          - img [ref=e12]
+          - text: T-Weave
+        - generic [ref=e20]:
+          - button "Save" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - text: Save
+          - button "Open" [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+            - text: Open
+        - generic [ref=e29]:
+          - button "Send to UPH" [active] [ref=e30] [cursor=pointer]:
+            - img [ref=e31]
+            - text: Send to UPH
+          - button "Export BOM" [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+            - text: Export BOM
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - heading "Library" [level=2] [ref=e42]:
+            - img [ref=e43]
+            - text: Library
+          - button "New Library" [ref=e48] [cursor=pointer]:
+            - img [ref=e49]
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - combobox "Select Library" [ref=e55] [cursor=pointer]:
+              - option "Varsayılan Kütüphane" [selected]
+            - generic:
+              - img
+          - generic [ref=e56]:
+            - button "Rename" [ref=e57] [cursor=pointer]:
+              - img [ref=e58]
+            - button "At least one library must remain" [disabled] [ref=e60]:
+              - img [ref=e61]
+      - generic [ref=e67]:
+        - heading "Canvas Settings" [level=2] [ref=e68]
+        - generic [ref=e69]:
+          - combobox "Paper Size" [ref=e71]:
+            - option "A3"
+            - option "A4" [selected]
+            - option "A6"
+          - combobox "Orientation" [ref=e73]:
+            - option "Landscape" [selected]
+            - option "Portrait"
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - heading "Library Content" [level=2] [ref=e76]
+          - generic [ref=e77]:
+            - button "Download" [ref=e78] [cursor=pointer]:
+              - img [ref=e79]
+            - button "Upload" [ref=e83] [cursor=pointer]:
+              - img [ref=e84]
+            - button "Add from Inventory" [ref=e89] [cursor=pointer]:
+              - img [ref=e90]
+            - button "Add" [ref=e95] [cursor=pointer]:
+              - img [ref=e96]
+        - generic [ref=e99]:
+          - img [ref=e100]
+          - generic [ref=e104]: Library is empty
+      - button "App Settings" [ref=e106] [cursor=pointer]:
+        - img [ref=e107]
+        - text: App Settings
+      - generic [ref=e110]: T-Weave v1.0 • TEK Ecosystem
+  - generic [ref=e111]:
+    - generic [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - img:
+            - generic:
+              - text: "1"
+              - text: "1"
+              - text: "2"
+              - text: "2"
+              - text: "3"
+              - text: "3"
+              - text: "4"
+              - text: "4"
+              - text: "5"
+              - text: "5"
+              - text: "6"
+              - text: "6"
+              - text: "7"
+              - text: "7"
+              - text: "8"
+              - text: "8"
+              - text: "9"
+              - text: "9"
+              - text: "10"
+              - text: "10"
+              - text: "11"
+              - text: "11"
+              - text: "12"
+              - text: "12"
+              - text: "13"
+              - text: "13"
+              - text: "14"
+              - text: "14"
+              - text: "15"
+              - text: "15"
+              - text: "16"
+              - text: "16"
+              - text: "17"
+              - text: "17"
+              - text: "18"
+              - text: "18"
+              - text: "19"
+              - text: "19"
+              - text: "20"
+              - text: "20"
+              - text: "21"
+              - text: "21"
+              - text: "22"
+              - text: "22"
+              - text: "23"
+              - text: "23"
+              - text: "24"
+              - text: "24"
+              - text: "25"
+              - text: "25"
+              - text: "26"
+              - text: "26"
+              - text: "27"
+              - text: "27"
+              - text: "28"
+              - text: "28"
+              - text: "29"
+              - text: "29"
+              - text: A
+              - text: A
+              - text: B
+              - text: B
+              - text: C
+              - text: C
+              - text: D
+              - text: D
+              - text: E
+              - text: E
+              - text: F
+              - text: F
+              - text: G
+              - text: G
+              - text: H
+              - text: H
+              - text: I
+              - text: I
+              - text: J
+              - text: J
+              - text: K
+              - text: K
+              - text: L
+              - text: L
+              - text: M
+              - text: M
+              - text: "N"
+              - text: "N"
+              - text: O
+              - text: O
+              - text: P
+              - text: P
+              - text: Q
+              - text: Q
+              - text: R
+              - text: R
+              - text: S
+              - text: S
+              - text: T
+              - text: T
+              - text: U
+              - text: U
+            - text: TS 88-20 EN ISO 128-20 • TS EN ISO 5457 UYUMLUDUR
+          - generic [ref=e116]:
+            - button "Anteti Düzenle" [ref=e117] [cursor=pointer]:
+              - img [ref=e118]
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - generic [ref=e124]: Logo Yok
+                - generic [ref=e125]:
+                  - generic [ref=e126]:
+                    - generic [ref=e127]: Proje Başlığı
+                    - generic [ref=e128]: Yeni Sistem Şeması
+                  - generic [ref=e129]:
+                    - generic [ref=e130]: Müşteri / Firma
+                    - generic [ref=e131]: Şirket Adı
+              - generic [ref=e132]:
+                - generic [ref=e133]:
+                  - generic [ref=e134]: Hazırlayan
+                  - generic [ref=e135]: "-"
+                - generic [ref=e136]:
+                  - generic [ref=e137]: Onaylayan
+                  - generic [ref=e138]: "-"
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Tarih
+                  - generic [ref=e141]: 22.12.2025
+                - generic [ref=e142]:
+                  - generic [ref=e143]: Revizyon
+                  - generic [ref=e144]: R.01
+              - generic [ref=e145]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]: Döküman No
+                  - generic [ref=e148]: YSS-20251222-R01
+                - generic [ref=e149]:
+                  - generic [ref=e150]: Sayfa Adı
+                  - generic [ref=e151]: Sayfa 1
+                - generic [ref=e152]:
+                  - generic [ref=e153]: Ölçek
+                  - generic [ref=e154]: 1:1
+                - generic [ref=e156]: 1 / 1
+        - img
+      - generic [ref=e157]:
+        - button "Seçim (V)" [ref=e158] [cursor=pointer]:
+          - img [ref=e159]
+        - button "Taşı (M)" [ref=e161] [cursor=pointer]:
+          - img [ref=e162]
+        - button "Ölçekle / Boyutlandır (S)" [ref=e169] [cursor=pointer]:
+          - img [ref=e170]
+        - button "Kutu Seçimi (B)" [ref=e175] [cursor=pointer]:
+          - img [ref=e176]
+        - button "Manuel Rota Çizimi (R)" [ref=e190] [cursor=pointer]:
+          - img [ref=e191]
+        - button "Bölge Ekle (Z)" [ref=e199] [cursor=pointer]:
+          - img [ref=e200]
+        - button "Metin Ekle (T)" [ref=e202] [cursor=pointer]:
+          - img [ref=e203]
+        - button "Not / Yorum Ekle (C)" [ref=e207] [cursor=pointer]:
+          - img [ref=e208]
+        - button "Izgaraya Yapış" [ref=e211] [cursor=pointer]:
+          - img [ref=e212]
+      - generic [ref=e216]:
+        - button "Harita" [ref=e217] [cursor=pointer]:
+          - img [ref=e218]
+        - button "Uzaklaş" [ref=e223] [cursor=pointer]:
+          - img [ref=e224]
+        - button "Ekrana Sığdır" [ref=e228] [cursor=pointer]:
+          - img [ref=e229]
+        - button "Yakınlaş" [ref=e234] [cursor=pointer]:
+          - img [ref=e235]
+        - generic [ref=e241]: 100%
+      - generic [ref=e242]:
+        - img
+    - generic [ref=e244]:
+      - generic [ref=e245]:
+        - button "Undo" [disabled] [ref=e246]:
+          - img [ref=e247]
+        - button "Redo" [disabled] [ref=e250]:
+          - img [ref=e251]
+      - button "History" [ref=e255] [cursor=pointer]:
+        - img [ref=e256]
+      - button "AI Analysis" [ref=e261] [cursor=pointer]:
+        - img [ref=e262]
+        - text: AI Analysis
+      - button "Auto Route" [disabled] [ref=e271]:
+        - img [ref=e272]
+        - text: Auto Route
+      - button "Group" [disabled] [ref=e277]:
+        - img [ref=e278]
+      - button "Ungroup" [disabled] [ref=e285]:
+        - img [ref=e286]
+      - button "Save Block" [disabled] [ref=e289]:
+        - img [ref=e290]
+      - button "Clear Scene" [ref=e298] [cursor=pointer]:
+        - img [ref=e299]
+      - button "Save" [ref=e305] [cursor=pointer]:
+        - img [ref=e306]
+        - generic [ref=e310]: Save
+      - button "Pin Map" [ref=e312] [cursor=pointer]:
+        - img [ref=e313]
+      - button "Shortcuts" [ref=e318] [cursor=pointer]:
+        - img [ref=e319]
+      - button "cloudSync" [ref=e324] [cursor=pointer]:
+        - img [ref=e325]
+      - generic [ref=e327]:
+        - generic "Input Port" [ref=e328]
+        - generic "Output Port" [ref=e330]
+        - generic "Bidirectional" [ref=e332]
+      - button "Switch to Light Mode" [ref=e335] [cursor=pointer]:
+        - img [ref=e336]
+      - button "Switch App" [ref=e348] [cursor=pointer]:
+        - img [ref=e349]
+      - button "Switch Language" [ref=e362] [cursor=pointer]:
+        - img [ref=e363]
+    - generic [ref=e367]:
+      - button "Sayfa çubuğunu daralt" [ref=e368] [cursor=pointer]:
+        - img [ref=e369]
+      - generic [ref=e371]:
+        - button "Sayfa Izgarası" [ref=e372] [cursor=pointer]:
+          - img [ref=e373]
+        - generic "Sayfa 1" [ref=e378] [cursor=pointer]:
+          - img [ref=e379]
+          - generic [ref=e385]: Sayfa 1
+          - button "Sayfayı Çoğalt" [ref=e387]:
+            - img [ref=e388]
+        - button "Yeni Sayfa Ekle" [ref=e392] [cursor=pointer]:
+          - img [ref=e393]
+  - generic [ref=e396]:
+    - button "Paneli Gizle" [ref=e397] [cursor=pointer]:
+      - img [ref=e398]
+    - generic [ref=e400]:
+      - generic [ref=e401]:
+        - button "Özellikler" [ref=e402] [cursor=pointer]:
+          - img [ref=e403]
+          - text: Özellikler
+        - button "Katmanlar" [ref=e408] [cursor=pointer]:
+          - img [ref=e409]
+          - text: Katmanlar
+      - generic [ref=e413]:
+        - img [ref=e415]
+        - paragraph [ref=e421]: Seçim Yapılmadı
+        - paragraph [ref=e422]:
+          - text: Düzenlemek veya detayları görmek için
+          - text: sahneden bir nesne seçin.
+  - generic [ref=e424]:
+    - generic [ref=e425]:
+      - heading "Send to UPH Project" [level=2] [ref=e426]:
+        - img [ref=e427]
+        - text: Send to UPH Project
+      - button "✕" [ref=e430] [cursor=pointer]
+    - generic [ref=e432]:
+      - text: Select Target Project
+      - generic [ref=e433]:
+        - 'button "ESP-Car-Remote-Simulator GitHub Repository: alazndy/ESP-Car-Remote-Simulator" [ref=e434] [cursor=pointer]':
+          - generic [ref=e435]: ESP-Car-Remote-Simulator
+          - generic [ref=e436]: "GitHub Repository: alazndy/ESP-Car-Remote-Simulator"
+        - button "Prolog Universal book search engine and reading list manager." [ref=e437] [cursor=pointer]:
+          - generic [ref=e438]: Prolog
+          - generic [ref=e439]: Universal book search engine and reading list manager.
+        - 'button "Pr-M GitHub Repository: alazndy/Pr-M" [ref=e440] [cursor=pointer]':
+          - generic [ref=e441]: Pr-M
+          - generic [ref=e442]: "GitHub Repository: alazndy/Pr-M"
+        - 'button "Routineless GitHub Repository: alazndy/Routineless" [ref=e443] [cursor=pointer]':
+          - generic [ref=e444]: Routineless
+          - generic [ref=e445]: "GitHub Repository: alazndy/Routineless"
+        - button "momopoly kasa ve tapu managment" [ref=e446] [cursor=pointer]:
+          - generic [ref=e447]: momopoly
+          - generic [ref=e448]: kasa ve tapu managment
+        - button "RCPS-Sim sim" [ref=e449] [cursor=pointer]:
+          - generic [ref=e450]: RCPS-Sim
+          - generic [ref=e451]: sim
+        - 'button "ESP-Car-Remote GitHub Repository: alazndy/ESP-Car-Remote" [ref=e452] [cursor=pointer]':
+          - generic [ref=e453]: ESP-Car-Remote
+          - generic [ref=e454]: "GitHub Repository: alazndy/ESP-Car-Remote"
+        - button "Content film dizi motoru" [ref=e455] [cursor=pointer]:
+          - generic [ref=e456]: Content
+          - generic [ref=e457]: film dizi motoru
+        - button "Weave Advanced Schematic Designer for system schematics, cable diagrams, and connection flows with intelligent routing." [ref=e458] [cursor=pointer]:
+          - generic [ref=e459]: Weave
+          - generic [ref=e460]: Advanced Schematic Designer for system schematics, cable diagrams, and connection flows with intelligent routing.
+        - 'button "sartnnametest GitHub Repository: alazndy/sartnnametest" [ref=e461] [cursor=pointer]':
+          - generic [ref=e462]: sartnnametest
+          - generic [ref=e463]: "GitHub Repository: alazndy/sartnnametest"
+        - button "test uph test" [ref=e464] [cursor=pointer]:
+          - generic [ref=e465]: test
+          - generic [ref=e466]: uph test
+        - 'button "parf-mistan GitHub Repository: alazndy/parf-mistan" [ref=e467] [cursor=pointer]':
+          - generic [ref=e468]: parf-mistan
+          - generic [ref=e469]: "GitHub Repository: alazndy/parf-mistan"
+        - button "waveformix fg" [ref=e470] [cursor=pointer]:
+          - generic [ref=e471]: waveformix
+          - generic [ref=e472]: fg
+        - button "inksim ink simulation for akort" [ref=e473] [cursor=pointer]:
+          - generic [ref=e474]: inksim
+          - generic [ref=e475]: ink simulation for akort
+        - 'button "ADC-web GitHub Repository: alazndy/ADC-web" [ref=e476] [cursor=pointer]':
+          - generic [ref=e477]: ADC-web
+          - generic [ref=e478]: "GitHub Repository: alazndy/ADC-web"
+        - 'button "RCPS GitHub Repository: alazndy/RCPS" [ref=e479] [cursor=pointer]':
+          - generic [ref=e480]: RCPS
+          - generic [ref=e481]: "GitHub Repository: alazndy/RCPS"
+        - 'button "geotales GitHub Repository: alazndy/geotales" [ref=e482] [cursor=pointer]':
+          - generic [ref=e483]: geotales
+          - generic [ref=e484]: "GitHub Repository: alazndy/geotales"
+        - button "ADCWEB Public-facing website for ADC, showcasing services, projects, and ecosystem capabilities." [ref=e485] [cursor=pointer]:
+          - generic [ref=e486]: ADCWEB
+          - generic [ref=e487]: Public-facing website for ADC, showcasing services, projects, and ecosystem capabilities.
+        - button "GTab Custom productivity-focused homepage/new-tab extension for browsers." [ref=e488] [cursor=pointer]:
+          - generic [ref=e489]: GTab
+          - generic [ref=e490]: Custom productivity-focused homepage/new-tab extension for browsers.
+        - button "ENV-I Comprehensive Inventory Management System for the TEK Ecosystem, tracking components, stocks, and procurement." [ref=e491] [cursor=pointer]:
+          - generic [ref=e492]: ENV-I
+          - generic [ref=e493]: Comprehensive Inventory Management System for the TEK Ecosystem, tracking components, stocks, and procurement.
+        - 'button "ADC-ENV-SYS GitHub Repository: alazndy/ADC-ENV-SYS" [ref=e494] [cursor=pointer]':
+          - generic [ref=e495]: ADC-ENV-SYS
+          - generic [ref=e496]: "GitHub Repository: alazndy/ADC-ENV-SYS"
+        - button "tech-schem dd" [ref=e497] [cursor=pointer]:
+          - generic [ref=e498]: tech-schem
+          - generic [ref=e499]: dd
+        - 'button "esp32flutter GitHub Repository: alazndy/esp32flutter" [ref=e500] [cursor=pointer]':
+          - generic [ref=e501]: esp32flutter
+          - generic [ref=e502]: "GitHub Repository: alazndy/esp32flutter"
+        - 'button "bs9100tsim GitHub Repository: alazndy/bs9100tsim" [ref=e503] [cursor=pointer]':
+          - generic [ref=e504]: bs9100tsim
+          - generic [ref=e505]: "GitHub Repository: alazndy/bs9100tsim"
+        - button "UPH Unified Project Hub (T-HUB) is the central command center for the TEK Ecosystem, integrating project management, financial tracking, and engineering designs." [ref=e506] [cursor=pointer]:
+          - generic [ref=e507]: UPH
+          - generic [ref=e508]: Unified Project Hub (T-HUB) is the central command center for the TEK Ecosystem, integrating project management, financial tracking, and engineering designs.
+    - generic [ref=e509]:
+      - button "Cancel" [ref=e510] [cursor=pointer]
+      - button "Send Design" [disabled] [ref=e511]:
+        - img [ref=e512]
+        - text: Send Design
+```

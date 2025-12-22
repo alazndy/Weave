@@ -37,7 +37,7 @@ export function useUPHSync() {
     try {
       // 1. Upload File to Storage (JSON)
       const jsonString = JSON.stringify(projectData);
-      const fileName = `weave-designs/${projectId}/${Date.now()}_${designName.replace(/\s+/g, '_')}.tsproj`;
+      const fileName = `weave-designs/${projectId}/${Date.now()}_${designName.replace(/\s+/g, '_')}.weave`;
       const storageRef = ref(storage, fileName);
       
       await uploadString(storageRef, jsonString, 'raw', { contentType: 'application/json' });

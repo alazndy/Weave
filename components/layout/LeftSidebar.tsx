@@ -148,7 +148,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY, template });
       }}
-      className="group relative bg-white dark:bg-black/40 border border-zinc-200 dark:border-white/5 rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:border-paprika/40 hover:bg-zinc-50 dark:hover:bg-ink hover:shadow-lg hover:shadow-paprika/10 transition-all duration-200 active:scale-95 overflow-hidden"
+      className="group relative bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:border-paprika/40 hover:bg-white/60 dark:hover:bg-white/10 hover:shadow-lg hover:shadow-paprika/5 transition-all duration-200 active:scale-95 overflow-hidden backdrop-blur-sm"
       title={template.name}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-paprika/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -160,7 +160,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             setEditingTemplate(template);
             setIsEditorOpen(true);
           }}
-          className="bg-ink text-zinc-300 p-1.5 rounded-lg shadow-lg hover:bg-apricot hover:text-black border border-white/10"
+          className="bg-black/80 text-zinc-300 p-1.5 rounded-lg shadow-lg hover:bg-apricot hover:text-black border border-white/10 backdrop-blur-md"
           title={t('sidebar.edit')}
           aria-label={t('sidebar.edit')}
         >
@@ -169,21 +169,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (confirm("Silmek istediğinize emin misiniz?")) { // TODO: Move to t() maybe? Or Alert/Confirm modal refactor? Leaving as hardcoded TR for now or use t if easy.
-             // Actually, confirm() is native, so I can use t().
-             // But I missed defining a key for "Are you sure?".
-             // I'll stick to hardcoded TR here since "minimal translation" or add generic key?
-             // "Silmek istediğinize emin misiniz?" -> "Are you sure you want to delete?"
-             // I'll leave it or assume user wants full translation? 
-             // Let's replace with t('deleteConfirm') if I had it. I don't.
-             // I will leave it TR for now as I missed adding key. Wait, I can execute another write_file or replace_file later.
-             // But minimal: User said "minimal translation needed". 
-             // The task.md says: "Translate Weave (Vite) - *Infrastructure Ready, minimal translation needed*"
-             // I will just translate the visible UI textual elements (tooltips etc) and skip some alerts if keys missing.
+            if (confirm("Silmek istediğinize emin misiniz?")) { 
               handleDeleteTemplate(template.id);
             }
           }}
-          className="bg-ink text-zinc-300 p-1.5 rounded-lg shadow-lg hover:bg-red-600 hover:text-white border border-white/10"
+          className="bg-black/80 text-zinc-300 p-1.5 rounded-lg shadow-lg hover:bg-red-600 hover:text-white border border-white/10 backdrop-blur-md"
           title={t('sidebar.delete')}
           aria-label={t('sidebar.delete')}
         >
@@ -191,26 +181,26 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </button>
       </div>
 
-      <div className="aspect-square w-full bg-white/5 rounded-lg mb-3 p-2 flex items-center justify-center overflow-hidden border border-white/5 group-hover:border-paprika/20 transition-colors">
+      <div className="aspect-square w-full bg-white/10 dark:bg-black/20 rounded-lg mb-3 p-2 flex items-center justify-center overflow-hidden border border-black/5 dark:border-white/5 border-dashed group-hover:border-paprika/20 transition-colors">
         <img
           src={template.imageUrl}
           alt={template.name}
           className="w-full h-full object-contain filter drop-shadow-md"
         />
       </div>
-      <p className="text-xs text-center truncate text-zinc-300 font-semibold group-hover:text-white transition-colors px-1">
+      <p className="text-xs text-center truncate text-zinc-600 dark:text-zinc-300 font-semibold group-hover:text-zinc-900 dark:group-hover:text-white transition-colors px-1">
         {template.name}
       </p>
 
       {template.isBlock ? (
         <div className="absolute top-2 left-2">
-          <span className="text-[9px] font-bold text-apricot bg-black/60 px-1.5 py-0.5 rounded border border-apricot/20 flex items-center gap-1 shadow-sm">
+          <span className="text-[9px] font-bold text-apricot bg-black/60 px-1.5 py-0.5 rounded border border-apricot/20 flex items-center gap-1 shadow-sm backdrop-blur-sm">
             <Box size={8} /> {t('sidebar.block')}
           </span>
         </div>
       ) : (
         <div className="absolute top-2 left-2">
-          <span className="text-[9px] font-bold text-zinc-500 bg-black/60 px-1.5 py-0.5 rounded border border-white/5 group-hover:border-paprika/20 group-hover:text-paprika transition-colors shadow-sm">
+          <span className="text-[9px] font-bold text-zinc-500 bg-white/80 dark:bg-black/60 px-1.5 py-0.5 rounded border border-black/5 dark:border-white/5 group-hover:border-paprika/20 group-hover:text-paprika transition-colors shadow-sm backdrop-blur-sm">
             {template.ports.length} P
           </span>
         </div>
@@ -220,16 +210,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   return (
     <div
-      className={`relative h-full transition-all duration-300 ease-in-out flex flex-col shadow-2xl z-30 no-print ${
+      className={`relative h-full transition-all duration-300 ease-in-out flex flex-col z-30 no-print ${
         isOpen
-          ? "w-80 bg-white/90 dark:bg-ink/90 backdrop-blur-xl border-r border-zinc-200 dark:border-white/5"
+          ? "w-80 glass-panel border-r border-white/20"
           : "w-0 border-none"
       }`}
     >
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="absolute -right-8 top-6 bg-white/90 dark:bg-ink/90 backdrop-blur-xl border border-zinc-200 dark:border-white/5 border-l-0 text-zinc-500 dark:text-zinc-400 hover:text-paprika p-1.5 rounded-r-lg shadow-lg cursor-pointer z-50 flex items-center justify-center h-10 w-8 transition-colors"
+        className="absolute -right-8 top-6 glass-panel border-l-0 text-zinc-500 dark:text-zinc-400 hover:text-paprika p-1.5 rounded-r-lg shadow-lg cursor-pointer z-50 flex items-center justify-center h-10 w-8 transition-colors"
         title={isOpen ? t('sidebar.hideMenu') : t('sidebar.showMenu')}
       >
         {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
@@ -242,20 +232,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         }`}
       >
         {/* Header Section */}
-        <div className="p-6 border-b border-zinc-200 dark:border-white/5">
-          <h1 className="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-paprika via-apricot to-vanilla flex items-center gap-3 mb-6 tracking-tight">
-            <Cable className="w-7 h-7 text-paprika" /> {t('sidebar.appName')}
+        <div className="p-6 border-b border-zinc-200/50 dark:border-white/5">
+          <h1 className="font-bold text-2xl premium-gradient-text flex items-center gap-3 mb-6 tracking-tight">
+            <Cable className="w-7 h-7 text-paprika drop-shadow-lg" /> {t('sidebar.appName')}
           </h1>
           <div className="flex gap-2">
             <button
               onClick={handleSaveProject}
-              className="flex-1 bg-zinc-100 dark:bg-white/5 hover:bg-paprika/10 text-zinc-700 dark:text-alabaster hover:text-paprika py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-zinc-200 dark:border-white/5 transition-all active:scale-95"
+              className="flex-1 bg-white/40 dark:bg-white/5 hover:bg-paprika/10 text-zinc-700 dark:text-alabaster hover:text-paprika py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 border border-white/10 transition-all active:scale-95 shadow-sm"
             >
               <Save size={14} /> {t('sidebar.save')}
             </button>
             <button
               onClick={() => projectInputRef.current?.click()}
-              className="flex-1 bg-zinc-100 dark:bg-white/5 hover:bg-apricot/10 text-zinc-700 dark:text-alabaster hover:text-apricot py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-zinc-200 dark:border-white/5 transition-all active:scale-95"
+              className="flex-1 bg-white/40 dark:bg-white/5 hover:bg-apricot/10 text-zinc-700 dark:text-alabaster hover:text-apricot py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 border border-white/10 transition-all active:scale-95 shadow-sm"
             >
               <FolderOpen size={14} /> {t('sidebar.open')}
             </button>
@@ -263,9 +253,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               type="file"
               ref={projectInputRef}
               onChange={handleLoadProject}
-              accept=".tsproj,.json"
+              accept=".weave,.json"
               className="hidden"
-              aria-label="Proje dosyası seç" // TODO: translate aria-label if critical
+              aria-label="Proje dosyası seç"
               title="Proje dosyası seç"
             />
           </div>
@@ -273,7 +263,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             {onOpenUPHExport && (
                 <button
                 onClick={onOpenUPHExport}
-                className="w-full bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-blue-500/20 transition-all active:scale-95"
+                className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:text-blue-500 py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 border border-blue-500/20 transition-all active:scale-95 shadow-sm"
                 >
                 <Send size={14} /> {t('sidebar.sendToUPH')}
                 </button>
@@ -281,7 +271,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             {onSaveToDrive && (
                 <button
                 onClick={onSaveToDrive}
-                className="w-full bg-green-600/10 hover:bg-green-600/20 text-green-400 hover:text-green-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-green-500/20 transition-all active:scale-95"
+                className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 hover:text-green-500 py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 border border-green-500/20 transition-all active:scale-95 shadow-sm"
                 >
                 <Download size={14} /> {t('sidebar.saveToDrive')}
                 </button>
@@ -289,7 +279,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             {onExportBOM && (
                 <button
                 onClick={onExportBOM}
-                className="w-full bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 hover:text-orange-300 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 border border-orange-500/20 transition-all active:scale-95"
+                className="w-full bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 hover:text-orange-500 py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 border border-orange-500/20 transition-all active:scale-95 shadow-sm"
                 >
                 <FileUp size={14} /> {t('sidebar.exportBOM')}
                 </button>
@@ -298,7 +288,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         {/* Library Selector */}
-        <div className="p-4 bg-zinc-50 dark:bg-black/20 border-b border-zinc-200 dark:border-white/5">
+        <div className="p-4 bg-white/5 border-b border-zinc-200/50 dark:border-white/5">
           <div className="flex justify-between items-center mb-2 px-1">
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
               <Library size={12} /> {t('sidebar.library')}
@@ -337,12 +327,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   onChange={(e) =>
                     onSwitchLibrary && onSwitchLibrary(e.target.value)
                   }
-                  className="w-full appearance-none bg-white dark:bg-white/5 hover:bg-zinc-50 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/5 rounded-lg pl-3 pr-8 py-2 text-sm font-semibold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none transition-colors cursor-pointer"
+                  className="w-full appearance-none bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 rounded-lg pl-3 pr-8 py-2 text-sm font-semibold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none transition-colors cursor-pointer"
                   title={t('sidebar.selectLibrary')}
                   aria-label={t('sidebar.selectLibrary')}
                 >
                   {libraries.map((lib) => (
-                    <option key={lib.id} value={lib.id} className="bg-ink">
+                    <option key={lib.id} value={lib.id} className="bg-white dark:bg-zinc-900">
                       {lib.name}
                     </option>
                   ))}
@@ -354,7 +344,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={startRename}
-                  className="p-2 text-zinc-500 hover:text-white hover:bg-white/10 rounded-md"
+                  className="p-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-white hover:bg-white/10 rounded-md"
                   title={t('sidebar.rename')}
                 >
                   <Edit2 size={14} />
@@ -385,7 +375,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
 
         {/* Page Settings */}
-        <div className="px-5 py-4 border-b border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
+        <div className="px-5 py-4 border-b border-zinc-200/50 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
           <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
             {t('sidebar.canvasSettings')}
           </h2>
@@ -399,7 +389,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     paperSize: e.target.value as PaperSize,
                   })
                 }
-                className="w-full appearance-none bg-white dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-zinc-50 dark:hover:bg-black/40 transition-colors"
+                className="w-full appearance-none bg-white/50 dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-white/80 dark:hover:bg-black/40 transition-colors"
                 title={t('sidebar.paperSize')}
                 aria-label={t('sidebar.paperSize')}
               >
@@ -417,7 +407,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     orientation: e.target.value as Orientation,
                   })
                 }
-                className="w-full appearance-none bg-white dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-zinc-50 dark:hover:bg-black/40 transition-colors"
+                className="w-full appearance-none bg-white/50 dark:bg-ink border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-zinc-800 dark:text-alabaster focus:border-paprika/50 outline-none hover:bg-white/80 dark:hover:bg-black/40 transition-colors"
                 title={t('sidebar.orientation')}
                 aria-label={t('sidebar.orientation')}
               >
@@ -437,14 +427,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <div className="flex gap-1">
               <button
                 onClick={handleExportLibrary}
-                className="text-zinc-500 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition"
+                className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white hover:bg-white/10 p-1.5 rounded-md transition"
                 title={t('sidebar.download')}
               >
                 <Download size={14} />
               </button>
               <button
                 onClick={() => libraryInputRef.current?.click()}
-                className="text-zinc-500 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition"
+                className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white hover:bg-white/10 p-1.5 rounded-md transition"
                 title={t('sidebar.upload')}
               >
                 <FileUp size={14} />
@@ -455,12 +445,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 onChange={handleImportLibrary}
                 accept=".json"
                 className="hidden"
-                aria-label="Kütüphane dosyası seç" // TODO: translate
+                aria-label="Kütüphane dosyası seç"
                 title="Kütüphane dosyası seç"
               />
               <button
                 onClick={onOpenInventoryImport}
-                className="text-green-500 hover:text-green-400 hover:bg-green-500/10 p-1.5 rounded-md transition"
+                className="text-green-600 dark:text-green-500 hover:text-green-500 hover:bg-green-500/10 p-1.5 rounded-md transition"
                 title={t('sidebar.addFromInventory')}
               >
                 <Package size={16} />
@@ -479,7 +469,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
 
           {templates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-600 border border-dashed border-white/10 rounded-2xl bg-white/5">
+            <div className="flex flex-col items-center justify-center py-12 text-zinc-600 border border-dashed border-zinc-200 dark:border-white/10 rounded-2xl bg-white/5">
               <BookPlus size={32} className="mb-3 opacity-50" />
               <span className="text-xs font-medium">{t('sidebar.emptyLibrary')}</span>
             </div>
@@ -489,7 +479,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <div>
                 <button
                   onClick={() => toggleSection("components")}
-                  className="flex items-center gap-2 w-full text-left text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-zinc-300 transition-colors mb-3"
+                  className="flex items-center gap-2 w-full text-left text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors mb-3"
                 >
                   {openSections.components ? (
                     <ChevronDown size={12} />
@@ -513,8 +503,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 )}
               </div>
 
-              {/* Blocks Section - Styled to be visually distinct below components */}
-              <div className="pt-2 border-t border-white/5">
+              {/* Blocks Section */}
+              <div className="pt-2 border-t border-zinc-200 dark:border-white/5">
                 <button
                   onClick={() => toggleSection("blocks")}
                   className="flex items-center gap-2 w-full text-left text-[10px] font-bold text-apricot/80 uppercase tracking-widest hover:text-apricot transition-colors mb-3"
@@ -530,7 +520,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 {openSections.blocks && (
                   <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 duration-200">
                     {blocks.length === 0 ? (
-                      <div className="col-span-2 text-center py-4 border border-dashed border-white/5 rounded-lg text-xs text-zinc-600 bg-black/20">
+                      <div className="col-span-2 text-center py-4 border border-dashed border-zinc-200 dark:border-white/5 rounded-lg text-xs text-zinc-600 bg-black/5 dark:bg-black/20">
                         {t('sidebar.noBlocks')}
                         <br />
                         <span className="text-[9px] opacity-70">
@@ -547,10 +537,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           )}
         </div>
 
-        <div className="border-t border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-black/20 p-2">
+        <div className="border-t border-zinc-200 dark:border-white/5 bg-zinc-50/80 dark:bg-black/20 p-2 backdrop-blur-sm">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-white transition-colors text-xs font-bold"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-white/10 text-zinc-500 hover:text-zinc-800 dark:hover:text-white transition-colors text-xs font-bold"
           >
             <Settings size={14} /> {t('sidebar.appSettings')}
           </button>
@@ -570,29 +560,29 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               node.style.left = `${contextMenu.x}px`;
             }
           }}
-          className="fixed z-[100] bg-ink border border-white/10 rounded-lg shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150"
+          className="fixed z-[100] glass-panel rounded-xl shadow-2xl py-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-150"
         >
           <button
-            className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+            className="w-full px-4 py-2 text-left text-sm text-zinc-600 dark:text-zinc-300 hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white flex items-center gap-2"
             onClick={(e) => { e.stopPropagation(); setContextMenu(null); setEditingTemplate(contextMenu.template); setIsEditorOpen(true); }}
           >
             <Edit2 size={14} /> Düzenle
           </button>
           <button
-            className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+            className="w-full px-4 py-2 text-left text-sm text-zinc-600 dark:text-zinc-300 hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white flex items-center gap-2"
             onClick={(e) => { e.stopPropagation(); setContextMenu(null); onSingleExport?.(contextMenu.template); }}
           >
             <Download size={14} /> Tekli Export
           </button>
           <button
-            className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-green-500/10 hover:text-green-300 flex items-center gap-2"
+            className="w-full px-4 py-2 text-left text-sm text-green-600 dark:text-green-400 hover:bg-green-500/10 hover:text-green-500 flex items-center gap-2"
             onClick={(e) => { e.stopPropagation(); setContextMenu(null); onSendToEnv?.(contextMenu.template); }}
           >
             <Send size={14} /> ENV'e Gönder
           </button>
-          <div className="border-t border-white/10 my-1"></div>
+          <div className="border-t border-zinc-200 dark:border-white/10 my-1"></div>
           <button
-            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2"
+            className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-500 flex items-center gap-2"
             onClick={(e) => { e.stopPropagation(); setContextMenu(null); if (confirm("Silmek istediğinize emin misiniz?")) handleDeleteTemplate(contextMenu.template.id); }}
           >
             <Trash2 size={14} /> Sil

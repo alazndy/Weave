@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { AppSettings } from '../../types';
-import { Settings, X, Moon, Sun, Monitor, Globe, Palette, Check, Users, Plus, Trash2 } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Globe, Palette, Check, Users, Plus, Trash2 } from 'lucide-react';
+import { PremiumModal } from '../ui/PremiumModal';
 
 interface AppSettingsModalProps {
   isOpen: boolean;
@@ -39,59 +39,53 @@ export const PALETTES = [
 ];
 
 export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings }) => {
-  if (!isOpen) return null;
-
   const handlePaletteChange = (paletteId: string) => {
       onUpdateSettings({ ...settings, palette: paletteId });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] no-print" onClick={onClose}>
-      <div className="bg-ink border border-zinc-700 w-[600px] max-w-[90vw] rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden" onClick={e => e.stopPropagation()}>
-        
-        {/* Header */}
-        <div className="p-6 border-b border-zinc-700 flex justify-between items-center bg-zinc-950/30">
-          <h3 className="text-xl font-bold text-alabaster flex items-center gap-3">
-            <div className="bg-gradient-to-br from-paprika/20 to-apricot/20 p-2 rounded-lg border border-paprika/20">
-              <Settings className="text-paprika w-6 h-6" />
-            </div>
-            Uygulama Ayarları
-          </h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto custom-scrollbar space-y-8 max-h-[70vh]">
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Uygulama Ayarları"
+      icon={<Settings className="text-paprika w-5 h-5" />}
+      width="max-w-2xl"
+      footer={
+         <button onClick={onClose} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/10 dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-xl font-bold text-sm transition-colors">
+            Kapat
+         </button>
+      }
+    >
+        <div className="space-y-8">
             
             {/* Theme Section */}
             <section>
-                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Monitor size={16}/> Görünüm Modu
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Monitor size={14}/> Görünüm Modu
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, theme: 'dark' })}
-                        className={`p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${settings.theme === 'dark' ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                        className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${settings.theme === 'dark' ? 'border-paprika bg-paprika/5 ring-1 ring-paprika/50' : 'border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10'}`}
                     >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${settings.theme === 'dark' ? 'bg-paprika text-white' : 'bg-zinc-700 text-zinc-400'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${settings.theme === 'dark' ? 'bg-paprika text-white shadow-lg shadow-paprika/30' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400'}`}>
                             <Moon size={20} />
                         </div>
                         <div className="text-left">
-                            <span className={`block font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-300'}`}>Karanlık Mod</span>
+                            <span className={`block font-bold text-sm ${settings.theme === 'dark' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>Karanlık Mod</span>
                             <span className="text-xs text-zinc-500">Göz yormayan koyu arayüz</span>
                         </div>
                     </button>
 
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, theme: 'light' })}
-                        className={`p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${settings.theme === 'light' ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                        className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${settings.theme === 'light' ? 'border-paprika bg-paprika/5 ring-1 ring-paprika/50' : 'border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10'}`}
                     >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${settings.theme === 'light' ? 'bg-paprika text-white' : 'bg-zinc-700 text-zinc-400'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${settings.theme === 'light' ? 'bg-paprika text-white shadow-lg shadow-paprika/30' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400'}`}>
                             <Sun size={20} />
                         </div>
                         <div className="text-left">
-                            <span className={`block font-bold ${settings.theme === 'light' ? 'text-white' : 'text-zinc-300'}`}>Aydınlık Mod</span>
+                            <span className={`block font-bold text-sm ${settings.theme === 'light' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>Aydınlık Mod</span>
                             <span className="text-xs text-zinc-500">Yüksek kontrastlı açık arayüz</span>
                         </div>
                     </button>
@@ -100,45 +94,45 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
 
             {/* Language Section */}
             <section>
-                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Globe size={16}/> Dil Tercihi
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Globe size={14}/> Dil Tercihi
                 </h4>
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, language: 'tr' })}
-                        className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all flex items-center gap-2 ${settings.language === 'tr' ? 'border-paprika bg-paprika text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}
+                        className={`px-4 py-2.5 rounded-xl border text-sm font-bold transition-all flex items-center gap-2 ${settings.language === 'tr' ? 'border-paprika bg-paprika text-white shadow-md shadow-paprika/20' : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'}`}
                     >
                         🇹🇷 Türkçe
                     </button>
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, language: 'en' })}
-                        className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all flex items-center gap-2 ${settings.language === 'en' ? 'border-paprika bg-paprika text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}
+                        className={`px-4 py-2.5 rounded-xl border text-sm font-bold transition-all flex items-center gap-2 ${settings.language === 'en' ? 'border-paprika bg-paprika text-white shadow-md shadow-paprika/20' : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'}`}
                     >
                         🇺🇸 English
                     </button>
                 </div>
-                <p className="text-xs text-zinc-500 mt-2 italic">* Dil değişikliği arayüzün bazı kısımlarında geçerli olacaktır.</p>
+                <p className="text-[10px] text-zinc-400 mt-2 italic">* Dil değişikliği arayüzün bazı kısımlarında geçerli olacaktır.</p>
             </section>
 
             {/* Color Palette Section */}
             <section>
-                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Palette size={16}/> Renk Teması
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Palette size={14}/> Renk Teması
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PALETTES.map(p => (
                         <button
                             key={p.id}
                             onClick={() => handlePaletteChange(p.id)}
-                            className={`relative p-3 rounded-xl border-2 flex items-center gap-4 transition-all overflow-hidden group ${settings.palette === p.id ? 'border-paprika bg-white/5' : 'border-zinc-700 hover:bg-white/5'}`}
+                            className={`relative p-3 rounded-xl border flex items-center gap-4 transition-all overflow-hidden group ${settings.palette === p.id ? 'border-paprika bg-paprika/5 ring-1 ring-paprika/50' : 'border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5'}`}
                         >
-                            <div className="flex gap-0 shrink-0 shadow-lg rounded-full overflow-hidden border border-white/20">
+                            <div className="flex gap-0 shrink-0 shadow-lg rounded-full overflow-hidden border border-white/20 ring-1 ring-black/5">
                                 <div className="w-4 h-8" style={{ backgroundColor: `rgb(${p.colors.ink})` }}></div>
                                 <div className="w-4 h-8" style={{ backgroundColor: `rgb(${p.colors.paprika})` }}></div>
                                 <div className="w-4 h-8" style={{ backgroundColor: `rgb(${p.colors.apricot})` }}></div>
                             </div>
-                            <span className={`font-bold ${settings.palette === p.id ? 'text-paprika' : 'text-zinc-300'}`}>{p.name}</span>
-                            {settings.palette === p.id && <Check className="absolute right-3 text-paprika" size={20}/>}
+                            <span className={`font-bold text-sm ${settings.palette === p.id ? 'text-paprika' : 'text-zinc-600 dark:text-zinc-300'}`}>{p.name}</span>
+                            {settings.palette === p.id && <Check className="absolute right-3 text-paprika" size={18}/>}
                         </button>
                     ))}
                 </div>
@@ -146,33 +140,33 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
 
             {/* Integrations Section */}
             <section>
-                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Globe size={16}/> Entegrasyonlar
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Globe size={14}/> Entegrasyonlar
                 </h4>
                  <div className="grid grid-cols-1 gap-4">
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, enableUPHIntegration: !settings.enableUPHIntegration })}
-                        className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${settings.enableUPHIntegration ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                        className={`p-4 rounded-xl border flex items-center justify-between transition-all ${settings.enableUPHIntegration ? 'border-paprika bg-paprika/5 ring-1 ring-paprika/50' : 'border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10'}`}
                     >
                         <div className="text-left">
-                            <span className={`block font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>UPH Entegrasyonu</span>
+                            <span className={`block font-bold text-sm ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>UPH Entegrasyonu</span>
                             <span className="text-xs text-zinc-500">Projeleri doğrudan Unified Project Hub'a gönder</span>
                         </div>
-                         <div className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.enableUPHIntegration ? 'bg-paprika' : 'bg-zinc-600'}`}>
-                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${settings.enableUPHIntegration ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                         <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 ${settings.enableUPHIntegration ? 'bg-paprika' : 'bg-zinc-300 dark:bg-zinc-600'}`}>
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${settings.enableUPHIntegration ? 'translate-x-5' : 'translate-x-0'}`}></div>
                         </div>
                     </button>
 
                     <button 
                         onClick={() => onUpdateSettings({ ...settings, enableGoogleDrive: !settings.enableGoogleDrive })}
-                        className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${settings.enableGoogleDrive ? 'border-paprika bg-paprika/10' : 'border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800'}`}
+                        className={`p-4 rounded-xl border flex items-center justify-between transition-all ${settings.enableGoogleDrive ? 'border-paprika bg-paprika/5 ring-1 ring-paprika/50' : 'border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10'}`}
                     >
                         <div className="text-left">
-                            <span className={`block font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>Google Drive</span>
+                            <span className={`block font-bold text-sm ${settings.theme === 'dark' ? 'text-white' : 'text-zinc-800'}`}>Google Drive</span>
                             <span className="text-xs text-zinc-500">Projeleri Google Drive'a yedekle</span>
                         </div>
-                         <div className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.enableGoogleDrive ? 'bg-paprika' : 'bg-zinc-600'}`}>
-                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${settings.enableGoogleDrive ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                         <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 ${settings.enableGoogleDrive ? 'bg-paprika' : 'bg-zinc-300 dark:bg-zinc-600'}`}>
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${settings.enableGoogleDrive ? 'translate-x-5' : 'translate-x-0'}`}></div>
                         </div>
                     </button>
                 </div>
@@ -180,8 +174,8 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
             
             {/* Team Section (Local) */}
             <section>
-                <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Users size={16}/> Yerel Ekip (İmza/Onay)
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Users size={14}/> Yerel Ekip (İmza/Onay)
                 </h4>
                 <div className="space-y-4">
                     <div className="flex gap-2">
@@ -189,17 +183,17 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                             type="text" 
                             placeholder="Ad Soyad"
                             id="new-member-name"
-                            className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                            className="flex-1 bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:border-paprika outline-none transition-colors"
                         />
                          <input 
                             type="email" 
                             placeholder="E-posta"
                             id="new-member-email"
-                            className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                            className="flex-1 bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:border-paprika outline-none transition-colors"
                         />
                          <select 
                              id="new-member-role"
-                             className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:border-paprika outline-none"
+                             className="bg-white/50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:border-paprika outline-none transition-colors"
                          >
                              <option value="viewer">Viewer</option>
                              <option value="manager">Manager</option>
@@ -226,7 +220,7 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                                     emailInput.value = '';
                                 }
                             }}
-                            className="bg-paprika text-white p-2 rounded-lg hover:bg-paprika/80 transition-colors"
+                            className="bg-paprika text-white p-2 rounded-xl hover:bg-paprika/80 transition-colors shadow-lg shadow-paprika/20"
                         >
                             <Plus size={20} />
                         </button>
@@ -234,24 +228,24 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
 
                     <div className="space-y-2">
                         {settings.teamMembers?.map(member => (
-                            <div key={member.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                            <div key={member.id} className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 transition-colors">
                                 <div>
-                                    <div className="font-bold text-white">{member.name}</div>
-                                    <div className="text-xs text-zinc-500">{member.email} • <span className="uppercase text-paprika">{member.role}</span></div>
+                                    <div className="font-bold text-sm text-zinc-900 dark:text-white">{member.name}</div>
+                                    <div className="text-xs text-zinc-500">{member.email} • <span className="uppercase text-paprika font-bold">{member.role}</span></div>
                                 </div>
                                 <button 
                                     onClick={() => onUpdateSettings({
                                         ...settings,
                                         teamMembers: settings.teamMembers?.filter(m => m.id !== member.id)
                                     })}
-                                    className="text-zinc-500 hover:text-red-500 p-2"
+                                    className="text-zinc-400 hover:text-red-500 p-2 transition-colors"
                                 >
                                     <Trash2 size={16} />
                                 </button>
                             </div>
                         ))}
                         {(!settings.teamMembers || settings.teamMembers.length === 0) && (
-                            <div className="text-center py-4 text-zinc-500 text-sm border border-dashed border-zinc-700 rounded-lg">
+                            <div className="text-center py-6 text-zinc-400 text-sm border border-dashed border-zinc-200 dark:border-white/10 rounded-xl bg-white/20 dark:bg-white/5">
                                 Henüz ekip üyesi eklenmemiş.
                             </div>
                         )}
@@ -259,13 +253,6 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                 </div>
             </section>
         </div>
-
-        <div className="p-4 border-t border-zinc-700 bg-zinc-950/30 flex justify-end">
-             <button onClick={onClose} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg font-bold text-sm transition-colors">
-                Kapat
-             </button>
-        </div>
-      </div>
-    </div>
+    </PremiumModal>
   );
 };

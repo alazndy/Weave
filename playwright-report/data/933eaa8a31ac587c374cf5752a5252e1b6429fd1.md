@@ -1,0 +1,324 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - button "Hide Menu" [ref=e6] [cursor=pointer]:
+      - img [ref=e7]
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "T-Weave" [level=1] [ref=e11]:
+          - img [ref=e12]
+          - text: T-Weave
+        - generic [ref=e16]:
+          - button "Save" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - text: Save
+          - button "Open" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - text: Open
+        - generic [ref=e25]:
+          - button "Send to UPH" [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+            - text: Send to UPH
+          - button "Export BOM" [ref=e30] [cursor=pointer]:
+            - img [ref=e31]
+            - text: Export BOM
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - heading "Library" [level=2] [ref=e37]:
+            - img [ref=e38]
+            - text: Library
+          - button "New Library" [ref=e40] [cursor=pointer]:
+            - img [ref=e41]
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - combobox "Select Library" [ref=e45] [cursor=pointer]:
+              - option "Varsayılan Kütüphane" [selected]
+            - generic:
+              - img
+          - generic [ref=e46]:
+            - button "Rename" [ref=e47] [cursor=pointer]:
+              - img [ref=e48]
+            - button "At least one library must remain" [disabled] [ref=e50]:
+              - img [ref=e51]
+      - generic [ref=e54]:
+        - heading "Canvas Settings" [level=2] [ref=e55]
+        - generic [ref=e56]:
+          - combobox "Paper Size" [ref=e58]:
+            - option "A3"
+            - option "A4" [selected]
+            - option "A6"
+          - combobox "Orientation" [ref=e60]:
+            - option "Landscape" [selected]
+            - option "Portrait"
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading "Library Content" [level=2] [ref=e63]
+          - generic [ref=e64]:
+            - button "Download" [ref=e65] [cursor=pointer]:
+              - img [ref=e66]
+            - button "Upload" [ref=e69] [cursor=pointer]:
+              - img [ref=e70]
+            - button "Add from Inventory" [ref=e74] [cursor=pointer]:
+              - img [ref=e75]
+            - button "Add" [ref=e79] [cursor=pointer]:
+              - img [ref=e80]
+        - generic [ref=e81]:
+          - img [ref=e82]
+          - generic [ref=e84]: Library is empty
+      - button "App Settings" [ref=e86] [cursor=pointer]:
+        - img [ref=e87]
+        - text: App Settings
+      - generic [ref=e90]: T-Weave v1.0 • TEK Ecosystem
+  - generic [ref=e91]:
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - img:
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "2"
+              - generic: "2"
+              - generic: "3"
+              - generic: "3"
+              - generic: "4"
+              - generic: "4"
+              - generic: "5"
+              - generic: "5"
+              - generic: "6"
+              - generic: "6"
+              - generic: "7"
+              - generic: "7"
+              - generic: "8"
+              - generic: "8"
+              - generic: "9"
+              - generic: "9"
+              - generic: "10"
+              - generic: "10"
+              - generic: "11"
+              - generic: "11"
+              - generic: "12"
+              - generic: "12"
+              - generic: "13"
+              - generic: "13"
+              - generic: "14"
+              - generic: "14"
+              - generic: "15"
+              - generic: "15"
+              - generic: "16"
+              - generic: "16"
+              - generic: "17"
+              - generic: "17"
+              - generic: "18"
+              - generic: "18"
+              - generic: "19"
+              - generic: "19"
+              - generic: "20"
+              - generic: "20"
+              - generic: "21"
+              - generic: "21"
+              - generic: "22"
+              - generic: "22"
+              - generic: "23"
+              - generic: "23"
+              - generic: "24"
+              - generic: "24"
+              - generic: "25"
+              - generic: "25"
+              - generic: "26"
+              - generic: "26"
+              - generic: "27"
+              - generic: "27"
+              - generic: "28"
+              - generic: "28"
+              - generic: "29"
+              - generic: "29"
+              - generic: A
+              - generic: A
+              - generic: B
+              - generic: B
+              - generic: C
+              - generic: C
+              - generic: D
+              - generic: D
+              - generic: E
+              - generic: E
+              - generic: F
+              - generic: F
+              - generic: G
+              - generic: G
+              - generic: H
+              - generic: H
+              - generic: I
+              - generic: I
+              - generic: J
+              - generic: J
+              - generic: K
+              - generic: K
+              - generic: L
+              - generic: L
+              - generic: M
+              - generic: M
+              - generic: "N"
+              - generic: "N"
+              - generic: O
+              - generic: O
+              - generic: P
+              - generic: P
+              - generic: Q
+              - generic: Q
+              - generic: R
+              - generic: R
+              - generic: S
+              - generic: S
+              - generic: T
+              - generic: T
+              - generic: U
+              - generic: U
+            - generic: TS 88-20 EN ISO 128-20 • TS EN ISO 5457 UYUMLUDUR
+          - generic [ref=e96]:
+            - button "Anteti Düzenle" [ref=e97] [cursor=pointer]:
+              - img [ref=e98]
+            - generic [ref=e101]:
+              - generic [ref=e102]:
+                - generic [ref=e104]: Logo Yok
+                - generic [ref=e105]:
+                  - generic [ref=e106]:
+                    - generic [ref=e107]: Proje Başlığı
+                    - generic [ref=e108]: Yeni Sistem Şeması
+                  - generic [ref=e109]:
+                    - generic [ref=e110]: Müşteri / Firma
+                    - generic [ref=e111]: Şirket Adı
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - generic [ref=e114]: Hazırlayan
+                  - generic [ref=e115]: "-"
+                - generic [ref=e116]:
+                  - generic [ref=e117]: Onaylayan
+                  - generic [ref=e118]: "-"
+                - generic [ref=e119]:
+                  - generic [ref=e120]: Tarih
+                  - generic [ref=e121]: 22.12.2025
+                - generic [ref=e122]:
+                  - generic [ref=e123]: Revizyon
+                  - generic [ref=e124]: R.01
+              - generic [ref=e125]:
+                - generic [ref=e126]:
+                  - generic [ref=e127]: Döküman No
+                  - generic [ref=e128]: YSS-20251222-R01
+                - generic [ref=e129]:
+                  - generic [ref=e130]: Sayfa Adı
+                  - generic [ref=e131]: Sayfa 1
+                - generic [ref=e132]:
+                  - generic [ref=e133]: Ölçek
+                  - generic [ref=e134]: 1:1
+                - generic [ref=e136]: 1 / 1
+        - img
+      - generic [ref=e137]:
+        - button "Seçim (V)" [ref=e138] [cursor=pointer]:
+          - img [ref=e139]
+        - button "Taşı (M)" [ref=e141] [cursor=pointer]:
+          - img [ref=e142]
+        - button "Ölçekle / Boyutlandır (S)" [ref=e147] [cursor=pointer]:
+          - img [ref=e148]
+        - button "Kutu Seçimi (B)" [ref=e153] [cursor=pointer]:
+          - img [ref=e154]
+        - button "Manuel Rota Çizimi (R)" [ref=e160] [cursor=pointer]:
+          - img [ref=e161]
+        - button "Bölge Ekle (Z)" [ref=e165] [cursor=pointer]:
+          - img [ref=e166]
+        - button "Metin Ekle (T)" [ref=e168] [cursor=pointer]:
+          - img [ref=e169]
+        - button "Not / Yorum Ekle (C)" [ref=e171] [cursor=pointer]:
+          - img [ref=e172]
+        - button "Izgaraya Yapış" [ref=e175] [cursor=pointer]:
+          - img [ref=e176]
+      - generic [ref=e180]:
+        - button "Harita" [ref=e181] [cursor=pointer]:
+          - img [ref=e182]
+        - button "Uzaklaş" [ref=e185] [cursor=pointer]:
+          - img [ref=e186]
+        - button "Ekrana Sığdır" [ref=e189] [cursor=pointer]:
+          - img [ref=e190]
+        - button "Yakınlaş" [ref=e195] [cursor=pointer]:
+          - img [ref=e196]
+        - generic [ref=e200]: 100%
+      - generic [ref=e201]:
+        - img
+    - generic [ref=e203]:
+      - generic [ref=e204]:
+        - button "Undo" [disabled] [ref=e205]:
+          - img [ref=e206]
+        - button "Redo" [disabled] [ref=e209]:
+          - img [ref=e210]
+      - button "History" [ref=e214] [cursor=pointer]:
+        - img [ref=e215]
+      - button "AI Analysis" [ref=e220] [cursor=pointer]:
+        - img [ref=e221]
+        - text: AI Analysis
+      - button "Auto Route" [disabled] [ref=e224]:
+        - img [ref=e225]
+        - text: Auto Route
+      - button "Group" [disabled] [ref=e230]:
+        - img [ref=e231]
+      - button "Ungroup" [disabled] [ref=e238]:
+        - img [ref=e239]
+      - button "Save Block" [disabled] [ref=e242]:
+        - img [ref=e243]
+      - button "Clear Scene" [ref=e248] [cursor=pointer]:
+        - img [ref=e249]
+      - button "Save" [ref=e252] [cursor=pointer]:
+        - img [ref=e253]
+        - generic [ref=e257]: Save
+      - button "Pin Map" [ref=e259] [cursor=pointer]:
+        - img [ref=e260]
+      - button "Shortcuts" [ref=e262] [cursor=pointer]:
+        - img [ref=e263]
+      - button "cloudSync" [ref=e267] [cursor=pointer]:
+        - img [ref=e268]
+      - generic [ref=e270]:
+        - generic "Input Port" [ref=e271]
+        - generic "Output Port" [ref=e273]
+        - generic "Bidirectional" [ref=e275]
+      - button "Switch to Light Mode" [ref=e278] [cursor=pointer]:
+        - img [ref=e279]
+      - button "Switch App" [ref=e287] [cursor=pointer]:
+        - img [ref=e288]
+      - button "Switch Language" [ref=e298] [cursor=pointer]:
+        - img [ref=e299]
+    - generic [ref=e302]:
+      - button "Sayfa çubuğunu daralt" [ref=e303] [cursor=pointer]:
+        - img [ref=e304]
+      - generic [ref=e306]:
+        - button "Sayfa Izgarası" [ref=e307] [cursor=pointer]:
+          - img [ref=e308]
+        - generic "Sayfa 1" [ref=e313] [cursor=pointer]:
+          - img [ref=e314]
+          - generic [ref=e317]: Sayfa 1
+          - button "Sayfayı Çoğalt" [ref=e319]:
+            - img [ref=e320]
+        - button "Yeni Sayfa Ekle" [ref=e324] [cursor=pointer]:
+          - img [ref=e325]
+  - generic [ref=e326]:
+    - button "Paneli Gizle" [ref=e327] [cursor=pointer]:
+      - img [ref=e328]
+    - generic [ref=e330]:
+      - generic [ref=e331]:
+        - button "Özellikler" [ref=e332] [cursor=pointer]:
+          - img [ref=e333]
+          - text: Özellikler
+        - button "Katmanlar" [ref=e336] [cursor=pointer]:
+          - img [ref=e337]
+          - text: Katmanlar
+      - generic [ref=e341]:
+        - img [ref=e343]
+        - paragraph [ref=e349]: Seçim Yapılmadı
+        - paragraph [ref=e350]:
+          - text: Düzenlemek veya detayları görmek için
+          - text: sahneden bir nesne seçin.
+  - generic [ref=e352]:
+    - img [ref=e353]
+    - generic [ref=e355]: Yükleniyor...
+```

@@ -1,7 +1,6 @@
-
-import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { ProductInstance, ProductTemplate, Connection, Point, PortDefinition, ProjectMetadata, Zone, TextNode, PaperSize, AlignmentGuide, Comment } from '../types';
-import { snapToGrid, calculateSnapGuides, getInstanceRect, getPortPosition } from '../utils/canvasHelpers';
+import React, { useRef } from 'react';
+import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, AlignmentGuide, Comment, PortDefinition } from '../types';
+import { getPortPosition } from '../utils/canvasHelpers';
 import { EditPortModal } from './modals/EditPortModal';
 import { EditConnectionModal } from './modals/EditConnectionModal';
 import { EditZoneModal } from './modals/EditZoneModal';
@@ -20,6 +19,9 @@ import { CanvasToolbar, ActiveTool } from './canvas/CanvasToolbar';
 import { ToolSettingsBar, ToolSettings } from './canvas/ToolSettingsBar';
 import { CanvasControls } from './canvas/CanvasControls';
 import { useCanvasView } from '../hooks/useCanvasView';
+import { useCanvasState } from './canvas/hooks/useCanvasState';
+import { useCanvasInteraction } from './canvas/hooks/useCanvasInteraction';
+import { snapToGrid } from '../utils/canvasHelpers';
 
 interface CanvasProps {
   instances: ProductInstance[];
@@ -63,6 +65,8 @@ const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
   'A3': { w: 420, h: 297 },
   'A4': { w: 297, h: 210 },
   'A6': { w: 148, h: 105 },
+  'Letter': { w: 279, h: 216 },
+  'Legal': { w: 356, h: 216 },
 };
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -78,381 +82,78 @@ export const Canvas: React.FC<CanvasProps> = ({
   onAddInstance
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Tools & UI State
-  // activeTool state lifted to parent
-  const [isGridSnapEnabled, setIsGridSnapEnabled] = useState(true);
-  const [isMinimapVisible, setIsMinimapVisible] = useState(true);
-  
-  // Tool Settings State
-  const [toolSettings, setToolSettings] = useState<ToolSettings>({
-      route: { color: '#6366f1', lineStyle: 'solid', strokeWidth: 'normal', cornerRadius: 10 },
-      text: { fontSize: 16, color: '#ffffff' },
-      zone: { color: '#10b981', labelPrefix: 'BÖLGE' },
-      scale: { maintainAspectRatio: true }
-  });
-
-  const handleUpdateToolSettings = (category: keyof ToolSettings, key: string, value: any) => {
-      setToolSettings(prev => ({
-          ...prev,
-          [category]: {
-              ...prev[category],
-              [key]: value
-          }
-      }));
-  };
-  
-  // Interaction State
-  const [connectingStart, setConnectingStart] = useState<{ instanceId: string; portId: string } | null>(null);
-  const [manualRoutePoints, setManualRoutePoints] = useState<Point[]>([]);
-  const [hoveredConnectionId, setHoveredConnectionId] = useState<string | null>(null);
-  
-  // Dragging & Panning State
-  const [isMiddlePanning, setIsMiddlePanning] = useState(false);
-  const [draggedInstance, setDraggedInstance] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
-  
-  // Tool Specific States
-  const [selectionBox, setSelectionBox] = useState<{ startX: number, startY: number, currentX: number, currentY: number } | null>(null);
-  const [drawingZone, setDrawingZone] = useState<{ startX: number, startY: number, currentX: number, currentY: number } | null>(null);
-
-  // Transformation States
-  const [rotatingInstance, setRotatingInstance] = useState<string | null>(null);
-  const [resizingTarget, setResizingTarget] = useState<{ id: string, type: 'instance' | 'zone', startW: number, startH: number, startX: number, startY: number } | null>(null);
-
-  // Edit Modals
-  const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
-  const [editingPortData, setEditingPortData] = useState<{ port: PortDefinition, templateId: string } | null>(null);
-  const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
-  const [editingTextId, setEditingTextId] = useState<string | null>(null);
-  
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, instanceId: string } | null>(null);
-
-  // Canvas View Hook
+  const canvasState = useCanvasState();
   const { scale, pan, setPan, handleWheel, handleFitScreen, handleZoomIn, handleZoomOut } = useCanvasView(window.innerWidth, window.innerHeight);
 
-    // Coordinate Helpers
-  const getMouseCoords = useCallback((e: React.MouseEvent) => {
-    if (!containerRef.current) return { x: 0, y: 0 };
-    const rect = containerRef.current.getBoundingClientRect();
-    // Since containerRef is the transformed element, its rect already accounts for pan/zoom on screen.
-    // The relative position inside the element (clientX - rect.left) is the SCALED distance.
-    // We just need to divide by scale to get the local coordinate.
-    // No need to subtract pan again.
-    return {
-      x: (e.clientX - rect.left) / scale,
-      y: (e.clientY - rect.top) / scale
-    };
-  }, [scale]);
+  const {
+      handleMouseDown,
+      handleMouseMove,
+      handleMouseUp,
+      handleInstanceMouseDown,
+      handleResizeStart,
+      handleInstanceContextMenu,
+      getMouseCoords
+  } = useCanvasInteraction({
+      instances, connections, templates, zones, textNodes, comments, projectMetadata, selectedIds,
+      onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange, onSelectIds, onUndoCheckpoint, onSetActiveTool,
+      canvasState, activeTool, scale, setPan, containerRef
+  });
+
+  const {
+      isGridSnapEnabled, setIsGridSnapEnabled,
+      isMinimapVisible, setIsMinimapVisible,
+      toolSettings, handleUpdateToolSettings,
+      connectingStart, setConnectingStart,
+      manualRoutePoints, setManualRoutePoints,
+      hoveredConnectionId, setHoveredConnectionId,
+      isMiddlePanning,
+      draggedInstance, setDraggedInstance,
+      setDragOffset,
+      alignmentGuides,
+      selectionBox,
+      drawingZone,
+      rotatingInstance, setRotatingInstance,
+      editingConnectionId, setEditingConnectionId,
+      editingPortData, setEditingPortData,
+      editingZoneId, setEditingZoneId,
+      editingTextId, setEditingTextId,
+      contextMenu, setContextMenu
+  } = canvasState;
 
   // Identify source port for validation highlighting
-  const startPort = useMemo(() => {
+  const startPort = React.useMemo(() => {
       if (!connectingStart) return null;
       const inst = instances.find(i => i.id === connectingStart.instanceId);
       const temp = templates.find(t => t.id === inst?.templateId);
       return temp?.ports.find(p => p.id === connectingStart.portId) || null;
   }, [connectingStart, instances, templates]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Middle Mouse Button PAN Logic
-    if (e.button === 1) {
-        e.preventDefault();
-        setIsMiddlePanning(true);
-        return;
-    }
+  // Helper for current mouse position (for drawing lines)
+  const [currentMousePos, setCurrentMousePos] = React.useState<Point | null>(null);
 
-    // Context Menu Check
-    if (e.button === 2) {
-        if (activeTool === 'manual-route') {
-            setConnectingStart(null);
-            setManualRoutePoints([]);
-            return;
-        }
-        return; 
-    }
-
-    const { x, y } = getMouseCoords(e);
-
-    switch (activeTool) {
-        case 'manual-route':
-             if (connectingStart) {
-                 // Add waypoint
-                 let pX = x;
-                 let pY = y;
-                 if (isGridSnapEnabled) {
-                     pX = snapToGrid(pX);
-                     pY = snapToGrid(pY);
-                 }
-                 setManualRoutePoints(prev => [...prev, { x: pX, y: pY }]);
-             }
-             break;
-
-        case 'select-box':
-            setSelectionBox({ startX: x, startY: y, currentX: x, currentY: y });
-            break;
-
-        case 'zone':
-            setDrawingZone({ startX: x, startY: y, currentX: x, currentY: y });
-            break;
-
-        case 'text':
-            if (onTextNodesChange) {
-                onUndoCheckpoint();
-                const newText: TextNode = {
-                    id: crypto.randomUUID(),
-                    content: 'Metin',
-                    x, y, 
-                    fontSize: toolSettings.text.fontSize, 
-                    color: toolSettings.text.color
-                };
-                onTextNodesChange([...textNodes, newText]);
-                onSetActiveTool('cursor');
-            }
-            break;
-
-        case 'comment':
-            if (onCommentsChange) {
-                onUndoCheckpoint();
-                const newComment: Comment = {
-                    id: crypto.randomUUID(),
-                    x, y, content: '', color: '#facc15', timestamp: new Date().toLocaleTimeString()
-                };
-                onCommentsChange([...comments, newComment]);
-                onSetActiveTool('cursor');
-            }
-            break;
-
-        case 'cursor':
-        case 'scale':
-        case 'move':
-            if (e.target === e.currentTarget && onSelectIds) {
-                onSelectIds([], false);
-            }
-            break;
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-     if (isMiddlePanning) {
-         setPan(prev => ({
-             x: prev.x + e.movementX,
-             y: prev.y + e.movementY
-         }));
-         return;
-     }
-
-     const { x, y } = getMouseCoords(e);
-
-     // --- RESIZING LOGIC ---
-     if (resizingTarget) {
-         e.preventDefault();
-         const dx = x - resizingTarget.startX;
-         const dy = y - resizingTarget.startY;
-
-         if (resizingTarget.type === 'instance') {
-             // Use maintainAspectRatio setting for 'scale' tool if active, or default for drag resize
-             const lockAspect = activeTool === 'scale' ? toolSettings.scale.maintainAspectRatio : true;
-             
-             const newW = Math.max(50, resizingTarget.startW + dx);
-             let newH = resizingTarget.startH + dy;
-             
-             if (lockAspect) {
-                 const aspectRatio = resizingTarget.startW / resizingTarget.startH;
-                 newH = newW / aspectRatio;
-             }
-             newH = Math.max(50, newH);
-
-             onInstancesChange(instances.map(i => i.id === resizingTarget.id ? { ...i, width: newW, height: newH } : i));
-         } else if (resizingTarget.type === 'zone' && onZonesChange) {
-             const newW = Math.max(50, resizingTarget.startW + dx);
-             const newH = Math.max(50, resizingTarget.startH + dy);
-             onZonesChange(zones.map(z => z.id === resizingTarget.id ? { ...z, width: newW, height: newH } : z));
-         }
-         return;
-     }
-
-     // --- ROTATING LOGIC ---
-     if (rotatingInstance) {
-         const inst = instances.find(i => i.id === rotatingInstance);
-         if (inst) {
-             const cx = inst.x + (inst.width || 100)/2;
-             const cy = inst.y + (inst.height || 100)/2;
-             const angle = Math.atan2(y - cy, x - cx) * (180 / Math.PI);
-             const snappedAngle = Math.round(angle / 15) * 15;
-             onInstancesChange(instances.map(i => i.id === rotatingInstance ? { ...i, rotation: snappedAngle + 90 } : i));
-         }
-         return;
-     }
-
-     // --- DRAGGING LOGIC ---
-     if (draggedInstance) {
-         let newX = x - dragOffset.x;
-         let newY = y - dragOffset.y;
-
-         if (isGridSnapEnabled) {
-             newX = snapToGrid(newX);
-             newY = snapToGrid(newY);
-         } else {
-             const inst = instances.find(i => i.id === draggedInstance);
-             if (inst) {
-                const t = templates.find(temp => temp.id === inst.templateId);
-                const w = inst.width || t?.width || 100;
-                const h = inst.height || t?.height || 100;
-                const snapResult = calculateSnapGuides(draggedInstance, newX, newY, w, h, instances, templates);
-                newX = snapResult.x;
-                newY = snapResult.y;
-                setAlignmentGuides(snapResult.guides);
-             }
-         }
-
-         const moveItem = (id: string, dx: number, dy: number) => {
-             const isSelected = selectedIds.has(id);
-             const itemsToMove = isSelected ? selectedIds : new Set([id]);
-             
-             onInstancesChange(instances.map(i => itemsToMove.has(i.id) ? { ...i, x: i.x + dx, y: i.y + dy } : i));
-             if (onZonesChange) onZonesChange(zones.map(z => itemsToMove.has(z.id) ? { ...z, x: z.x + dx, y: z.y + dy } : z));
-             if (onTextNodesChange) onTextNodesChange(textNodes.map(t => itemsToMove.has(t.id) ? { ...t, x: t.x + dx, y: t.y + dy } : t));
-             if (onCommentsChange) onCommentsChange(comments.map(c => itemsToMove.has(c.id) ? { ...c, x: c.x + dx, y: c.y + dy } : c));
-         };
-
-         const currentObj = 
-            instances.find(i => i.id === draggedInstance) || 
-            zones.find(z => z.id === draggedInstance) ||
-            textNodes.find(t => t.id === draggedInstance) ||
-            comments.find(c => c.id === draggedInstance);
-            
-         if (currentObj) {
-             const dx = newX - currentObj.x;
-             const dy = newY - currentObj.y;
-             if (dx !== 0 || dy !== 0) {
-                 moveItem(draggedInstance, dx, dy);
-             }
-         }
-     }
-
-     // --- SELECTION BOX ---
-     if (selectionBox) {
-         setSelectionBox({ ...selectionBox, currentX: x, currentY: y });
-     }
-
-     // --- ZONE DRAWING ---
-     if (drawingZone) {
-         setDrawingZone({ ...drawingZone, currentX: x, currentY: y });
-     }
-  };
-
-  const handleMouseUp = () => {
-      setIsMiddlePanning(false);
-      setDraggedInstance(null);
-      setRotatingInstance(null);
-      setResizingTarget(null); // Clear resize
-      setAlignmentGuides([]);
-      
-      if (selectionBox && onSelectIds) {
-          const x1 = Math.min(selectionBox.startX, selectionBox.currentX);
-          const y1 = Math.min(selectionBox.startY, selectionBox.currentY);
-          const x2 = Math.max(selectionBox.startX, selectionBox.currentX);
-          const y2 = Math.max(selectionBox.startY, selectionBox.currentY);
-          
-          const newSelectedIds: string[] = [];
-          instances.forEach(i => {
-              const t = templates.find(temp => temp.id === i.templateId);
-              const w = i.width || t?.width || 0;
-              const h = i.height || t?.height || 0;
-              if (i.x >= x1 && i.x + w <= x2 && i.y >= y1 && i.y + h <= y2) {
-                  newSelectedIds.push(i.id);
-              }
-          });
-          zones.forEach(z => {
-              if (z.x >= x1 && z.x + z.width <= x2 && z.y >= y1 && z.y + z.height <= y2) {
-                  newSelectedIds.push(z.id);
-              }
-          });
-          
-          onSelectIds(newSelectedIds, false);
-          setSelectionBox(null);
-          onSetActiveTool('cursor');
-      }
-
-      if (drawingZone && onZonesChange) {
-          const x = Math.min(drawingZone.startX, drawingZone.currentX);
-          const y = Math.min(drawingZone.startY, drawingZone.currentY);
-          const width = Math.abs(drawingZone.currentX - drawingZone.startX);
-          const height = Math.abs(drawingZone.currentY - drawingZone.startY);
-
-          if (width > 10 && height > 10) {
-              onUndoCheckpoint();
-              const newZone: Zone = {
-                  id: crypto.randomUUID(),
-                  label: toolSettings.zone.labelPrefix,
-                  x, y, width, height,
-                  color: toolSettings.zone.color
-              };
-              onZonesChange([...zones, newZone]);
-          }
-          setDrawingZone(null);
-      }
-  };
-
-  const handleInstanceMouseDown = (e: React.MouseEvent, id: string) => {
-      if (activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route') return;
-      if (e.button === 1) return; // Ignore middle click
-
-      e.stopPropagation();
-      const isMulti = e.ctrlKey || e.shiftKey;
-      
-      if (onSelectIds) {
-          if (isMulti) {
-              onSelectIds([id], true);
-          } else {
-             if (!selectedIds.has(id)) {
-                 onSelectIds([id], false);
-             }
-          }
-      }
-      
-      if (activeTool === 'cursor' || activeTool === 'move' || activeTool === 'scale') {
+  const handleMouseMoveWrapper = (e: React.MouseEvent) => {
+      handleMouseMove(e);
+      if (connectingStart) {
           const { x, y } = getMouseCoords(e);
-          const inst = instances.find(i => i.id === id);
-          if (inst) {
-              setDragOffset({ x: x - inst.x, y: y - inst.y });
-              setDraggedInstance(id);
-              onUndoCheckpoint();
-          }
-      }
-  };
+          let pX = x;
+          let pY = y;
+          
+          const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
+          const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
+          const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
+          const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
+          
+          pX = Math.max(0, Math.min(pX, finalW));
+          pY = Math.max(0, Math.min(pY, finalH));
 
-  const handleResizeStart = (e: React.MouseEvent, id: string, type: 'instance' | 'zone') => {
-      if (e.button === 1) return;
-      e.stopPropagation();
-      onUndoCheckpoint();
-      const { x, y } = getMouseCoords(e);
-      
-      let startW = 0, startH = 0;
-      if (type === 'instance') {
-          const inst = instances.find(i => i.id === id);
-          const t = templates.find(temp => temp.id === inst?.templateId);
-          if (inst && t) {
-              startW = inst.width || t.width;
-              startH = inst.height || t.height;
+          if (isGridSnapEnabled) {
+              pX = snapToGrid(pX);
+              pY = snapToGrid(pY);
           }
+          setCurrentMousePos({ x: pX, y: pY });
       } else {
-          const z = zones.find(zn => zn.id === id);
-          if (z) {
-              startW = z.width;
-              startH = z.height;
-          }
+          setCurrentMousePos(null);
       }
-      
-      setResizingTarget({ id, type, startX: x, startY: y, startW, startH });
-  };
-
-  const handleInstanceContextMenu = (e: React.MouseEvent, id: string) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onSelectIds) onSelectIds([id], false);
-      setContextMenu({ x: e.clientX, y: e.clientY, instanceId: id });
   };
 
   const handlePortClick = (e: React.MouseEvent, instId: string, portId: string) => {
@@ -514,43 +215,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           }
       }
   };
-  
-  const [currentMousePos, setCurrentMousePos] = useState<Point | null>(null);
-
-  const handleMouseMoveWrapper = (e: React.MouseEvent) => {
-      handleMouseMove(e);
-      if (connectingStart) {
-          const { x, y } = getMouseCoords(e);
-          let pX = x;
-          let pY = y;
-          
-          // Clamp to canvas bounds
-          const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
-          const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
-          const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
-          const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
-          
-          pX = Math.max(0, Math.min(pX, finalW));
-          pY = Math.max(0, Math.min(pY, finalH));
-
-          if (isGridSnapEnabled) {
-              pX = snapToGrid(pX);
-              pY = snapToGrid(pY);
-          }
-          setCurrentMousePos({ x: pX, y: pY });
-      } else {
-          setCurrentMousePos(null);
-      }
-  };
-
-  const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
-  const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
-  const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
-  const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
-
-  const cursorClass = isMiddlePanning ? 'cursor-grabbing' :
-                      activeTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 
-                      activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route' ? 'cursor-crosshair' : 'cursor-default';
 
   const handleDrop = (e: React.DragEvent) => {
       e.preventDefault();
@@ -566,6 +230,15 @@ export const Canvas: React.FC<CanvasProps> = ({
           onAddInstance(templateId, { x: dropX, y: dropY });
       }
   };
+
+  const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
+  const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
+  const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
+  const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
+
+  const cursorClass = isMiddlePanning ? 'cursor-grabbing' :
+                      activeTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 
+                      activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route' ? 'cursor-crosshair' : 'cursor-default';
 
   return (
     <div 

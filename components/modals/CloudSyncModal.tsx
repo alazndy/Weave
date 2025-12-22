@@ -1,8 +1,9 @@
 // Cloud Sync Modal for Weave
 import React, { useState, useEffect } from 'react';
-import { X, Cloud, CloudOff, RefreshCw, Upload, Download, Wifi, WifiOff, Settings, Trash2 } from 'lucide-react';
+import { X, Cloud, CloudOff, RefreshCw, Upload, Download, Wifi, WifiOff, Settings, Trash2, CheckCircle2, AlertTriangle, CloudRain, Zap } from 'lucide-react';
 import type { CloudProject, SyncSettings } from '../../types/cloud-sync';
 import * as cloudSyncService from '../../services/cloudSyncService';
+import { PremiumModal } from '../ui/PremiumModal';
 
 interface CloudSyncModalProps {
   isOpen: boolean;
@@ -73,230 +74,217 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
 
   const getStatusIcon = () => {
     switch (syncState.status) {
-      case 'synced':
-        return <Cloud className="h-5 w-5 text-green-500" />;
-      case 'syncing':
-        return <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" />;
-      case 'pending':
-        return <Cloud className="h-5 w-5 text-yellow-500" />;
-      case 'offline':
-        return <CloudOff className="h-5 w-5 text-gray-400" />;
-      case 'error':
-        return <CloudOff className="h-5 w-5 text-red-500" />;
-      default:
-        return <Cloud className="h-5 w-5 text-gray-400" />;
+      case 'synced': return <CheckCircle2 className="h-5 w-5 text-emerald-400" />;
+      case 'syncing': return <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />;
+      case 'pending': return <Cloud className="h-5 w-5 text-amber-400" />;
+      case 'offline': return <CloudOff className="h-5 w-5 text-zinc-500" />;
+      case 'error': return <AlertTriangle className="h-5 w-5 text-red-400" />;
+      default: return <Cloud className="h-5 w-5 text-zinc-500" />;
     }
   };
 
   const getStatusText = () => {
     switch (syncState.status) {
-      case 'synced':
-        return syncState.lastSyncedAt ? `Son senkronizasyon: ${formatDate(syncState.lastSyncedAt)}` : 'Senkronize';
-      case 'syncing':
-        return 'Senkronize ediliyor...';
-      case 'pending':
-        return `${syncState.pendingChanges} bekleyen değişiklik`;
-      case 'offline':
-        return settings.offlineMode ? 'Çevrimdışı mod' : 'Bağlantı yok';
-      case 'error':
-        return syncState.error || 'Senkronizasyon hatası';
-      default:
-        return 'Bilinmeyen durum';
+      case 'synced': return syncState.lastSyncedAt ? `Son senkronizasyon: ${formatDate(syncState.lastSyncedAt)}` : 'Senkronize';
+      case 'syncing': return 'Senkronize ediliyor...';
+      case 'pending': return `${syncState.pendingChanges} bekleyen değişiklik`;
+      case 'offline': return settings.offlineMode ? 'Çevrimdışı mod' : 'Bağlantı yok';
+      case 'error': return syncState.error || 'Senkronizasyon hatası';
+      default: return 'Bilinmeyen durum';
     }
   };
 
-  if (!isOpen) return null;
+  // Custom Header Content for PremiumModal
+  const headerContent = (
+      <div className="flex items-center gap-3">
+          {isOnline ? (
+              <span className="flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full border border-emerald-400/20">
+                  <Wifi className="h-3 w-3 mr-1" /> Çevrimiçi
+              </span>
+          ) : (
+              <span className="flex items-center text-xs font-bold text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded-full border border-zinc-700">
+                  <WifiOff className="h-3 w-3 mr-1" /> Çevrimdışı
+              </span>
+          )}
+      </div>
+  );
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <Cloud className="h-6 w-6 text-blue-500" />
-            <h2 className="text-xl font-semibold dark:text-white">Bulut Senkronizasyonu</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            {isOnline ? (
-              <span className="flex items-center text-sm text-green-600">
-                <Wifi className="h-4 w-4 mr-1" />
-                Çevrimiçi
-              </span>
-            ) : (
-              <span className="flex items-center text-sm text-gray-400">
-                <WifiOff className="h-4 w-4 mr-1" />
-                Çevrimdışı
-              </span>
-            )}
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-              <X className="h-5 w-5 dark:text-gray-300" />
-            </button>
-          </div>
-        </div>
-
-        {/* Status Bar */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            {getStatusIcon()}
-            <span className="text-sm dark:text-gray-300">{getStatusText()}</span>
-          </div>
-          <button
-            onClick={handleForceSync}
-            disabled={!isOnline || isSyncing}
-            className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center"
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Senkronize Ediliyor...' : 'Şimdi Senkronize Et'}
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b dark:border-gray-700">
-          <button
-            onClick={() => setActiveTab('projects')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === 'projects'
-                ? 'border-b-2 border-blue-500 text-blue-500'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            }`}
-          >
-            <Cloud className="h-4 w-4 inline mr-2" />
-            Bulut Projeleri
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === 'settings'
-                ? 'border-b-2 border-blue-500 text-blue-500'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            }`}
-          >
-            <Settings className="h-4 w-4 inline mr-2" />
-            Ayarlar
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'projects' ? (
-            <div className="space-y-3">
-              {cloudProjects.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Cloud className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                  <p>Bulut projesi bulunamadı</p>
-                  <p className="text-sm mt-1">Projelerinizi yükleyerek başlayın</p>
-                </div>
-              ) : (
-                cloudProjects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium dark:text-white">{project.name}</h4>
-                      <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        <span>v{project.version}</span>
-                        <span>{formatSize(project.sizeBytes)}</span>
-                        <span>Son güncelleme: {formatDate(project.lastModifiedAt)}</span>
-                      </div>
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Bulut Senkronizasyonu"
+      icon={<Cloud className="text-blue-400 w-5 h-5" />}
+      headerAction={headerContent}
+      width="max-w-3xl"
+    >
+        <div className="flex flex-col h-[500px]">
+            {/* Status Bar */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-900/10 to-transparent rounded-xl border border-blue-500/10 mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-black/20 rounded-full border border-white/5">
+                        {getStatusIcon()}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onDownload(project.id)}
-                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                        title="İndir"
-                      >
-                        <Download className="h-5 w-5" />
-                      </button>
+                    <span className="text-sm font-medium text-zinc-300">{getStatusText()}</span>
+                </div>
+                <button
+                    onClick={handleForceSync}
+                    disabled={!isOnline || isSyncing}
+                    className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+                >
+                    <RefreshCw className={`h-3 w-3 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                    {isSyncing ? 'Senkronize Ediliyor...' : 'Şimdi Senkronize Et'}
+                </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-4 mb-6 border-b border-white/5 pb-1">
+                <button
+                    onClick={() => setActiveTab('projects')}
+                    className={`pb-3 text-sm font-bold transition-all relative ${
+                        activeTab === 'projects'
+                            ? 'text-blue-400'
+                            : 'text-zinc-500 hover:text-white'
+                    }`}
+                >
+                    <div className="flex items-center gap-2">
+                         <Cloud className="h-4 w-4" /> Bulut Projeleri
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Auto Sync */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium dark:text-white">Otomatik Senkronizasyon</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Değişiklikler otomatik olarak senkronize edilsin
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.autoSync}
-                    onChange={(e) => handleUpdateSettings({ autoSync: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {/* Offline Mode */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium dark:text-white">Çevrimdışı Mod</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Senkronizasyonu duraklat ve çevrimdışı çalış
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.offlineMode}
-                    onChange={(e) => handleUpdateSettings({ offlineMode: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {/* Sync Interval */}
-              <div>
-                <h4 className="font-medium dark:text-white mb-2">Senkronizasyon Aralığı</h4>
-                <select
-                  value={settings.syncIntervalMs}
-                  onChange={(e) => handleUpdateSettings({ syncIntervalMs: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    {activeTab === 'projects' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>}
+                </button>
+                <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`pb-3 text-sm font-bold transition-all relative ${
+                        activeTab === 'settings'
+                            ? 'text-blue-400'
+                            : 'text-zinc-500 hover:text-white'
+                    }`}
                 >
-                  <option value={15000}>15 saniye</option>
-                  <option value={30000}>30 saniye</option>
-                  <option value={60000}>1 dakika</option>
-                  <option value={300000}>5 dakika</option>
-                </select>
-              </div>
-
-              {/* Conflict Resolution */}
-              <div>
-                <h4 className="font-medium dark:text-white mb-2">Çakışma Çözümü</h4>
-                <select
-                  value={settings.conflictResolution}
-                  onChange={(e) => handleUpdateSettings({ conflictResolution: e.target.value as SyncSettings['conflictResolution'] })}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="ask">Her zaman sor</option>
-                  <option value="prefer_local">Yerel değişiklikleri tercih et</option>
-                  <option value="prefer_remote">Uzak değişiklikleri tercih et</option>
-                </select>
-              </div>
+                    <div className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" /> Ayarlar
+                    </div>
+                    {activeTab === 'settings' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>}
+                </button>
             </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end p-4 border-t dark:border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-          >
-            Kapat
-          </button>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                {activeTab === 'projects' ? (
+                    <div className="space-y-3">
+                        {cloudProjects.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-zinc-500 border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.02]">
+                                <div className="p-4 bg-white/5 rounded-full mb-4">
+                                     <CloudRain className="h-8 w-8 opacity-50" />
+                                </div>
+                                <p className="font-medium">Bulut projesi bulunamadı</p>
+                                <p className="text-xs mt-1 text-zinc-600">Projelerinizi güvenle yedeklemek için senkronizasyonu başlatın.</p>
+                            </div>
+                        ) : (
+                            cloudProjects.map((project) => (
+                                <div
+                                    key={project.id}
+                                    className="group flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 hover:border-white/10 transition-all cursor-default"
+                                >
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-zinc-200 group-hover:text-white transition-colors flex items-center gap-2">
+                                            {project.name}
+                                            {project.id === projectId && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/20">Aktif</span>}
+                                        </h4>
+                                        <div className="flex gap-4 text-xs text-zinc-500 mt-1.5 font-medium">
+                                            <span className="flex items-center gap-1"><Zap size={10}/> v{project.version}</span>
+                                            <span>{formatSize(project.sizeBytes)}</span>
+                                            <span>{formatDate(project.lastModifiedAt)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => onDownload(project.id)}
+                                            className="p-2 hover:bg-blue-500 hover:text-white text-zinc-400 rounded-lg transition-colors border border-transparent hover:border-blue-400/30"
+                                            title="İndir"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            className="p-2 hover:bg-red-500 hover:text-white text-zinc-400 rounded-lg transition-colors border border-transparent hover:border-red-400/30"
+                                            title="Sil"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="p-5 bg-white/5 border border-white/5 rounded-2xl">
+                             <h3 className="text-sm font-bold text-white mb-4">Senkronizasyon Tercihleri</h3>
+                             
+                             <div className="space-y-4">
+                                <label className="flex items-center justify-between p-3 bg-black/20 rounded-xl cursor-pointer hover:bg-black/30 transition-colors group">
+                                    <div>
+                                        <span className="block text-sm font-bold text-zinc-300 group-hover:text-white">Otomatik Senkronizasyon</span>
+                                        <span className="text-xs text-zinc-500">Değişiklikleri anında buluta gönder</span>
+                                    </div>
+                                    <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 ${settings.autoSync ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
+                                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${settings.autoSync ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.autoSync}
+                                        onChange={(e) => handleUpdateSettings({ autoSync: e.target.checked })}
+                                        className="hidden"
+                                    />
+                                </label>
+
+                                <label className="flex items-center justify-between p-3 bg-black/20 rounded-xl cursor-pointer hover:bg-black/30 transition-colors group">
+                                    <div>
+                                        <span className="block text-sm font-bold text-zinc-300 group-hover:text-white">Çevrimdışı Mod</span>
+                                        <span className="text-xs text-zinc-500">İnternet bağlantısını yoksay ve yerel çalış</span>
+                                    </div>
+                                    <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 ${settings.offlineMode ? 'bg-amber-500' : 'bg-zinc-700'}`}>
+                                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${settings.offlineMode ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.offlineMode}
+                                        onChange={(e) => handleUpdateSettings({ offlineMode: e.target.checked })}
+                                        className="hidden"
+                                    />
+                                </label>
+
+                                <label className="flex items-center justify-between p-3 bg-black/20 rounded-xl cursor-pointer hover:bg-black/30 transition-colors group">
+                                    <div>
+                                        <span className="block text-sm font-bold text-zinc-300 group-hover:text-white">Çakışma Çözümü</span>
+                                        <span className="text-xs text-zinc-500">Versiyon çakışmalarında öncelik</span>
+                                    </div>
+                                    <select
+                                        value={settings.conflictResolution}
+                                        onChange={(e) => handleUpdateSettings({ conflictResolution: e.target.value as any })}
+                                        className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500 font-bold"
+                                    >
+                                        <option value="manual">Bana Sor</option>
+                                        <option value="client-wins">Yerel Kazansın</option>
+                                        <option value="server-wins">Bulut Kazansın</option>
+                                    </select>
+                                </label>
+                             </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                            <h4 className="text-xs font-bold text-blue-300 mb-2 flex items-center gap-2"><Upload className="h-3 w-3"/> Depolama Durumu</h4>
+                            <div className="w-full bg-black/40 rounded-full h-2 mb-2 overflow-hidden">
+                                <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full" style={{ width: '15%' }}></div>
+                            </div>
+                            <div className="flex justify-between text-[10px] font-medium text-zinc-500">
+                                <span>Kullanılan: 156 MB</span>
+                                <span>Toplam: 1 GB</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
+    </PremiumModal>
   );
 };
-
-export default CloudSyncModal;

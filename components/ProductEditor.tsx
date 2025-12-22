@@ -1,12 +1,12 @@
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { PortDefinition, ProductTemplate, ConnectorType, CONNECTOR_LABELS, PortFlowType, ExternalPart } from '../types';
-import { X, Edit2, Crosshair, Plus, Zap, Trash2, ArrowRight, ArrowLeft, ArrowRightLeft, Cable, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Undo2 } from 'lucide-react';
+import { X, Edit2, Crosshair, Plus, Zap, Trash2, ArrowRight, ArrowLeft, ArrowRightLeft, Cable, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Undo2, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { extractPartListFromImage } from '../services/geminiService';
 import { EditorSidebar } from './editor/EditorSidebar';
 
-// Set worker for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://aistudiocdn.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+// Set worker for PDF.js - Ensure this URL is valid or hosted locally if possible, but for now using CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
 interface ProductEditorProps {
   initialTemplate?: ProductTemplate | null; 
@@ -671,8 +671,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   };
 
   const modalSizeClass = mode === 'upload' 
-    ? 'w-full max-w-2xl h-auto' 
-    : 'w-auto h-auto max-w-[98vw] max-h-[98vh] min-w-[1000px]'; 
+    ? 'w-full max-w-4xl h-[600px]' 
+    : 'w-auto h-auto max-w-[98vw] max-h-[98vh] min-w-[1200px] h-[90vh]'; 
 
   const getTypeBadge = (type: PortFlowType) => {
       switch(type) {
@@ -683,17 +683,28 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className={`bg-zinc-900 border border-zinc-700 rounded-xl flex flex-col shadow-2xl overflow-hidden relative transition-all duration-300 ${modalSizeClass}`}>
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6 backdrop-blur-md animate-in fade-in duration-300">
+      <div className={`glass-panel rounded-3xl flex flex-col shadow-2xl overflow-hidden relative transition-all duration-300 border border-white/20 ${modalSizeClass}`}>
         
-        <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0">
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500 flex items-center gap-2">
-            {initialTemplate ? <Edit2 className="w-6 h-6 text-teal-400"/> : <Plus className="w-6 h-6 text-teal-400" />} 
-            {mode === 'upload' ? 'Dosya Seçimi' : mode === 'preprocess' ? 'Görsel İşleme & Kalibrasyon' : initialTemplate ? 'Ürün Düzenle' : 'Port Tanımlama'}
+        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.03] backdrop-blur-3xl shrink-0">
+          <h2 className="text-2xl font-black bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-sm">
+            {initialTemplate ? <Edit2 className="w-7 h-7 text-teal-400"/> : <Plus className="w-7 h-7 text-teal-400" />} 
+            {mode === 'upload' ? 'Görsel Yükleme' : mode === 'preprocess' ? 'Ön İşleme & Kalibrasyon' : initialTemplate ? 'Ürün Düzenle' : 'Port Tanımlama'}
           </h2>
-          <button onClick={onCancel} className="text-zinc-400 hover:text-white" title="Kapat" aria-label="Kapat">
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-4">
+               {mode === 'ports' && (
+                  <button 
+                  onClick={handleSave}
+                  className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-white/10 transition-all active:scale-95"
+                  >
+                  <Save size={18} />
+                  Kaydet
+                  </button>
+              )}
+            <button onClick={onCancel} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors" title="Kapat" aria-label="Kapat">
+                <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-1 overflow-hidden">
@@ -730,21 +741,25 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
           />
 
           {/* Right: Interactive Area */}
-          <div className="flex-1 bg-zinc-950 relative overflow-hidden flex items-center justify-center p-4">
-             <div className="absolute inset-0 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-50"></div>
+          <div className="flex-1 bg-black/40 relative overflow-hidden flex items-center justify-center p-8">
+             <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-[0.03]"></div>
              
              {mode === 'upload' && (
-                 <div className="text-zinc-600 flex flex-col items-center pointer-events-none">
-                     <p className="text-lg font-medium">Sol menüden bir dosya yükleyerek başlayın.</p>
+                 <div className="text-zinc-500 flex flex-col items-center pointer-events-none text-center max-w-md">
+                     <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                         <Upload className="w-10 h-10 opacity-30"/>
+                     </div>
+                     <p className="text-xl font-bold text-white mb-2">Başlamak için Bir Resim Yükleyin</p>
+                     <p className="text-sm font-medium">Sol menüyü kullanarak cihazınızdan bir resim veya PDF dosyası seçin.</p>
                  </div>
              )}
 
              {mode === 'preprocess' && rawImage && (
-                 <div className="relative shadow-2xl border border-zinc-700">
+                 <div className="relative shadow-2xl border border-white/10 rounded-lg overflow-hidden ring-1 ring-white/5 backdrop-blur-sm">
                      {/* Layer 1: Base Image */}
                      <canvas 
                         ref={canvasRef}
-                        className="block max-h-[calc(95vh-80px)] max-w-[calc(98vw-22rem)] object-contain"
+                        className="block max-h-[calc(85vh-80px)] max-w-[calc(90vw-26rem)] object-contain bg-zinc-900"
                      />
                      {/* Layer 2: UI Overlay (Tools) */}
                      <canvas
@@ -759,13 +774,13 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
              )}
 
              {mode === 'ports' && processedImage && (
-              <div className="relative shadow-2xl animate-in zoom-in-95 duration-300 group/image">
+              <div className="relative shadow-2xl animate-in zoom-in-95 duration-500 group/image border border-white/10 rounded-xl overflow-hidden ring-4 ring-black/20">
                 <img 
                   ref={imageRef}
                   src={processedImage} 
                   alt="Work area"
                   onClick={handleImageClick}
-                  className="max-h-[calc(95vh-80px)] max-w-[calc(98vw-22rem)] object-contain border border-zinc-600 bg-white block cursor-crosshair"
+                  className="max-h-[calc(85vh-80px)] max-w-[calc(90vw-26rem)] object-contain bg-white block cursor-crosshair"
                   draggable={false}
                 />
                 {ports.map(p => (
@@ -774,12 +789,12 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                     onClick={(e) => { e.stopPropagation(); startEditingPort(p); }}
                     onMouseEnter={() => setHoveredPortId(p.id)}
                     onMouseLeave={() => setHoveredPortId(null)}
-                    className={`absolute w-5 h-5 shadow-sm transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 flex items-center justify-center transition-all ${getConnectorShapeClass(p.connectorType)} ${
+                    className={`absolute w-6 h-6 shadow-[0_4px_10px_rgba(0,0,0,0.3)] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 flex items-center justify-center transition-all duration-300 ${getConnectorShapeClass(p.connectorType)} ${
                       editingPortId === p.id 
-                        ? 'border-2 border-amber-500 ring-4 ring-amber-500/40 scale-150 z-30' 
+                        ? 'border-2 border-amber-400 ring-4 ring-amber-400/30 scale-125 z-50' 
                         : hoveredPortId === p.id
-                            ? 'scale-150 z-20 border-2 border-white ring-2 ring-white/50'
-                            : 'border border-white hover:scale-125'
+                            ? 'scale-125 z-40 border-2 border-white ring-4 ring-white/20'
+                            : 'border-2 border-white/80 hover:scale-110'
                     }`}
                     style={{ 
                       left: `${p.x}%`, 
@@ -788,184 +803,127 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                     }}
                     title={p.label}
                   >
-                    <div className="w-1.5 h-1.5 bg-black/50 rounded-full"></div>
+                    <div className="w-1.5 h-1.5 bg-white/80 rounded-full shadow-inner"></div>
                     
-                    <div className="absolute pointer-events-none opacity-80">
+                    <div className="absolute pointer-events-none opacity-100 drop-shadow-md">
                          {getDirectionIcon(p.direction)}
                     </div>
                     
                     {p.isPower && (
-                        <div className={`absolute -top-4 -right-4 rounded-full p-1 shadow-sm z-30 ${p.isGround ? 'bg-zinc-700 text-white' : 'bg-yellow-500 text-black'}`}>
-                             {p.isGround ? <ArrowDownToLine size={10}/> : <Zap size={10} fill="currentColor" />}
+                        <div className={`absolute -top-3 -right-3 rounded-full p-1 shadow-lg z-30 border border-white/20 scale-75 ${p.isGround ? 'bg-zinc-800 text-white' : 'bg-amber-400 text-black'}`}>
+                             {p.isGround ? <ArrowDownToLine size={12}/> : <Zap size={12} fill="currentColor" />}
                         </div>
                     )}
-
-                    <div className={`absolute -top-10 left-1/2 -translate-x-1/2 text-xs bg-black/90 px-3 py-2 rounded text-white whitespace-nowrap flex flex-col items-center z-20 border border-zinc-600 shadow-2xl pointer-events-none transition-opacity ${editingPortId === p.id || hoveredPortId === p.id ? 'opacity-100' : 'opacity-0'}`}>
-                      <span className="font-bold flex items-center gap-1 text-sm">
-                          {p.isGround ? <ArrowDownToLine size={10} /> : (p.isPower && <Zap size={10} className="text-yellow-400 fill-yellow-400"/>)}
-                          {p.label}
-                      </span>
-                      <span className="text-[10px] font-medium text-zinc-300">{CONNECTOR_LABELS[p.connectorType]}</span>
+                    
+                    {/* Tooltip on Hover */}
+                    <div className={`absolute left-1/2 -translate-x-1/2 -bottom-8 bg-black/80 backdrop-blur text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover/port:opacity-100 pointer-events-none transition-opacity font-bold border border-white/10 ${hoveredPortId === p.id ? 'opacity-100' : ''}`}>
+                        {p.label}
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {mode === 'ports' && (
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900 flex gap-2 overflow-x-auto">
-                {/* Port Editor Bottom Panel Logic (Merged into main view above in previous version, kept minimal here) */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="flex-1 flex flex-col">
-                        <div className={`p-4 rounded border shadow-inner transition-colors flex gap-4 items-start ${editingPortId ? 'bg-amber-900/20 border-amber-700/50' : 'bg-zinc-800/50 border-zinc-700'}`}>
-                            <div className="w-64 space-y-3">
-                                <h3 className={`text-sm font-bold flex items-center gap-2 ${editingPortId ? 'text-amber-400' : 'text-teal-400'}`}>
-                                {editingPortId ? <Edit2 className="w-4 h-4" /> : <Crosshair className="w-4 h-4" />}
-                                {editingPortId ? 'Port Düzenle' : 'Yeni Port Ekle'}
-                                </h3>
-                                <div>
-                                    <label className="text-xs font-bold text-zinc-400 mb-1 block">Etiket</label>
-                                    <input 
-                                    type="text" 
-                                    value={tempPortLabel}
-                                    onChange={(e) => setTempPortLabel(e.target.value)}
-                                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm font-bold text-zinc-100 focus:border-teal-500 outline-none"
-                                    placeholder="Port adı"
-                                    aria-label="Port etiketi"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="w-64 space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-xs font-bold text-zinc-400 mb-1 block">Yön</label>
-                                        <select 
-                                            value={tempPortType}
-                                            onChange={(e) => setTempPortType(e.target.value as PortFlowType)}
-                                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm font-medium text-zinc-300"
-                                            title="Port yönü"
-                                            aria-label="Port yönü"
-                                        >
-                                            <option value="input">Giriş</option>
-                                            <option value="output">Çıkış</option>
-                                            <option value="bidirectional">Çift</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-zinc-400 mb-1 block">Konnektör</label>
-                                        <select 
-                                            value={tempConnectorType}
-                                            onChange={(e) => setTempConnectorType(e.target.value as ConnectorType)}
-                                            className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm font-medium text-zinc-300"
-                                            title="Konnektör tipi"
-                                            aria-label="Konnektör tipi"
-                                        >
-                                            {Object.entries(CONNECTOR_LABELS).map(([key, label]) => (
-                                            <option key={key} value={key}>{label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-zinc-400 mb-1 block">Çıkış Yönü</label>
-                                    <div className="flex gap-1 justify-center bg-zinc-900 p-1 rounded border border-zinc-800">
-                                        {['top', 'bottom', 'left', 'right'].map((dir) => (
-                                            <button
-                                                key={dir}
-                                                onClick={() => setTempDirection(dir as any)}
-                                                className={`p-1 rounded border transition-colors ${tempDirection === dir ? 'bg-teal-600 border-teal-500 text-white' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'}`}
-                                                title={dir}
-                                            >
-                                                {dir === 'top' ? <ChevronUp size={14}/> : dir === 'bottom' ? <ChevronDown size={14}/> : dir === 'left' ? <ChevronLeft size={14}/> : <ChevronRight size={14}/>}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="w-64 bg-zinc-900 p-3 rounded border border-zinc-700 self-stretch">
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={tempIsPower} 
-                                            onChange={e => {
-                                                setTempIsPower(e.target.checked);
-                                                if(!e.target.checked) setTempIsGround(false);
-                                            }}
-                                            className="w-4 h-4 accent-teal-500"
-                                        />
-                                        <span className="text-xs font-bold text-zinc-300 flex items-center gap-1">
-                                            <Zap size={12} className={tempIsPower ? 'text-yellow-500 fill-yellow-500' : 'text-zinc-500'} />
-                                            Güç
-                                        </span>
-                                    </label>
-
-                                    {tempIsPower && (
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={tempIsGround} 
-                                                onChange={e => setTempIsGround(e.target.checked)}
-                                                className="w-4 h-4 accent-zinc-500"
-                                            />
-                                            <span className="text-xs font-bold text-zinc-300 flex items-center gap-1">
-                                                <ArrowDownToLine size={12} className={tempIsGround ? 'text-zinc-100' : 'text-zinc-500'} />
-                                                GND
-                                            </span>
-                                        </label>
-                                    )}
-                                </div>
-                                
-                                {tempIsPower && (
-                                    <div className={`grid grid-cols-3 gap-2 mt-2 ${tempIsGround ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                                        <select value={tempPowerType} onChange={e => setTempPowerType(e.target.value as 'AC'|'DC')} className="bg-zinc-950 border border-zinc-700 rounded px-1 py-1 text-[10px] font-bold text-white" title="Güç tipi" aria-label="Güç tipi"><option value="DC">DC</option><option value="AC">AC</option></select>
-                                        <input type="text" placeholder="V" value={tempVoltage} onChange={e => setTempVoltage(e.target.value)} className="bg-zinc-950 border border-zinc-700 rounded px-1 py-1 text-[10px] font-bold text-white" />
-                                        <input type="text" placeholder="A" value={tempAmperage} onChange={e => setTempAmperage(e.target.value)} className="bg-zinc-950 border border-zinc-700 rounded px-1 py-1 text-[10px] font-bold text-white" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex-1 flex flex-col justify-center gap-2">
-                                {editingPortId ? (
-                                    <>
-                                    <button onClick={updatePort} className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 rounded shadow w-full">Güncelle</button>
-                                    <button onClick={cancelEditing} className="bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-bold py-2 rounded shadow w-full">İptal</button>
-                                    </>
-                                ) : (
-                                    <div className="text-xs text-zinc-500 text-center italic">
-                                        Resme tıklayarak port ekleyin.
-                                    </div>
-                                )}
-                            </div>
+            
+            {/* Context Menu for Port Editing */}
+            {editingPortId && (
+                <div 
+                    className="absolute z-50 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 animate-in fade-in zoom-in-95 duration-200"
+                    style={{
+                        left: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.x || 50))}%`,
+                        top: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.y || 50))}%`,
+                        transform: 'translate(-50%, 10px)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                        <h4 className="font-bold text-white text-sm">Port Düzenle</h4>
+                        <button onClick={cancelEditing} className="text-zinc-500 hover:text-white transition-colors"><X size={14}/></button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Etiket</label>
+                            <input 
+                                type="text" 
+                                value={tempPortLabel} 
+                                onChange={e => setTempPortLabel(e.target.value)} 
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white focus:border-amber-500 outline-none font-medium"
+                                autoFocus
+                            />
                         </div>
                         
-                        <div className="mt-2 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                            {ports.map(p => (
-                                <div key={p.id} onClick={() => startEditingPort(p)} onMouseEnter={() => setHoveredPortId(p.id)} onMouseLeave={() => setHoveredPortId(null)} className={`flex items-center gap-2 bg-zinc-800 px-2 py-1 rounded border cursor-pointer min-w-[120px] ${editingPortId === p.id ? 'border-amber-500 ring-1 ring-amber-500/50' : hoveredPortId === p.id ? 'border-zinc-500' : 'border-zinc-700'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${p.customColor ? '' : p.type === 'input' ? 'bg-blue-500' : p.type === 'output' ? 'bg-red-500' : 'bg-teal-500'}`} style={{ backgroundColor: p.customColor }}></div>
-                                    <div className="flex flex-col overflow-hidden">
-                                        <span className="text-xs font-bold text-white truncate">{p.label}</span>
-                                        <span className="text-[8px] text-zinc-500 truncate">{CONNECTOR_LABELS[p.connectorType]}</span>
-                                    </div>
-                                    <button onClick={(e) => { e.stopPropagation(); removePort(p.id); }} className="ml-auto text-zinc-600 hover:text-red-500" title="Portu sil" aria-label="Portu sil"><Trash2 size={12}/></button>
-                                </div>
-                            ))}
+                        <div className="grid grid-cols-2 gap-2">
+                             <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Tip</label>
+                                <select 
+                                    value={tempPortType} 
+                                    onChange={e => setTempPortType(e.target.value as any)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 outline-none"
+                                >
+                                    <option value="input">Giriş</option>
+                                    <option value="output">Çıkış</option>
+                                    <option value="bidirectional">Çift Yönlü</option>
+                                </select>
+                             </div>
+                             <div>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Yön</label>
+                                <select 
+                                    value={tempDirection} 
+                                    onChange={e => setTempDirection(e.target.value as any)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 outline-none"
+                                >
+                                    <option value="bottom">Aşağı</option>
+                                    <option value="top">Yukarı</option>
+                                    <option value="left">Sola</option>
+                                    <option value="right">Sağa</option>
+                                </select>
+                             </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                             <label className={`flex-1 p-2 rounded-lg border cursor-pointer transition-all flex items-center justify-center gap-2 ${tempIsPower ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 font-bold' : 'bg-black/20 border-white/10 text-zinc-500 hover:text-white'}`}>
+                                 <input type="checkbox" checked={tempIsPower} onChange={e => setTempIsPower(e.target.checked)} className="hidden" />
+                                 <Zap size={14} fill={tempIsPower ? "currentColor" : "none"}/> Güç
+                             </label>
+                             <label className={`flex-1 p-2 rounded-lg border cursor-pointer transition-all flex items-center justify-center gap-2 ${tempIsGround ? 'bg-zinc-600/30 border-zinc-500 text-zinc-300 font-bold' : 'bg-black/20 border-white/10 text-zinc-500 hover:text-white'}`}>
+                                 <input type="checkbox" checked={tempIsGround} onChange={e => setTempIsGround(e.target.checked)} className="hidden" />
+                                 <ArrowDownToLine size={14}/> Toprak
+                             </label>
+                        </div>
+                        
+                        {tempIsPower && !tempIsGround && (
+                            <div className="grid grid-cols-2 gap-2 animate-in fade-in">
+                                <input 
+                                    type="text" 
+                                    placeholder="Voltaj (5V)" 
+                                    value={tempVoltage} 
+                                    onChange={e => setTempVoltage(e.target.value)}
+                                    className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500"
+                                />
+                                <input 
+                                    type="text" 
+                                    placeholder="Akım (2A)" 
+                                    value={tempAmperage} 
+                                    onChange={e => setTempAmperage(e.target.value)}
+                                    className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 mt-4 pt-2 border-t border-white/10">
+                            <button onClick={updatePort} className="flex-1 bg-amber-500 hover:bg-amber-400 text-black py-2 rounded-lg text-sm font-bold transition-transform active:scale-95 shadow-lg shadow-amber-500/20">
+                                Kaydet
+                            </button>
+                            <button onClick={() => removePort(editingPortId!)} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition-colors">
+                                <Trash2 size={18} />
+                            </button>
                         </div>
                     </div>
                 </div>
+            )}
+
             </div>
-        )}
-        
-        {mode === 'ports' && (
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900 shrink-0 flex justify-end gap-3">
-                {!initialTemplate && <button onClick={() => setMode('preprocess')} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded font-bold text-sm hover:text-white">Geri</button>}
-                <button onClick={handleSave} disabled={!name} className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded font-bold text-sm shadow-lg flex items-center gap-2 disabled:opacity-50"><Save size={16}/> Kaydet</button>
-            </div>
-        )}
+             )}
+          </div>
+        </div>
       </div>
     </div>
   );
