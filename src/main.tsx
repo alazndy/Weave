@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './src/i18n';
+import './index.css'; 
+import '@fontsource/geist-sans';
+import './i18n';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

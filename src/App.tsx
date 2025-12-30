@@ -23,6 +23,7 @@ import { PageBar } from './components/layout/PageBar';
 import { PageGrid } from './components/canvas/PageGrid';
 import { PALETTES } from './components/modals/AppSettingsModal';
 import { ModalManager } from './components/managers/ModalManager';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { getPortPosition, getPortNormal, findSmartPath, getInstanceRect } from './utils/canvasHelpers';
 import { useLibraryManager } from './hooks/useLibraryManager';
@@ -809,6 +810,7 @@ export default function App() {
   };
 
   return (
+    <TooltipProvider>
     <div className="flex h-screen w-full bg-ink text-alabaster overflow-hidden font-sans select-none transition-colors duration-300 relative">
          {showWelcome && (
              <WelcomeScreen 
@@ -1051,5 +1053,6 @@ export default function App() {
       />
       </div>
     </div>
+    </TooltipProvider>
   );
 }

@@ -1,0 +1,118 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- UPH (UNIFIED PROJECT HUB) ---
+    
+    // Projects: Central Hub
+    match /projects/{projectId} {
+      allow create: if isAuthenticated();
+      // Read/Update: Member or Owner (UPH Logic)
+      allow read, update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        (resource.data.members is list && request.auth.uid in resource.data.members)
+      );
+      // Delete: Owner Only
+      allow delete: if isOwner(resource.data.userId);
+
+      match /tasks/{taskId} {
+         allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Teams: Core Organization
+    match /teams/{teamId} {
+      allow create: if isAuthenticated();
+      allow read, update: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid ||
+        request.auth.uid in resource.data.memberIds
+      );
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Forge (Manufacturing): Dashboard Access
+    match /forge_jobs/{jobId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Flux (IoT): Dashboard Access
+    match /flux_devices/{deviceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // --- WEAVE (SUPPLY CHAIN) ---
+    match /weave_designs/{designId} {
+      // Public designs are readable by anyone (or just auth? Let's say auth for now to be safe, or public if specifically requested)
+      // The code queries for public designs, so we allow read if isPublic is true.
+      allow read: if isAuthenticated() && (
+        resource.data.isPublic == true || 
+        resource.data.userId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // --- ENV-I (CONSTRUCTION & INVENTORY) ---
+    
+    // Users: Profile Data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Products/Inventory: Shared Ecosystem Data
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      // Write: Owner or Creator (ENV-I logic)
+      allow write: if isAuthenticated() && (
+        !exists(resource.data) || // Allow create if new
+        isOwner(resource.data.userId) || 
+        isOwner(request.resource.data.userId)
+      );
+    }
+    
+    // Orders, Proposals, Warehouses: Strict Ownership
+    match /orders/{orderId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /proposals/{proposalId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /equipment/{equipmentId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /consumables/{consumableId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /warehouses/{warehouseId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /settings/{settingId} {
+       allow read, write: if isOwner(settingId);
+    }
+    match /discontinued/{itemId} {
+       allow read: if isAuthenticated();
+       allow write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    match /project_usages/{usageId} {
+       allow read, write: if isOwner(resource.data.userId) || isOwner(request.resource.data.userId);
+    }
+    
+    // Audit Logs: Read Auth, Write Auth (System)
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+  }
+}
