@@ -1,9 +1,9 @@
 export const GoogleDriveService = {
   isAuthenticated: false,
   
-  // TODO: Replace with actual Client ID / API Key
-  clientId: '', 
-  apiKey: '',
+  // Configuration from environment variables
+  clientId: import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID || '', 
+  apiKey: import.meta.env.VITE_GOOGLE_DRIVE_API_KEY || '',
 
   async connect() {
     console.log("Connecting to Google Drive...");

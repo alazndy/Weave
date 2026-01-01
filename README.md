@@ -136,6 +136,15 @@ pnpm install
 pnpm dev
 ```
 
+### Ortam Değişkenleri
+
+`.env` dosyası oluşturun:
+
+```env
+VITE_GOOGLE_DRIVE_CLIENT_ID=your_client_id
+VITE_GOOGLE_DRIVE_API_KEY=your_api_key
+```
+
 **Port**: 5173
 
 ---
