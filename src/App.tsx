@@ -34,6 +34,9 @@ import { exportBOM } from './utils/bom-exporter';
 import { GoogleDriveService } from './services/google-drive-service';
 import * as html2canvas from 'html2canvas';
 
+import { CookieConsent } from './components/compliance/CookieConsent';
+import { LegalModal } from './components/compliance/LegalModal';
+
 // Lazy load keys just in case but ModalManager handles them mostly
 
 const generateDocNo = (projectName: string = 'Weave Project', revision: string = 'R01') => {
@@ -151,7 +154,19 @@ export default function App() {
   const [isUPHExportOpen, setIsUPHExportOpen] = useState(false);
   const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+
+  // Compliance State
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState('privacy');
+
+  const openLegal = (tab: string) => {
+    setLegalTab(tab);
+    setIsLegalModalOpen(true);
+  };
+  
+
   
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
@@ -1053,6 +1068,8 @@ export default function App() {
       />
       </div>
     </div>
+    <CookieConsent onOpenLegal={openLegal} />
+    <LegalModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} defaultTab={legalTab} />
     </TooltipProvider>
   );
 }
