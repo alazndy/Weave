@@ -1,177 +1,89 @@
-# Weave - Sistem Bağlantı Tasarım Platformu
+# Weave: Schematic Design & Engineering Canvas
 
-<div align="center">
+![Status](https://img.shields.io/badge/Status-Alpha-rose) ![License](https://img.shields.io/badge/License-MIT-green) ![Tech](https://img.shields.io/badge/Tech-React%2019%20%7C%20Vite%20%7C%20Canvas-FF6B6B)
 
-![Weave Logo](https://via.placeholder.com/150?text=Weave)
+**Weave** is the premier engineering design tool of the **T-Ecosystem**. It provides an infinite, high-performance vector canvas for creating complex schematics, wiring diagrams, and process flows. Uniquely, Weave is deeply integrated with the ecosystem's data, allowing you to drag live inventory items directly into your technical drawings.
 
-**Fiziksel Ürün Bağlantı ve Sistem Tasarım Platformu**
+## 🚀 Capabilities & Features
 
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite)](https://vitejs.dev/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+### 🎨 Infinite Engineering Canvas
 
-[Demo](#) • [Dokümantasyon](#) • [Kurulum](#kurulum) • [Özellikler](#özellikler)
+- **Vector Engine**: Zoom from 10% to 5000% without loss of fidelity.
+- **Layer Management**: Complex designs organized into selectable, lockable layers.
+- **Smart Connectors**: Auto-routing wires that snap to component ports and maintain connections during movement.
 
-</div>
+### 🔌 Ecosystem Integration
 
----
+- **Live Inventory Sync (ENV-I)**: Drag a product from the sidebar, and it links to the real SKUs in your database.
+- **Stock Awareness**: Real-time stock level indicators directly on schematic components.
+- **BOM Generation**: One-click export of a Bill of Materials based on the components placed on the canvas.
 
-## 📖 Hakkında
+### 🛠️ Professional Design Tools
 
-Weave, **sistem seviyesinde bağlantı tasarım platformudur**. PCB veya devre tasarımı değil, fiziksel ürünlerin (kameralar, monitörler, sensörler, kontrol üniteleri) birbirine nasıl bağlanacağını tasarlamak için kullanılır.
+- **Component Library**: Extensive library of electrical, mechanical, and flow symbols.
+- **Custom Parts**: Create and save your own composable logic blocks.
+- **Grid & Snapping**: Precision alignment tools for professional layouts.
+- **History API**: Robust Undo/Redo (Ctrl+Z/Ctrl+Y) functionality tracking every move.
 
-### Neden Weave?
+### ☁️ Cloud & Collaboration
 
-- 🔌 **75+ Konnektör Tipi**: Endüstri standardı bağlantı tipleri
-- 📦 **Ürün Tarama**: ENV-I'den ürün çekme ve port tanımlama
-- 🎨 **Görsel Tasarım**: Sürükle-bırak ile sistem şeması oluşturma
-- 📄 **BOM Oluşturma**: Otomatik malzeme listesi
-- 🔗 **Ekosistem Entegrasyonu**: ENV-I stok kontrolü, UPH dosya kaydetme
+- **Cloud Sync**: Designs are automatically saved to the ecosystem cloud.
+- **Version Control**: Save named snapshots and restore previous versions of your design.
+- **PDF Export**: High-resolution export for printing and technical documentation bundles.
 
----
+## 🛠️ Technology Architecture
 
-## 🎯 Ne Yapıyor?
+- **Core**: **React 19** + **Vite** for blazing fast performance.
+- **Canvas Engine**: Custom HTML5 Canvas implementation (referencing Fabric.js concepts) for maximum control.
+- **State Management**: **Zustand** + **Immer** for complex immutable state updates.
+- **Styling**: Tailwind CSS + Shadcn UI.
+- **Sync**: Custom hooks (`useEnviStock`, `useCloudSync`) connecting to Firebase.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  1. ÜRÜN TANIMLAMA                                          │
-│     • Ürün görselini yükle veya ENV-I'den çek              │
-│     • Port noktalarını işaretle (Video Out, Power In...)   │
-│     • Konnektör tiplerini belirle (VBV, M12, FAKRA...)     │
-│                                                             │
-│  2. SİSTEM TASARIMI                                        │
-│     • Ürünleri canvas'a yerleştir                          │
-│     • Port'lar arası bağlantı çiz                          │
-│     • Kablo tipleri ve renkleri seç                        │
-│                                                             │
-│  3. DOKÜMANTASYON                                          │
-│     • Otomatik BOM (malzeme listesi)                       │
-│     • Teknik şema PDF export                               │
-│     • Müşteri sunumu için görsel                           │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## ✨ Özellikler
-
-### Ürün Tarama ve Tanımlama
-
-- ENV-I envanterinden ürün import
-- Görsel yükleme ve boyutlandırma
-- Port noktası işaretleme
-- 75+ konnektör tipi seçimi
-- Stok durumu senkronizasyonu
-
-### Port Sistemi
-
-- Input/Output/Bidirectional tipler
-- Voltaj ve akım tanımlama
-- Güç/toprak işaretleme
-- Özel renk atama
-- Konnektör tipi seçimi
-
-### Bağlantı Yönetimi
-
-- Curved/Straight/Orthogonal stiller
-- Kablo renk seçimi
-- Etiketleme
-- Arrow head seçenekleri
-
-### Çoklu Sayfa
-
-- Karmaşık sistemler için sayfa sistemi
-- Sayfa düzenleme ve sıralama
-- Cross-reference
-
-### Export
-
-- PDF teknik şema
-- BOM (malzeme listesi)
-- PNG/SVG görsel
-- KiCad/SPICE export
-
-### Entegrasyonlar
-
-- **ENV-I**: Ürün import, stok kontrolü
-- **UPH**: Proje dosyası kaydetme
-- **Renderci**: 3D görselleştirme
-
----
-
-## 🔌 Desteklenen Konnektörler
-
-| Kategori         | Örnekler                                |
-| ---------------- | --------------------------------------- |
-| **Araç Kamera**  | VBV 4-Pin, Elite 4-Pin, Backeye 360     |
-| **Endüstriyel**  | M12 D-Coded, M12 A-Coded 5/8-Pin        |
-| **Araç (FAKRA)** | GPS (Mavi), GSM (Mor), Video (Yeşil)    |
-| **Heavy Duty**   | SP-7, MDR 15-Pin                        |
-| **Sensör**       | Ultrasonic, Deutsch DT04 serisi         |
-| **Güç**          | Flying Lead, Ring Terminal, Fuse Holder |
-| **Veri**         | CAN Bus, OBD-II, USB                    |
-
----
-
-## 🛠️ Teknoloji Yığını
-
-| Kategori   | Teknoloji        |
-| ---------- | ---------------- |
-| Build Tool | Vite 5           |
-| Framework  | React 19         |
-| Dil        | TypeScript 5     |
-| Canvas     | Custom 2D Canvas |
-| State      | Zustand          |
-| Stil       | Tailwind CSS 4   |
-| Desktop    | Electron         |
-
----
-
-## 📦 Kurulum
+## 📂 Project Structure
 
 ```bash
-cd Weave-main
-pnpm install
-pnpm dev
+src/
+├── components/
+│   ├── canvas/      # The core drawing engine
+│   ├── library/     # Component browser (ENV-I linked)
+│   └── ui/          # Toolbars and panels
+├── hooks/
+│   ├── useCanvas.ts # Main canvas logic
+│   └── useHistory.ts# Undo/Redo implementation
+├── services/        # Backend sync & asset loading
+└── types/           # Schematic data models (Node, Edge, Port)
 ```
 
-### Ortam Değişkenleri
+## 🏁 Getting Started
 
-`.env` dosyası oluşturun:
+### Prerequisites
 
-```env
-VITE_GOOGLE_DRIVE_CLIENT_ID=your_client_id
-VITE_GOOGLE_DRIVE_API_KEY=your_api_key
-```
+- Node.js (v18+)
+- pnpm
 
-**Port**: 5173
+### Installation
+
+1.  **Clone the repository**
+
+    ```bash
+    git clone https://github.com/alazndy/Weave.git
+    cd Weave
+    ```
+
+2.  **Install Dependencies**
+
+    ```bash
+    pnpm install
+    ```
+
+3.  **Run Development Server**
+
+    ```bash
+    pnpm dev
+    ```
+
+    Open [http://localhost:3004](http://localhost:3004) to start designing.
 
 ---
 
-## 🎨 Örnek Kullanım
-
-**Senaryo**: TIR için 360° kamera sistemi tasarımı
-
-1. Ürünleri tanımla (4 kamera, 1 monitör, 1 kayıt ünitesi)
-2. Her ürünün port'larını yapılandır
-3. Canvas'a yerleştir ve bağlantıları çiz
-4. BOM ve PDF export
-
----
-
-## 🔗 T-Ecosystem Entegrasyonu
-
-```
-ENV-I (Stok) ──► Weave (Tasarım) ──► UPH (Proje)
-     │                 │
-     └──── Stok ◄──────┘
-```
-
----
-
-<div align="center">
-
-**T-Ecosystem** tarafından ❤️ ile geliştirildi
-
-</div>
+Part of the **T-Ecosystem**.
