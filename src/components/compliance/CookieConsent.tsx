@@ -89,7 +89,7 @@ export function CookieConsent({ onOpenLegal }: { onOpenLegal: (tab: string) => v
               <>
                 <h3 className="font-semibold text-lg mb-4 flex items-center justify-between">
                   Preferences
-                  <button onClick={() => setShowPreferences(false)}><X size={16} /></button>
+                  <button onClick={() => setShowPreferences(false)} title="Close Preferences"><X size={16} /></button>
                 </h3>
                 <div className="space-y-4 mb-4">
                   <div className="flex items-center justify-between">
@@ -108,6 +108,7 @@ export function CookieConsent({ onOpenLegal }: { onOpenLegal: (tab: string) => v
                     </div>
                     <button 
                          onClick={() => setPreferences(p => ({...p, analytics: !p.analytics}))}
+                         title="Toggle Analytics"
                          className={cn("w-10 h-6 rounded-full relative transition-colors", preferences.analytics ? "bg-emerald-600" : "bg-zinc-700")}
                     >
                         <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", preferences.analytics ? "right-1" : "left-1")} />

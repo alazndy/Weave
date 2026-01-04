@@ -28,8 +28,8 @@ interface UseHistoryReturn<T> {
   history: HistoryState<T>;
 }
 
-export function useHistory<T>(options: UseHistoryOptions<T>): UseHistoryReturn<T> {
-  const { initialState, maxHistory = 50 } = options;
+export function useHistory<T>(options?: UseHistoryOptions<T>): UseHistoryReturn<T> {
+  const { initialState = {} as T, maxHistory = 50 } = options || {};
   
   const [history, setHistory] = useState<HistoryState<T>>({
     past: [],

@@ -76,7 +76,7 @@ export function LegalModal({ isOpen, onClose, defaultTab = 'privacy' }: LegalMod
                     Legal & Compliance
                 </Dialog.Title>
                 <Dialog.Close asChild>
-                    <button className="rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                    <button className="rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" title="Close">
                         <X size={20} />
                     </button>
                 </Dialog.Close>
@@ -112,7 +112,7 @@ export function LegalModal({ isOpen, onClose, defaultTab = 'privacy' }: LegalMod
                              if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-bold mt-4 mb-2">{line.replace('## ', '')}</h2>;
                              if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-bold mt-3 mb-1">{line.replace('### ', '')}</h3>;
                              if (line.startsWith('**') && line.endsWith('**')) return <strong key={i}>{line.replace(/\*\*/g, '')}</strong>;
-                             if (line.startsWith('- ')) return <li key={i} className="ml-4 list-disc">{line.replace('- ', '')}</li>;
+                             if (line.startsWith('- ')) return <div key={i} className="ml-4 flex items-start text-muted-foreground"><span className="mr-2 shrink-0">•</span><span>{line.replace('- ', '')}</span></div>;
                              if (line.trim().match(/^\d+\./)) return <div key={i} className="mb-2 font-medium">{line}</div>;
                              if (line.trim() === '') return <br key={i} />;
                              return <p key={i} className="mb-2 text-muted-foreground">{line}</p>;
