@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, AlignmentGuide, Comment, PortDefinition } from '../types';
+import React, { useRef, useState, useEffect } from 'react';
+import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment } from '../types';
 import { getPortPosition } from '../utils/canvasHelpers';
 import { EditPortModal } from './modals/EditPortModal';
 import { EditConnectionModal } from './modals/EditConnectionModal';
@@ -16,12 +16,12 @@ import { TextLabelNode } from './canvas/TextLabelNode';
 import { CommentMarker } from './canvas/CommentMarker';
 import { Minimap } from './canvas/Minimap';
 import { CanvasToolbar, ActiveTool } from './canvas/CanvasToolbar';
-import { ToolSettingsBar, ToolSettings } from './canvas/ToolSettingsBar';
+import { ToolSettingsBar } from './canvas/ToolSettingsBar';
 import { CanvasControls } from './canvas/CanvasControls';
 import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
 import { useCanvasInteraction } from './canvas/hooks/useCanvasInteraction';
-import { snapToGrid } from '../utils/canvasHelpers';
+import { snapToGrid, validatePortCompatibility } from '../utils/canvasHelpers';
 
 interface CanvasProps {
   instances: ProductInstance[];
@@ -46,6 +46,7 @@ interface CanvasProps {
   onEditMetadata?: () => void;
   onUndoCheckpoint: () => void;
   onSelectInstance?: (id: string | null) => void;
+  onCopyInstance?: (id: string) => void;
   onRemovePort?: (templateId: string, portId: string) => void; 
   isLegendCollapsed?: boolean;
   onToggleLegend?: (collapsed: boolean) => void;
@@ -65,8 +66,6 @@ const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
   'A3': { w: 420, h: 297 },
   'A4': { w: 297, h: 210 },
   'A6': { w: 148, h: 105 },
-  'Letter': { w: 279, h: 216 },
-  'Legal': { w: 356, h: 216 },
 };
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -74,7 +73,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   selectedInstanceId, selectedIds = new Set(), onSelectIds, theme = 'dark',
   editingPortInfo, onSetEditingPortInfo,
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange,
-  onTemplateChange, onEditMetadata, onUndoCheckpoint, onSelectInstance, onRemovePort,
+  onTemplateChange, onEditMetadata, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
   activePageName = 'Sayfa 1', activePageNumber = 1, totalPages = 1,
@@ -112,7 +111,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       alignmentGuides,
       selectionBox,
       drawingZone,
-      rotatingInstance, setRotatingInstance,
+      setRotatingInstance,
       editingConnectionId, setEditingConnectionId,
       editingPortData, setEditingPortData,
       editingZoneId, setEditingZoneId,
@@ -156,6 +155,30 @@ export const Canvas: React.FC<CanvasProps> = ({
       }
   };
 
+  const [connectionWarning, setConnectionWarning] = useState<string | null>(null);
+  useEffect(() => {
+      if (!connectionWarning) return;
+      const timer = setTimeout(() => setConnectionWarning(null), 5000);
+      return () => clearTimeout(timer);
+  }, [connectionWarning]);
+
+  const findPort = (instId: string, portId: string) => {
+      const inst = instances.find(i => i.id === instId);
+      return templates.find(t => t.id === inst?.templateId)?.ports.find(p => p.id === portId);
+  };
+
+  /** Returns true (and shows why) when the two ports must not be wired together. */
+  const rejectIncompatible = (instId: string, portId: string) => {
+      if (!connectingStart) return false;
+      const from = findPort(connectingStart.instanceId, connectingStart.portId);
+      const to = findPort(instId, portId);
+      if (!from || !to) return false;
+      const problems = validatePortCompatibility(from, to);
+      if (problems.length === 0) return false;
+      setConnectionWarning(`Bağlantı kurulamadı: ${problems.join(' • ')}`);
+      return true;
+  };
+
   const handlePortClick = (e: React.MouseEvent, instId: string, portId: string) => {
       e.stopPropagation();
       if (e.button === 1) return;
@@ -167,6 +190,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                   setManualRoutePoints([]);
                   return;
               }
+              if (rejectIncompatible(instId, portId)) return;
               onUndoCheckpoint();
               const newConn: Connection = {
                   id: crypto.randomUUID(),
@@ -198,6 +222,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                   setConnectingStart(null);
                   return;
               }
+              if (rejectIncompatible(instId, portId)) return;
               onUndoCheckpoint();
               const newConn: Connection = {
                   id: crypto.randomUUID(),
@@ -231,6 +256,8 @@ export const Canvas: React.FC<CanvasProps> = ({
       }
   };
 
+  const hiddenInstanceIds = new Set(instances.filter(i => i.hidden).map(i => i.id));
+
   const paperW = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].w * projectMetadata.pixelScale : 2000;
   const paperH = projectMetadata ? PAPER_DIMENSIONS[projectMetadata.paperSize].h * projectMetadata.pixelScale : 1500;
   const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
@@ -242,6 +269,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   return (
     <div 
+      data-testid="canvas-viewport"
       className={`relative w-full h-full overflow-hidden bg-zinc-950 select-none print:overflow-visible print:bg-white ${cursorClass}`}
       onWheel={(e) => handleWheel(e, containerRef.current!.getBoundingClientRect())}
       onDragOver={(e) => e.preventDefault()}
@@ -283,7 +311,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         )}
 
         {/* Zones */}
-        {zones.map(zone => (
+        {zones.filter(z => !z.hidden).map(zone => (
             <ZoneNode 
                 key={zone.id} 
                 zone={zone} 
@@ -294,7 +322,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 onUndoCheckpoint={onUndoCheckpoint}
                 setDraggedInstance={(id) => { setDraggedInstance(id); setDragOffset({ x: 0, y: 0 }); }} 
                 setEditingZoneId={setEditingZoneId}
-                removeZone={(id) => onZonesChange && onZonesChange(zones.filter(z => z.id !== id))}
+                removeZone={(id) => { if (!onZonesChange) return; onUndoCheckpoint(); onZonesChange(zones.filter(z => z.id !== id)); }}
                 handleResizeMouseDown={(e) => handleResizeStart(e, zone.id, 'zone')}
             />
         ))}
@@ -302,7 +330,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         {/* Instances */}
         {instances.map((inst, idx) => {
             const t = templates.find(temp => temp.id === inst.templateId);
-            if (!t) return null;
+            if (!t || inst.hidden) return null;
             return (
                 <ProductNode 
                     key={inst.id}
@@ -338,7 +366,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     <path d="M 10 0 L 0 5 L 10 10 z" fill="currentColor" />
                 </marker>
             </defs>
-            {connections.map(conn => (
+            {connections.filter(c => !c.hidden && !hiddenInstanceIds.has(c.fromInstanceId) && !hiddenInstanceIds.has(c.toInstanceId)).map(conn => (
                 <ConnectionLine 
                     key={conn.id} 
                     conn={conn}
@@ -406,7 +434,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         </svg>
 
         {/* Text Nodes */}
-        {textNodes.map(text => (
+        {textNodes.filter(t => !t.hidden).map(text => (
             <TextLabelNode 
                 key={text.id}
                 text={text}
@@ -415,18 +443,19 @@ export const Canvas: React.FC<CanvasProps> = ({
                 handleTextMouseDown={(e, id) => { 
                     e.stopPropagation(); 
                     if(onSelectIds) onSelectIds([id], e.ctrlKey); 
-                    if (activeTool === 'cursor' || activeTool === 'move') {
+                    if ((activeTool === 'cursor' || activeTool === 'move') && !text.locked) {
+                        onUndoCheckpoint();
                         setDraggedInstance(id); 
                         setDragOffset({ x: 0, y: 0 }); 
                     }
                 }}
                 setEditingTextId={setEditingTextId}
-                removeText={(id) => onTextNodesChange && onTextNodesChange(textNodes.filter(t => t.id !== id))}
+                removeText={(id) => { if (!onTextNodesChange) return; onUndoCheckpoint(); onTextNodesChange(textNodes.filter(t => t.id !== id)); }}
             />
         ))}
 
         {/* Comments */}
-        {comments.map(comment => (
+        {comments.filter(c => !c.hidden).map(comment => (
             <CommentMarker 
                 key={comment.id}
                 comment={comment}
@@ -434,14 +463,15 @@ export const Canvas: React.FC<CanvasProps> = ({
                 isSelected={selectedIds.has(comment.id)}
                 onSelect={() => { 
                     if(onSelectIds) onSelectIds([comment.id], false); 
-                    if (activeTool === 'cursor' || activeTool === 'move') {
+                    if ((activeTool === 'cursor' || activeTool === 'move') && !comment.locked) {
+                        onUndoCheckpoint();
                         setDraggedInstance(comment.id); 
                         setDragOffset({ x: 0, y: 0 }); 
                     }
                 }}
-                onUpdate={(id, content, color, isResolved) => onCommentsChange && onCommentsChange(comments.map(c => c.id === id ? { ...c, content, color, isResolved } : c))}
-                onDelete={(id) => onCommentsChange && onCommentsChange(comments.filter(c => c.id !== id))}
-                onToggleLock={(id) => onCommentsChange && onCommentsChange(comments.map(c => c.id === id ? { ...c, locked: !c.locked } : c))}
+                onUpdate={(id, content, color, isResolved) => { if (!onCommentsChange) return; onUndoCheckpoint(); onCommentsChange(comments.map(c => c.id === id ? { ...c, content, color, isResolved } : c)); }}
+                onDelete={(id) => { if (!onCommentsChange) return; onUndoCheckpoint(); onCommentsChange(comments.filter(c => c.id !== id)); }}
+                onToggleLock={(id) => { if (!onCommentsChange) return; onUndoCheckpoint(); onCommentsChange(comments.map(c => c.id === id ? { ...c, locked: !c.locked } : c)); }}
             />
         ))}
         
@@ -511,6 +541,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       />
 
       {isMinimapVisible && (
+          <div data-testid="minimap" className="contents">
           <Minimap 
               instances={instances} 
               templates={templates} 
@@ -523,6 +554,13 @@ export const Canvas: React.FC<CanvasProps> = ({
               theme={theme}
               visible={isMinimapVisible}
           />
+          </div>
+      )}
+
+      {connectionWarning && (
+          <div role="alert" className="absolute top-24 left-1/2 -translate-x-1/2 z-[120] max-w-[80%] rounded-lg bg-red-600/95 px-4 py-2 text-sm font-medium text-white shadow-xl no-print">
+              {connectionWarning}
+          </div>
       )}
 
       {/* Modals */}
@@ -576,7 +614,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                   const inst = instances.find(i => i.id === contextMenu.instanceId);
                   if (inst && onEditTemplate) onEditTemplate(inst.templateId);
               }}
-              onCopy={() => { if(onSelectInstance) onSelectInstance(contextMenu.instanceId); }}
+              onCopy={() => { onSelectInstance?.(contextMenu.instanceId); onCopyInstance?.(contextMenu.instanceId); }}
               onMirror={() => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === contextMenu.instanceId ? { ...i, mirrored: !i.mirrored } : i)); }}
               onRotate={() => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === contextMenu.instanceId ? { ...i, rotation: (i.rotation || 0) + 90 } : i)); }}
               onDelete={() => { 

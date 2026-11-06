@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ActiveTool } from './CanvasToolbar';
-import { Minus, MoreHorizontal, GripHorizontal, Type, Square, Palette, Cable, Scaling } from 'lucide-react';
+import { Minus, MoreHorizontal, GripHorizontal, Type, Square, Cable, Scaling } from 'lucide-react';
 import { LineStyle } from '../../types';
 
 export interface ToolSettings {

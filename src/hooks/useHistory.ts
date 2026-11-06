@@ -1,243 +1,86 @@
 /**
- * useHistory - Undo/Redo hook for Weave canvas
- * Implements command pattern for state history
+ * useHistory - checkpoint based undo/redo for the Weave document.
+ *
+ * Callers invoke `saveCheckpoint(currentState)` *before* mutating the document.
+ * `undo(currentState)` / `redo(currentState)` return the state to restore (or null).
+ * Named snapshots are kept separately and survive undo/redo.
  */
 
 import { useState, useCallback, useRef } from 'react';
+import type { HistoryState, HistorySnapshot } from '../types';
 
-interface HistoryState<T> {
-  past: T[];
-  present: T;
-  future: T[];
-}
+const MAX_HISTORY = 50;
 
-interface UseHistoryOptions<T> {
-  initialState: T;
-  maxHistory?: number;
-}
+const clone = (state: HistoryState): HistoryState => structuredClone(state);
 
-interface UseHistoryReturn<T> {
-  state: T;
-  setState: (newState: T | ((prev: T) => T)) => void;
-  undo: () => void;
-  redo: () => void;
+export interface UseHistoryReturn {
+  saveCheckpoint: (state: HistoryState) => void;
+  undo: (current: HistoryState) => HistoryState | null;
+  redo: (current: HistoryState) => HistoryState | null;
   canUndo: boolean;
   canRedo: boolean;
-  clear: () => void;
-  reset: (newState: T) => void;
-  history: HistoryState<T>;
+  pastStates: HistoryState[];
+  snapshots: HistorySnapshot[];
+  createSnapshot: (name: string, state: HistoryState) => void;
+  clearHistory: () => void;
 }
 
-export function useHistory<T>(options?: UseHistoryOptions<T>): UseHistoryReturn<T> {
-  const { initialState = {} as T, maxHistory = 50 } = options || {};
-  
-  const [history, setHistory] = useState<HistoryState<T>>({
-    past: [],
-    present: initialState,
-    future: [],
-  });
+export function useHistory(maxHistory: number = MAX_HISTORY): UseHistoryReturn {
+  // Refs hold the source of truth so undo/redo can return synchronously;
+  // the version counter re-renders consumers when the stacks change.
+  const past = useRef<HistoryState[]>([]);
+  const future = useRef<HistoryState[]>([]);
+  const [, setVersion] = useState(0);
+  const [snapshots, setSnapshots] = useState<HistorySnapshot[]>([]);
+  const bump = () => setVersion(v => v + 1);
 
-  const setState = useCallback((newState: T | ((prev: T) => T)) => {
-    setHistory(prev => {
-      const resolvedState = typeof newState === 'function' 
-        ? (newState as (prev: T) => T)(prev.present)
-        : newState;
-      
-      // Don't record if same state
-      if (JSON.stringify(resolvedState) === JSON.stringify(prev.present)) {
-        return prev;
-      }
-      
-      const newPast = [...prev.past, prev.present];
-      // Limit history size
-      if (newPast.length > maxHistory) {
-        newPast.shift();
-      }
-      
-      return {
-        past: newPast,
-        present: resolvedState,
-        future: [], // Clear future on new action
-      };
-    });
+  const saveCheckpoint = useCallback((state: HistoryState) => {
+    past.current = [...past.current, clone(state)].slice(-maxHistory);
+    future.current = [];
+    bump();
   }, [maxHistory]);
 
-  const undo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.past.length === 0) return prev;
-      
-      const newPast = [...prev.past];
-      const previousState = newPast.pop()!;
-      
-      return {
-        past: newPast,
-        present: previousState,
-        future: [prev.present, ...prev.future],
-      };
-    });
+  const undo = useCallback((current: HistoryState) => {
+    const previous = past.current.at(-1);
+    if (!previous) return null;
+    past.current = past.current.slice(0, -1);
+    future.current = [clone(current), ...future.current];
+    bump();
+    return previous;
   }, []);
 
-  const redo = useCallback(() => {
-    setHistory(prev => {
-      if (prev.future.length === 0) return prev;
-      
-      const newFuture = [...prev.future];
-      const nextState = newFuture.shift()!;
-      
-      return {
-        past: [...prev.past, prev.present],
-        present: nextState,
-        future: newFuture,
-      };
-    });
+  const redo = useCallback((current: HistoryState) => {
+    const next = future.current[0];
+    if (!next) return null;
+    future.current = future.current.slice(1);
+    past.current = [...past.current, clone(current)].slice(-maxHistory);
+    bump();
+    return next;
+  }, [maxHistory]);
+
+  const createSnapshot = useCallback((name: string, state: HistoryState) => {
+    setSnapshots(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), name, timestamp: new Date().toISOString(), state: clone(state) },
+    ]);
   }, []);
 
-  const clear = useCallback(() => {
-    setHistory(prev => ({
-      past: [],
-      present: prev.present,
-      future: [],
-    }));
-  }, []);
-
-  const reset = useCallback((newState: T) => {
-    setHistory({
-      past: [],
-      present: newState,
-      future: [],
-    });
+  const clearHistory = useCallback(() => {
+    past.current = [];
+    future.current = [];
+    setSnapshots([]);
+    bump();
   }, []);
 
   return {
-    state: history.present,
-    setState,
+    saveCheckpoint,
     undo,
     redo,
-    canUndo: history.past.length > 0,
-    canRedo: history.future.length > 0,
-    clear,
-    reset,
-    history,
-  };
-}
-
-// Command interface for more complex undo/redo
-export interface Command<T> {
-  execute: () => T;
-  undo: () => T;
-  description: string;
-}
-
-interface UseCommandHistoryReturn<T> {
-  state: T;
-  execute: (command: Command<T>) => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  undoDescription: string | null;
-  redoDescription: string | null;
-}
-
-export function useCommandHistory<T>(initialState: T): UseCommandHistoryReturn<T> {
-  const [state, setState] = useState(initialState);
-  const undoStack = useRef<Command<T>[]>([]);
-  const redoStack = useRef<Command<T>[]>([]);
-  const [, forceUpdate] = useState({});
-
-  const execute = useCallback((command: Command<T>) => {
-    const newState = command.execute();
-    setState(newState);
-    undoStack.current.push(command);
-    redoStack.current = [];
-    forceUpdate({});
-  }, []);
-
-  const undo = useCallback(() => {
-    const command = undoStack.current.pop();
-    if (command) {
-      const newState = command.undo();
-      setState(newState);
-      redoStack.current.push(command);
-      forceUpdate({});
-    }
-  }, []);
-
-  const redo = useCallback(() => {
-    const command = redoStack.current.pop();
-    if (command) {
-      const newState = command.execute();
-      setState(newState);
-      undoStack.current.push(command);
-      forceUpdate({});
-    }
-  }, []);
-
-  return {
-    state,
-    execute,
-    undo,
-    redo,
-    canUndo: undoStack.current.length > 0,
-    canRedo: redoStack.current.length > 0,
-    undoDescription: undoStack.current.length > 0 
-      ? undoStack.current[undoStack.current.length - 1].description 
-      : null,
-    redoDescription: redoStack.current.length > 0 
-      ? redoStack.current[redoStack.current.length - 1].description 
-      : null,
-  };
-}
-
-// Pre-built commands for canvas operations
-export function createAddCommand<T extends { id: string }>(
-  item: T,
-  getState: () => T[],
-  setState: (items: T[]) => T[]
-): Command<T[]> {
-  return {
-    execute: () => setState([...getState(), item]),
-    undo: () => setState(getState().filter(i => i.id !== item.id)),
-    description: `Öğe eklendi`,
-  };
-}
-
-export function createRemoveCommand<T extends { id: string }>(
-  itemId: string,
-  getState: () => T[],
-  setState: (items: T[]) => T[]
-): Command<T[]> {
-  let removed: T | undefined;
-  return {
-    execute: () => {
-      const items = getState();
-      removed = items.find(i => i.id === itemId);
-      return setState(items.filter(i => i.id !== itemId));
-    },
-    undo: () => {
-      if (removed) {
-        return setState([...getState(), removed]);
-      }
-      return getState();
-    },
-    description: `Öğe silindi`,
-  };
-}
-
-export function createMoveCommand<T extends { id: string; x: number; y: number }>(
-  itemId: string,
-  oldPos: { x: number; y: number },
-  newPos: { x: number; y: number },
-  getState: () => T[],
-  setState: (items: T[]) => T[]
-): Command<T[]> {
-  return {
-    execute: () => setState(
-      getState().map(i => i.id === itemId ? { ...i, ...newPos } : i)
-    ),
-    undo: () => setState(
-      getState().map(i => i.id === itemId ? { ...i, ...oldPos } : i)
-    ),
-    description: `Öğe taşındı`,
+    canUndo: past.current.length > 0,
+    canRedo: future.current.length > 0,
+    pastStates: past.current,
+    snapshots,
+    createSnapshot,
+    clearHistory,
   };
 }

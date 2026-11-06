@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { AppSettings } from '../../types';
-import { Settings, Moon, Sun, Monitor, Globe, Palette, Check, Users, Plus, Trash2, Sliders, Share2 } from 'lucide-react';
+import { AppSettings, ColorPalette } from '../../types';
+import { Settings, Moon, Sun, Monitor, Check, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -18,7 +17,7 @@ interface AppSettingsModalProps {
   onUpdateSettings: (s: AppSettings) => void;
 }
 
-export const PALETTES = [
+export const PALETTES: { id: ColorPalette; name: string; colors: Record<'ink' | 'paprika' | 'apricot' | 'vanilla' | 'alabaster', string> }[] = [
   {
     id: 'weave',
     name: 'Weave (Default)',
@@ -47,9 +46,9 @@ export const PALETTES = [
 ];
 
 export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings }) => {
-  const [newMember, setNewMember] = useState({ name: '', email: '', role: 'viewer' as 'viewer' | 'manager' | 'admin' });
+  const [showKey, setShowKey] = useState(false);
 
-  const handlePaletteChange = (paletteId: string) => {
+  const handlePaletteChange = (paletteId: ColorPalette) => {
       onUpdateSettings({ ...settings, palette: paletteId });
   };
 
@@ -62,15 +61,14 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                     Application Settings
                 </DialogTitle>
                 <DialogDescription>
-                    Customize your workspace appearance and manage team settings.
+                    Customize your workspace appearance and AI features.
                 </DialogDescription>
             </DialogHeader>
 
             <Tabs defaultValue="appearance" className="w-full mt-4">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="appearance"><Monitor className="w-4 h-4 mr-2"/> Appearance</TabsTrigger>
-                    <TabsTrigger value="integrations"><Share2 className="w-4 h-4 mr-2"/> Integrations</TabsTrigger>
-                    <TabsTrigger value="team"><Users className="w-4 h-4 mr-2"/> Team</TabsTrigger>
+                    <TabsTrigger value="ai"><Sparkles className="w-4 h-4 mr-2"/> AI</TabsTrigger>
                 </TabsList>
 
                 {/* --- APPEARANCE TAB --- */}
@@ -152,112 +150,29 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                     </div>
                 </TabsContent>
 
-                {/* --- INTEGRATIONS TAB --- */}
-                <TabsContent value="integrations" className="space-y-6 mt-4">
-                    <div className="border rounded-xl p-4 flex items-center justify-between">
-                        <div className="space-y-0.5">
-                            <Label className="text-base">UPH Integration</Label>
-                            <p className="text-sm text-muted-foreground">Sync projects directly to Unified Project Hub</p>
-                        </div>
-                        <Switch 
-                            checked={settings.enableUPHIntegration}
-                            onCheckedChange={(checked) => onUpdateSettings({ ...settings, enableUPHIntegration: checked })}
-                        />
-                    </div>
-
-                    <div className="border rounded-xl p-4 flex items-center justify-between">
-                         <div className="space-y-0.5">
-                            <Label className="text-base">Google Drive</Label>
-                            <p className="text-sm text-muted-foreground">Backup projects to your Drive automatically</p>
-                        </div>
-                        <Switch 
-                            checked={settings.enableGoogleDrive}
-                            onCheckedChange={(checked) => onUpdateSettings({ ...settings, enableGoogleDrive: checked })}
-                        />
-                    </div>
-                </TabsContent>
-
-                {/* --- TEAM TAB --- */}
-                <TabsContent value="team" className="space-y-6 mt-4">
-                    <div className="space-y-4">
-                        <Label className="text-base">Add Team Member</Label>
-                        <div className="flex gap-2 items-start">
-                            <Input 
-                                placeholder="Name Surname" 
-                                value={newMember.name}
-                                onChange={(e) => setNewMember({...newMember, name: e.target.value})}
-                                className="flex-1"
+                {/* --- AI TAB --- */}
+                <TabsContent value="ai" className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="gemini-key" className="text-base font-semibold">Gemini API Key</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="gemini-key"
+                                type={showKey ? 'text' : 'password'}
+                                autoComplete="off"
+                                spellCheck={false}
+                                placeholder="AIza..."
+                                value={settings.geminiApiKey || ''}
+                                onChange={(e) => onUpdateSettings({ ...settings, geminiApiKey: e.target.value.trim() })}
+                                className="flex-1 font-mono"
                             />
-                            <Input 
-                                placeholder="Email" 
-                                type="email"
-                                value={newMember.email}
-                                onChange={(e) => setNewMember({...newMember, email: e.target.value})}
-                                className="flex-1"
-                            />
-                            <Select 
-                                value={newMember.role} 
-                                onValueChange={(val: 'viewer'|'manager'|'admin') => setNewMember({...newMember, role: val})}
-                            >
-                                 <SelectTrigger className="w-[110px]">
-                                    <SelectValue placeholder="Role" />
-                                 </SelectTrigger>
-                                 <SelectContent>
-                                    <SelectItem value="viewer">Viewer</SelectItem>
-                                    <SelectItem value="manager">Manager</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                 </SelectContent>
-                            </Select>
-                            <Button 
-                                size="icon"
-                                onClick={() => {
-                                    if (newMember.name && newMember.email) {
-                                        const member = {
-                                            id: crypto.randomUUID(),
-                                            name: newMember.name,
-                                            email: newMember.email,
-                                            role: newMember.role
-                                        };
-                                        onUpdateSettings({ 
-                                            ...settings, 
-                                            teamMembers: [...(settings.teamMembers || []), member] 
-                                        });
-                                        setNewMember({ name: '', email: '', role: 'viewer' });
-                                    }
-                                }}
-                                disabled={!newMember.name || !newMember.email}
-                            >
-                                <Plus className="w-4 h-4" />
+                            <Button variant="outline" size="icon" onClick={() => setShowKey(v => !v)} aria-label={showKey ? 'Gizle' : 'Göster'}>
+                                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </Button>
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Team Members</Label>
-                        {settings.teamMembers?.map(member => (
-                            <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground">
-                                <div>
-                                    <div className="font-medium">{member.name}</div>
-                                    <div className="text-xs text-muted-foreground">{member.email} • <span className="uppercase text-primary font-bold">{member.role}</span></div>
-                                </div>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    className="text-muted-foreground hover:text-destructive"
-                                    onClick={() => onUpdateSettings({
-                                        ...settings,
-                                        teamMembers: settings.teamMembers?.filter(m => m.id !== member.id)
-                                    })}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        ))}
-                        {(!settings.teamMembers || settings.teamMembers.length === 0) && (
-                            <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg bg-muted/20">
-                                No team members added yet.
-                            </div>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                            Şema analizi ve görselden parça listesi çıkarma için kullanılır. Anahtar yalnızca bu cihazda saklanır
+                            ve doğrudan Google'a gönderilir. Anahtar almak için: aistudio.google.com/apikey
+                        </p>
                     </div>
                 </TabsContent>
             </Tabs>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Zone } from '../../types';
 
 export const EditZoneModal = ({ zone, onSave, onCancel }: { zone: Zone, onSave: (z: Zone) => void, onCancel: () => void }) => {

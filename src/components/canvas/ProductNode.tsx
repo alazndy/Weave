@@ -59,6 +59,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
 
     return (
         <div
+          data-instance-id={inst.id}
           style={{ left: inst.x, top: inst.y, width: currentWidth, height: currentHeight }}
           className="absolute z-30 flex items-center justify-center pointer-events-none" 
         >
@@ -155,6 +156,8 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                     return (
                     <div
                         key={port.id}
+                        data-port-id={port.id}
+                        data-port-instance-id={inst.id}
                         className={`absolute w-5 h-5 -ml-2.5 -mt-2.5 border border-zinc-900 cursor-crosshair z-50 transition-all flex items-center justify-center group/port ${shapeClass} ${portStyleClass} ${!startPort ? 'hover:scale-125' : ''}`}
                         style={{ 
                             left: `${portX}%`, 
@@ -222,6 +225,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
 export const ProductNode = React.memo(ProductNodeComponent, (prev, next) => {
     return (
         prev.inst === next.inst &&
+        prev.template === next.template &&
         prev.isSelected === next.isSelected &&
         prev.isDragged === next.isDragged &&
         prev.isScaleToolActive === next.isScaleToolActive && 

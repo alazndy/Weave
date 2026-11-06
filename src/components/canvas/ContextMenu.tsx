@@ -1,6 +1,5 @@
 
 
-import React from 'react';
 import { Edit2, Copy, RotateCw, FlipHorizontal, Trash2, Group, Ungroup, PackagePlus } from 'lucide-react';
 
 export const ContextMenu = ({ 

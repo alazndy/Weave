@@ -19,6 +19,7 @@ export const TextLabelNode: React.FC<TextLabelNodeProps> = ({
 }) => {
     return (
         <div 
+            data-text-id={text.id}
             style={{ 
                 left: text.x, 
                 top: text.y, 

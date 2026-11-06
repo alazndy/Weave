@@ -2,12 +2,11 @@ import React from 'react';
 import { 
   Undo2, Redo2, Sparkles, Route, Trash2, Printer, 
   Moon, Sun, HelpCircle, TableProperties, History, 
-  Group, Ungroup, PackagePlus, Cloud, Keyboard 
+  Group, Ungroup, PackagePlus 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { EcosystemSwitcher } from './EcosystemSwitcher';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -28,7 +27,6 @@ interface ToolbarProps {
   openShortcuts: () => void;
   openPinout?: () => void;
   openHistory?: () => void;
-  openCloudSync?: () => void;
   selectedCount?: number;
   handleGroup?: () => void;
   handleUngroup?: () => void;
@@ -42,7 +40,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
     handleAutoRoute, hasConnections,
     requestClear, handleExportImage,
     theme, setTheme,
-    openShortcuts, openPinout, openHistory, openCloudSync,
+    openShortcuts, openPinout, openHistory,
     selectedCount = 0, handleGroup, handleUngroup, handleSaveBlock
   } = props;
   const { t } = useTranslation();
@@ -55,6 +53,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                 size={size}
                 onClick={onClick}
                 disabled={disabled}
+                aria-label={label}
                 className={cn(
                     "transition-all duration-200", 
                     className,
@@ -174,9 +173,6 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
              <ToolbarBtn onClick={openPinout} icon={TableProperties} label={t('pinMap')} className="hover:text-paprika" />
         )}
         <ToolbarBtn onClick={openShortcuts} icon={HelpCircle} label={t('shortcuts')} />
-        {openCloudSync && (
-             <ToolbarBtn onClick={openCloudSync} icon={Cloud} label={t('cloudSync')} className="hover:text-blue-400" />
-        )}
 
         <div className="flex items-center gap-2 px-2 border-l border-border h-6 ml-1 opacity-50">
              <div className="flex items-center gap-1" title={t('inputPort')}><div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] ring-1 ring-blue-400/50"></div></div>
@@ -194,7 +190,6 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
 
         <Separator orientation="vertical" className="h-6 mx-1 bg-border/50" />
 
-        <EcosystemSwitcher />
         <LanguageSwitcher />
     </div>
   );

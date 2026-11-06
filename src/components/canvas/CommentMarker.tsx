@@ -35,6 +35,7 @@ export const CommentMarker: React.FC<CommentMarkerProps> = ({
 
     return (
         <div
+            data-comment-id={comment.id}
             className="absolute z-[80]"
             style={{ left: comment.x, top: comment.y }}
             onMouseDown={(e) => {

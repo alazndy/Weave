@@ -25,6 +25,7 @@ export const ZoneNode: React.FC<ZoneNodeProps> = ({
     
     return (
         <div 
+            data-zone-id={zone.id}
             style={{ 
                 left: zone.x, 
                 top: zone.y, 

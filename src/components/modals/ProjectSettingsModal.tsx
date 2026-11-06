@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ProjectMetadata, CustomField, PaperSize, Orientation } from '../../types';
-import { Settings, X, Upload, RefreshCw, LayoutTemplate, ArrowLeftRight, Plus, Trash2, Save, FileText, Briefcase, User, Calendar } from 'lucide-react';
+import { Settings, Upload, RefreshCw, LayoutTemplate, ArrowLeftRight, Plus, Trash2, Save, FileText, Briefcase, User, Calendar } from 'lucide-react';
 import { PremiumModal } from '../ui/PremiumModal';
 
 interface ProjectSettingsModalProps {

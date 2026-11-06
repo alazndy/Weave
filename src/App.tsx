@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ProductInstance, 
   Connection, 
@@ -31,11 +31,9 @@ import { useHistory } from './hooks/useHistory';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
 import { ActiveTool } from './components/canvas/CanvasToolbar';
 import { exportBOM } from './utils/bom-exporter';
-import { GoogleDriveService } from './services/google-drive-service';
-import * as html2canvas from 'html2canvas';
-
-import { CookieConsent } from './components/compliance/CookieConsent';
-import { LegalModal } from './components/compliance/LegalModal';
+import { saveProject, loadProject, type RecentProject } from './services/projectStore';
+import i18n from './i18n';
+import html2canvas from 'html2canvas-pro';
 
 // Lazy load keys just in case but ModalManager handles them mostly
 
@@ -80,8 +78,21 @@ const DEFAULT_SETTINGS: AppSettings = {
     theme: 'dark',
     language: 'tr',
     palette: 'weave',
-    enableUPHIntegration: true,
-    enableGoogleDrive: false
+    geminiApiKey: ''
+};
+
+const SETTINGS_KEY = 'weave_app_settings';
+const AUTOSAVE_DELAY_MS = 1500;
+
+const loadSettings = (): AppSettings => {
+    try {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+        if (!saved) return DEFAULT_SETTINGS;
+        const { theme, language, palette, geminiApiKey } = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        return { theme, language, palette, geminiApiKey };
+    } catch {
+        return DEFAULT_SETTINGS;
+    }
 };
 
 const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
@@ -103,16 +114,17 @@ export default function App() {
     handleSwitchLibrary 
   } = useLibraryManager();
 
-  const { 
-      saveCheckpoint: saveHistoryCheckpoint, 
+  const {
+      saveCheckpoint: saveHistoryCheckpoint,
       undo, redo, canUndo, canRedo,
-      createSnapshot, restoreSnapshot,
-      pastStates, snapshots 
+      createSnapshot, clearHistory,
+      pastStates, snapshots
   } = useHistory();
 
   // --- STATE ---
-  const [pages, setPages] = useState<Page[]>([createNewPage(1)]);
-  const [activePageId, setActivePageId] = useState<string>(pages[0].id);
+  const [pages, setPages] = useState<Page[]>(() => [createNewPage(1)]);
+  const [activePageId, setActivePageId] = useState<string>(() => pages[0].id);
+  const [projectId, setProjectId] = useState<string>(() => crypto.randomUUID());
   const [isGridView, setIsGridView] = useState(false); 
   const [activeTool, setActiveTool] = useState<ActiveTool>('cursor'); 
 
@@ -121,10 +133,7 @@ export default function App() {
   const [clipboardInstance, setClipboardInstance] = useState<ProductInstance | null>(null);
   
   // App Settings
-  const [appSettings, setAppSettings] = useState<AppSettings>(() => {
-      const saved = localStorage.getItem('weave_app_settings');
-      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
-  });
+  const [appSettings, setAppSettings] = useState<AppSettings>(loadSettings);
 
   const [editingPortInfo, setEditingPortInfo] = useState<{templateId: string, portId: string} | null>(null);
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
@@ -144,27 +153,14 @@ export default function App() {
   }, [appSettings.theme]);
 
   const [showWelcome, setShowWelcome] = useState(true);
-  const [isInventoryImportOpen, setIsInventoryImportOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isPinoutOpen, setIsPinoutOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isSendToEnvModalOpen, setIsSendToEnvModalOpen] = useState(false);
-  const [templateToSend, setTemplateToSend] = useState<ProductTemplate | null>(null);
-  const [isUPHExportOpen, setIsUPHExportOpen] = useState(false);
-  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
-  // Compliance State
-  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
-  const [legalTab, setLegalTab] = useState('privacy');
-
-  const openLegal = (tab: string) => {
-    setLegalTab(tab);
-    setIsLegalModalOpen(true);
-  };
   
 
   
@@ -174,7 +170,8 @@ export default function App() {
   // Apply App Settings (Theme & Palette)
   useEffect(() => {
       // 1. Save to local storage
-      localStorage.setItem('weave_app_settings', JSON.stringify(appSettings));
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings)); } catch { /* storage unavailable */ }
+      if (i18n.language !== appSettings.language) i18n.changeLanguage(appSettings.language);
 
       // 2. Apply Theme Class
       /* Note: We handle theme prop explicitly in components, but for global bg/text
@@ -193,6 +190,16 @@ export default function App() {
       root.style.setProperty('--color-alabaster', palette.colors.alabaster);
 
   }, [appSettings]);
+
+  // Keep settings in sync when the toolbar language switcher changes i18n directly.
+  useEffect(() => {
+      const onChange = (lng: string) => {
+          const lang = lng.startsWith('en') ? 'en' : 'tr';
+          setAppSettings(prev => prev.language === lang ? prev : { ...prev, language: lang });
+      };
+      i18n.on('languageChanged', onChange);
+      return () => i18n.off('languageChanged', onChange);
+  }, []);
 
   // --- DERIVED STATE (Shortcuts to active page data) ---
   const activePage = pages.find(p => p.id === activePageId) || pages[0];
@@ -269,6 +276,20 @@ export default function App() {
       const currentState = { pages, activePageId, templates };
       createSnapshot(name, currentState);
   };
+
+  // --- AUTOSAVE (IndexedDB) ---
+  // Skipped until the user leaves the welcome screen so an untouched blank
+  // project never shows up in the recent list.
+  const [autosaveError, setAutosaveError] = useState(false);
+  useEffect(() => {
+      if (showWelcome) return;
+      const timer = setTimeout(() => {
+          saveProject(projectId, { version: '2.0', metadata: projectMetadata, templates, pages, activePageId })
+              .then(() => setAutosaveError(false))
+              .catch(err => { console.error('Autosave failed', err); setAutosaveError(true); });
+      }, AUTOSAVE_DELAY_MS);
+      return () => clearTimeout(timer);
+  }, [showWelcome, projectId, projectMetadata, templates, pages, activePageId]);
 
   const handleSelectIds = (ids: string[], multi: boolean) => {
       if (multi) {
@@ -387,8 +408,8 @@ export default function App() {
       }
 
       try {
-          const canvas = await html2canvas.default(element as HTMLElement, {
-              x: minX, 
+          const canvas = await html2canvas(element as HTMLElement, {
+              x: minX,
               y: minY, 
               width: width, 
               height: height,
@@ -452,6 +473,8 @@ export default function App() {
   };
 
   const handleDeleteSelected = () => {
+      if (selectedIds.size === 0) return;
+      performCheckpoint();
       setInstances(prev => prev.filter(i => !selectedIds.has(i.id)));
       setTextNodes(prev => prev.filter(t => !selectedIds.has(t.id)));
       setZones(prev => prev.filter(z => !selectedIds.has(z.id)));
@@ -501,13 +524,8 @@ export default function App() {
   };
   
   const handleExportLibrary = () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(templates));
-      const link = document.createElement('a');
-      link.setAttribute("href", dataStr);
-      link.setAttribute("download", `techschematic_library_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = new Blob([JSON.stringify(templates)], { type: 'application/json' });
+      downloadBlob(blob, `weave_library_${new Date().toISOString().slice(0,10)}.json`);
   };
   
   const handleImportLibrary = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -516,11 +534,13 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = (evt) => {
           try {
-              const imported = JSON.parse(evt.target?.result as string);
-              if (Array.isArray(imported)) {
+              const parsed = JSON.parse(evt.target?.result as string);
+              // Accept a full library (array) or a single exported template (object)
+              const imported = Array.isArray(parsed) ? parsed : (parsed && parsed.id && Array.isArray(parsed.ports) ? [parsed] : null);
+              if (imported) {
                   if (confirm("Mevcut kütüphane ile birleştirilsin mi?")) {
                       const newTemplates = [...templates];
-                      imported.forEach(imp => { if (!newTemplates.find(t => t.id === imp.id)) newTemplates.push(imp); });
+                      imported.forEach((imp: ProductTemplate) => { if (!newTemplates.find(t => t.id === imp.id)) newTemplates.push(imp); });
                       setTemplates(newTemplates);
                   } else {
                       setTemplates(imported);
@@ -607,9 +627,11 @@ export default function App() {
   const runAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    const result = await analyzeSchematic(instances, connections, templates);
-    setAnalysisResult(result);
-    setIsAnalyzing(false);
+    try {
+      setAnalysisResult(await analyzeSchematic(appSettings.geminiApiKey, instances, connections, templates));
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const requestClear = () => setIsClearModalOpen(true);
@@ -622,12 +644,14 @@ export default function App() {
 
   const downloadBlob = (blob: Blob | null, filename: string) => {
       if(!blob) return;
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = filename;
-      link.href = URL.createObjectURL(blob);
+      link.href = url;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   const handleExportImage = async () => {
@@ -655,7 +679,7 @@ export default function App() {
               const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
               const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
 
-              const canvas = await html2canvas.default(element as HTMLElement, {
+              const canvas = await html2canvas(element as HTMLElement, {
                   scale: 2, // High resolution
                   useCORS: true, 
                   allowTaint: true, 
@@ -691,13 +715,9 @@ export default function App() {
 
   const handleSaveProject = () => {
       const projectData = { version: '2.0', timestamp: new Date().toISOString(), metadata: projectMetadata, templates, pages, activePageId };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData));
-      const link = document.createElement('a');
-      link.setAttribute("href", dataStr);
-      link.setAttribute("download", `${projectMetadata.documentNo || 'Project'}.weave`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      // Blob instead of a data: URI — embedded product images easily exceed URL length limits.
+      const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
+      downloadBlob(blob, `${projectMetadata.documentNo || 'Project'}.weave`);
   };
 
   useAppShortcuts({
@@ -720,66 +740,84 @@ export default function App() {
       handleSaveBlockAsTemplate,
       handleAutoRoute,
       handleSaveProject,
-      onSetCanvasMode: (mode) => setActiveTool(mode as ActiveTool)
+      onSetCanvasMode: setActiveTool
   });
 
-  const handleLoadProject = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  /** Replaces the open document. Returns false if `data` is not a Weave project. */
+  const applyProjectData = (data: any, id: string = crypto.randomUUID()): boolean => {
+      if (!data || !Array.isArray(data.templates)) return false;
+      let nextPages: Page[];
+      if (Array.isArray(data.pages) && data.pages.length > 0) {
+          nextPages = data.pages;
+      } else {
+          // Legacy single-page format (or empty project)
+          const legacyPage = createNewPage(1);
+          legacyPage.instances = data.instances || [];
+          legacyPage.connections = data.connections || [];
+          legacyPage.zones = data.zones || [];
+          legacyPage.textNodes = data.textNodes || [];
+          legacyPage.comments = data.comments || [];
+          nextPages = [legacyPage];
+      }
+      const nextActive = nextPages.some(p => p.id === data.activePageId) ? data.activePageId : nextPages[0].id;
+      setPages(nextPages);
+      setActivePageId(nextActive);
+      // `templates` is also the active library (persisted by useLibraryManager):
+      // merge the project's templates in instead of replacing the library.
+      const incoming: ProductTemplate[] = data.templates;
+      if (incoming.length > 0) {
+          setTemplates(prev => {
+              const byId = new Map(prev.map(t => [t.id, t]));
+              incoming.forEach(t => byId.set(t.id, t));
+              return Array.from(byId.values());
+          });
+      }
+      setProjectMetadata({ ...INITIAL_METADATA, ...(data.metadata || {}) });
+      setProjectId(id);
+      setSelectedIds(new Set());
+      setAnalysisResult(null);
+      clearHistory();
+      return true;
+  };
+
+  const readProjectFile = (file: File) => {
       const reader = new FileReader();
       reader.onload = (evt) => {
           try {
               const data = JSON.parse(evt.target?.result as string);
-              if (!data.templates) { alert("Geçersiz proje dosyası."); return; }
-              if (confirm("Mevcut çalışmanızın üzerine yazılacak. Devam etmek istiyor musunuz?")) {
-                  performCheckpoint();
-                  if (!data.pages && data.instances) {
-                      const legacyPage = createNewPage(1);
-                      legacyPage.instances = data.instances || [];
-                      legacyPage.connections = data.connections || [];
-                      legacyPage.zones = data.zones || [];
-                      legacyPage.textNodes = data.textNodes || [];
-                      legacyPage.comments = data.comments || [];
-                      setPages([legacyPage]);
-                      setActivePageId(legacyPage.id);
-                  } else {
-                      setPages(data.pages || [createNewPage(1)]);
-                      setActivePageId(data.activePageId || data.pages[0]?.id);
-                  }
-                  
-                  setTemplates(data.templates || []);
-                  if (data.metadata) setProjectMetadata(data.metadata);
-                  alert("Proje başarıyla yüklendi.");
-              }
+              if (!applyProjectData(data)) { alert("Geçersiz proje dosyası."); return; }
+              setShowWelcome(false);
           } catch (err) { console.error("Load Error", err); alert("Dosya okunamadı."); }
       };
+      reader.onerror = () => alert("Dosya okunamadı.");
       reader.readAsText(file);
+  };
+
+  const handleLoadProject = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
       if (e.target) e.target.value = '';
+      if (!file) return;
+      if (!confirm("Mevcut proje kapatılacak (otomatik kaydedildi). Devam etmek istiyor musunuz?")) return;
+      readProjectFile(file);
   };
 
   const handleCreateNewProject = () => {
-      // Logic for new project (reset everything)
-      if (confirm("Mevcut çalışmanız silinecek. Yeni proje oluşturmak istediğinize emin misiniz?")) {
-          setProjectMetadata(INITIAL_METADATA);
-          setPages([createNewPage(1)]);
-          setActivePageId(pages[0].id); // This will point to old page, but it's fine since we reset
-          setTemplates([]);
+      applyProjectData({ templates: [], metadata: INITIAL_METADATA });
+      setShowWelcome(false);
+  };
+
+  const handleOpenRecent = async (project: RecentProject) => {
+      try {
+          const stored = await loadProject(project.id);
+          if (!stored || !applyProjectData(stored.data, stored.id)) {
+              alert("Proje yerel kayıtlarda bulunamadı.");
+              return;
+          }
           setShowWelcome(false);
+      } catch (err) {
+          console.error("Recent load failed", err);
+          alert("Proje açılamadı.");
       }
-  };
-
-  const handleOpenRecent = (project: any) => {
-      // Mock loading logic
-      console.log("Loading recent:", project);
-      alert(`"${project.name}" yükleniyor... (Demo)`);
-      setShowWelcome(false);
-  };
-
-  const handleWelcomeLoad = (file: File) => {
-      // Wrap existing load handler
-      const dummyEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
-      handleLoadProject(dummyEvent);
-      setShowWelcome(false);
   };
   
   const handleAddPage = () => {
@@ -828,12 +866,18 @@ export default function App() {
     <TooltipProvider>
     <div className="flex h-screen w-full bg-ink text-alabaster overflow-hidden font-sans select-none transition-colors duration-300 relative">
          {showWelcome && (
-             <WelcomeScreen 
-                onNewProject={() => { setShowWelcome(false); /* Start fresh implicitly */ }}
-                onOpenProject={(file) => handleWelcomeLoad(file)}
+             <WelcomeScreen
+                onNewProject={handleCreateNewProject}
+                onOpenProject={readProjectFile}
                 onOpenRecent={handleOpenRecent}
+                onSettings={() => setIsAppSettingsOpen(true)}
                 onClose={() => setShowWelcome(false)}
              />
+         )}
+         {autosaveError && (
+             <div role="alert" className="fixed bottom-16 right-4 z-[300] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-lg no-print">
+                 Otomatik kayıt başarısız — projeyi dosyaya kaydedin (Ctrl+S).
+             </div>
          )}
          <div className="flex-1 flex overflow-hidden relative">
             <LeftSidebar
@@ -857,52 +901,10 @@ export default function App() {
                 onDeleteLibrary={handleDeleteLibrary}
                 onRenameLibrary={handleRenameLibrary}
                 onOpenSettings={() => setIsAppSettingsOpen(true)}
-                onOpenInventoryImport={() => setIsInventoryImportOpen(true)}
-                onOpenUPHExport={appSettings.enableUPHIntegration ? () => setIsUPHExportOpen(true) : undefined}
-                onSaveToDrive={appSettings.enableGoogleDrive ? async () => {
-                    const confirmSave = confirm("Projeyi Google Drive'a yedeklemek istiyor musunuz?");
-                    if (!confirmSave) return;
-
-                    // Mock Connect if not auth
-                    if (!GoogleDriveService.isAuthenticated) {
-                        const res = await GoogleDriveService.connect();
-                        if (!res.success) {
-                            alert("Google Drive bağlantısı başarısız.");
-                            return;
-                        }
-                    }
-
-                    // Prepare data
-                    const projectData: any = { // Using any temporarily or need to import ProjectData if available
-                         metadata: projectMetadata,
-                         pages: pages, 
-                         templates: templates, // library was undefined, using templates
-                         version: "1.0.0"
-                    };
-                    const json = JSON.stringify(projectData, null, 2);
-                    
-                    try {
-                        await GoogleDriveService.uploadFile(`Weave_Project_${projectMetadata.projectName}.json`, json);
-                        alert("Proje başarıyla Google Drive'a yedeklendi!");
-                    } catch (e) {
-                         alert("Yedekleme sırasında bir hata oluştu.");
-                         console.error(e);
-                    }
-                } : undefined}
-                onExportBOM={() => exportBOM(activePage.instances, projectMetadata.projectName)}
+                onExportBOM={() => exportBOM(activePage.instances, templates, projectMetadata.projectName, projectMetadata.externalParts)}
                 onSingleExport={(template) => {
-                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template, null, 2));
-                    const link = document.createElement('a');
-                    link.setAttribute("href", dataStr);
-                    link.setAttribute("download", `${template.name.replace(/\s/g, '_')}.weave`);
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                }}
-                onSendToEnv={(template) => {
-                    // Always open modal to select/confirm target product
-                    setTemplateToSend(template);
-                    setIsSendToEnvModalOpen(true);
+                    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+                    downloadBlob(blob, `${template.name.replace(/\s/g, '_')}.json`);
                 }}
             />
             
@@ -943,6 +945,7 @@ export default function App() {
                         onEditMetadata={() => setIsSettingsOpen(true)}
                         onUndoCheckpoint={performCheckpoint}
                         onSelectInstance={(id) => handleSelectIds(id ? [id] : [], false)}
+                        onCopyInstance={(id) => { const inst = instances.find(i => i.id === id); if (inst) setClipboardInstance(inst); }}
                         onRemovePort={handleRemovePortFromInstance}
                         isLegendCollapsed={isLegendCollapsed}
                         onToggleLegend={setIsLegendCollapsed}
@@ -963,7 +966,7 @@ export default function App() {
           </div>
           
           {!isGridView && (
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-max max-w-[90vw]">
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-max max-w-[calc(100%-1.5rem)] overflow-x-auto rounded-2xl">
                 <Toolbar 
                     handleUndo={handleUndo} handleRedo={handleRedo}
                     canUndo={canUndo} canRedo={canRedo}
@@ -974,8 +977,7 @@ export default function App() {
                     openShortcuts={() => setIsShortcutsOpen(true)}
                     openPinout={() => setIsPinoutOpen(true)}
                     openHistory={() => setIsHistoryOpen(true)}
-                    openCloudSync={() => setIsCloudSyncOpen(true)}
-                    
+
                     selectedCount={selectedIds.size}
                     handleGroup={handleGroupSelected}
                     handleUngroup={handleUngroupSelected}
@@ -1038,18 +1040,6 @@ export default function App() {
         setIsSettingsOpen={setIsSettingsOpen}
         isAppSettingsOpen={isAppSettingsOpen}
         setIsAppSettingsOpen={setIsAppSettingsOpen}
-        isProjectSettingsOpen={false} // Assuming consolidated or controlled internally by isSettingsOpen logic if needed, but passing for now
-        setIsProjectSettingsOpen={() => {}} // No-op if consolidate
-        isInventoryImportOpen={isInventoryImportOpen}
-        setIsInventoryImportOpen={setIsInventoryImportOpen}
-        isUPHExportOpen={isUPHExportOpen}
-        setIsUPHExportOpen={setIsUPHExportOpen}
-        isSendToEnvModalOpen={isSendToEnvModalOpen}
-        setIsSendToEnvModalOpen={setIsSendToEnvModalOpen}
-        templateToSend={templateToSend}
-        setTemplateToSend={setTemplateToSend}
-        isCloudSyncOpen={isCloudSyncOpen}
-        setIsCloudSyncOpen={setIsCloudSyncOpen}
         isClearModalOpen={isClearModalOpen}
         setIsClearModalOpen={setIsClearModalOpen}
         onClearConfirm={handleClearConfirm}
@@ -1068,8 +1058,6 @@ export default function App() {
       />
       </div>
     </div>
-    <CookieConsent onOpenLegal={openLegal} />
-    <LegalModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} defaultTab={legalTab} />
     </TooltipProvider>
   );
 }

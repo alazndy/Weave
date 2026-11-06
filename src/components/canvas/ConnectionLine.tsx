@@ -166,6 +166,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
 
     return (
         <g 
+          data-connection-id={conn.id}
           className={`group pointer-events-auto ${conn.locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => !conn.locked && handleConnectionDoubleClick(e, conn.id)}

@@ -23,7 +23,7 @@
     "block": "BLOCK",
     "hideMenu": "Hide Menu",
     "showMenu": "Show Menu",
-    "appName": "T-Weave",
+    "appName": "Weave",
     "save": "Save",
     "open": "Open",
     "sendToUPH": "Send to UPH",
@@ -52,7 +52,7 @@
     "noBlocks": "No saved blocks.",
     "blockHint": "Select from scene and right click > Save Block",
     "appSettings": "App Settings",
-    "footer": "T-Weave v1.0 • TEK Ecosystem",
+    "footer": "Weave",
     "exportBOM": "Export BOM"
   }
 }

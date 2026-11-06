@@ -1,3 +1,4 @@
+import type { ActiveTool } from '../components/canvas/CanvasToolbar';
 
 import React, { useEffect } from 'react';
 import { ProductInstance, TextNode, Zone, Comment } from '../types';
@@ -22,8 +23,19 @@ interface UseAppShortcutsProps {
     performCheckpoint: () => void;
     selectedInstanceId: string | null;
     clipboardInstance: ProductInstance | null;
-    onSetCanvasMode?: (mode: 'select' | 'move' | 'rotate' | 'scale' | 'zone' | 'text') => void;
+    onSetCanvasMode?: (mode: ActiveTool) => void;
 }
+
+const TOOL_KEYS: Record<string, ActiveTool> = {
+    v: 'cursor',
+    m: 'move',
+    s: 'scale',
+    b: 'select-box',
+    r: 'manual-route',
+    z: 'zone',
+    t: 'text',
+    c: 'comment',
+};
 
 export const useAppShortcuts = ({
     selectedIds,
@@ -115,39 +127,23 @@ export const useAppShortcuts = ({
                     }
                 }
                 
-                // Delete/Backspace
+                // Delete/Backspace (handleDeleteSelected records its own checkpoint)
                 if (key === 'delete' || key === 'backspace') { 
                     if (selectedIds.size > 0) { 
                         e.preventDefault(); 
-                        performCheckpoint(); 
                         handleDeleteSelected(); 
                     } 
                 }
                 
-                // Mode shortcuts (only if onSetCanvasMode is provided)
-                if (onSetCanvasMode) {
-                    if (key === 'm') { 
-                        e.preventDefault(); 
-                        onSetCanvasMode('move'); 
-                    }
-                    else if (key === 'r') { 
-                        e.preventDefault(); 
-                        onSetCanvasMode('rotate'); 
-                    }
-                    else if (key === 's') { 
-                        e.preventDefault(); 
-                        onSetCanvasMode('scale'); 
-                    }
-                    else if (key === 'a') { 
-                        e.preventDefault(); 
-                        onSetCanvasMode('zone'); 
-                    }
-                }
-                
-                // Auto-route shortcut
-                if (key === 'b') {
+                // Auto-route: Alt+R
+                if (e.altKey && key === 'r') {
                     e.preventDefault();
                     handleAutoRoute();
+                }
+                // Tool shortcuts: same letters as the canvas toolbar tooltips
+                else if (onSetCanvasMode && !e.altKey && TOOL_KEYS[key]) {
+                    e.preventDefault();
+                    onSetCanvasMode(TOOL_KEYS[key]);
                 }
             }
         };

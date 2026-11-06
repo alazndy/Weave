@@ -23,7 +23,7 @@
     "block": "BLOK",
     "hideMenu": "Menüyü Gizle",
     "showMenu": "Menüyü Göster",
-    "appName": "T-Weave",
+    "appName": "Weave",
     "save": "Kaydet",
     "open": "Aç",
     "sendToUPH": "UPH'a Gönder",
@@ -52,7 +52,7 @@
     "noBlocks": "Kayıtlı blok yok.",
     "blockHint": "Sahneden seçip sağ tıkla > Bloğu Kaydet",
     "appSettings": "Uygulama Ayarları",
-    "footer": "T-Weave v1.0 • TEK Ekosistemi",
+    "footer": "Weave",
     "exportBOM": "BOM Dışa Aktar"
   }
 }

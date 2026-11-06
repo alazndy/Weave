@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Page, ProductTemplate, ProductInstance, Connection } from '../../types';
+import { Page, ProductTemplate } from '../../types';
 import { FileText, Trash2, Copy, MousePointer2 } from 'lucide-react';
 import { getPortPosition } from '../../utils/canvasHelpers';
 
