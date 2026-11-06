@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
-  openApp, trackErrors, autoDialogs, nodes, leftTab, dropTemplate, placePair, CAMERA, canvas,
+  openApp, trackErrors, autoDialogs, nodes, leftTab, dropTemplate, placePair, CAMERA, canvas, undoBtn, redoBtn,
 } from './helpers';
 
 const readDownload = async (file: import('@playwright/test').Download) =>
@@ -167,6 +167,10 @@ test.describe('Antet / proje detayları', () => {
     await modal.locator('textarea').fill('1. Tüm kablolar etiketlenecek.');
     await modal.getByRole('button', { name: 'Kaydet' }).click();
     await expect(canvas(page)).toContainText('Tüm kablolar etiketlenecek');
+    await undoBtn(page).click();
+    await expect(page.locator('#legend-export-area')).not.toContainText('Tüm kablolar etiketlenecek');
+    await redoBtn(page).click();
+    await expect(page.locator('#legend-export-area')).toContainText('Tüm kablolar etiketlenecek');
   });
 });
 

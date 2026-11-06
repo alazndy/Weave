@@ -819,11 +819,9 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
             {editingPortId && (
                 <div 
                     className="absolute z-50 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 animate-in fade-in zoom-in-95 duration-200"
-                    style={{
-                        left: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.x || 50))}%`,
-                        top: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.y || 50))}%`,
-                        transform: 'translate(-50%, 10px)'
-                    }}
+                    style={(ports.find(p => p.id === editingPortId)?.x ?? 50) > 50
+                        ? { right: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }
+                        : { left: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">

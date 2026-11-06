@@ -241,39 +241,42 @@ export default function App() {
 
   const performCheckpoint = useCallback(() => {
     saveHistoryCheckpoint({
-      pages, activePageId, templates
+      pages, activePageId, templates, metadata: projectMetadata
     });
-  }, [saveHistoryCheckpoint, pages, activePageId, templates]);
+  }, [saveHistoryCheckpoint, pages, activePageId, templates, projectMetadata]);
 
   const handleUndo = useCallback(() => {
-    const currentState = { pages, activePageId, templates };
+    const currentState = { pages, activePageId, templates, metadata: projectMetadata };
     const restoredState = undo(currentState);
     if (restoredState) {
         setPages(restoredState.pages);
         setActivePageId(restoredState.activePageId);
         setTemplates(restoredState.templates);
+        if (restoredState.metadata) setProjectMetadata(restoredState.metadata);
     }
-  }, [undo, pages, activePageId, templates, setTemplates]);
+  }, [undo, pages, activePageId, templates, projectMetadata, setTemplates]);
 
   const handleRedo = useCallback(() => {
-    const currentState = { pages, activePageId, templates };
+    const currentState = { pages, activePageId, templates, metadata: projectMetadata };
     const restoredState = redo(currentState);
     if (restoredState) {
         setPages(restoredState.pages);
         setActivePageId(restoredState.activePageId);
         setTemplates(restoredState.templates);
+        if (restoredState.metadata) setProjectMetadata(restoredState.metadata);
     }
-  }, [redo, pages, activePageId, templates, setTemplates]);
+  }, [redo, pages, activePageId, templates, projectMetadata, setTemplates]);
 
   const handleRestoreHistoryState = (state: HistoryState) => {
       performCheckpoint();
       setPages(state.pages);
       setActivePageId(state.activePageId);
       setTemplates(state.templates);
+      if (state.metadata) setProjectMetadata(state.metadata);
   };
 
   const handleCreateSnapshot = (name: string) => {
-      const currentState = { pages, activePageId, templates };
+      const currentState = { pages, activePageId, templates, metadata: projectMetadata };
       createSnapshot(name, currentState);
   };
 
@@ -882,7 +885,7 @@ export default function App() {
          <div className="flex-1 flex overflow-hidden relative">
             <LeftSidebar
                 projectMetadata={projectMetadata}
-                setProjectMetadata={setProjectMetadata}
+                setProjectMetadata={(m) => { performCheckpoint(); setProjectMetadata(m); }}
                 templates={templates}
                 handleSaveProject={handleSaveProject}
                 handleLoadProject={handleLoadProject}

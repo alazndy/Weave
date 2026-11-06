@@ -223,6 +223,7 @@ export interface HistoryState {
   pages: Page[];
   activePageId: string;
   templates: ProductTemplate[];
+  metadata?: ProjectMetadata;
 }
 
 export interface HistorySnapshot {

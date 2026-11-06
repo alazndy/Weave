@@ -40,9 +40,22 @@ pnpm dev          # http://localhost:3004
 | `pnpm build` | Production web build to `dist/` |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm test` | Unit tests (Vitest) |
-| `pnpm test:e2e` | Browser tests (Playwright). Set `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium` to use a system Chromium |
+| `pnpm test:e2e` | Browser UI tests (Playwright, `tests/e2e/`). Set `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium` to use a system Chromium |
 | `pnpm electron:dev` / `pnpm electron:build` | Desktop app (Electron) |
 | `pnpm mobile:build` | Build and sync Capacitor Android/iOS projects |
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| V / M / S / B | Select / Move / Scale / Box select |
+| R / Alt+R | Manual route / Auto-route |
+| Z / T / C | Zone / Text / Comment |
+| Ctrl+Z / Ctrl+Y | Undo / Redo |
+| Ctrl+C / Ctrl+V | Copy / Paste device |
+| Ctrl+G / Ctrl+Shift+G | Group / Ungroup |
+| Ctrl+S | Save project as `.weave` |
+| Delete | Delete selection |
 
 ## Project layout
 
