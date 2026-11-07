@@ -57,7 +57,7 @@ function registerAppProtocol() {
     if (!file.startsWith(DIST_DIR + path.sep) && file !== DIST_DIR) {
       return new Response('Forbidden', { status: 403 });
     }
-    return net.fetch(pathToFileURL(file).toString());
+    return net.fetch(pathToFileURL(file).toString()).catch(() => new Response('Not found', { status: 404 }));
   });
 }
 
