@@ -44,6 +44,21 @@ pnpm dev          # http://localhost:3004
 | `pnpm electron:dev` / `pnpm electron:build` | Desktop app (Electron) |
 | `pnpm mobile:build` | Build and sync Capacitor Android/iOS projects |
 
+## Desktop app (Linux)
+
+Weave ships as an Electron desktop app that runs fully offline. Projects and libraries are
+stored per user in `~/.config/weave` (IndexedDB), so they survive restarts and updates.
+
+```bash
+scripts/install-linux.sh              # builds if needed, installs to ~/.local/opt/Weave + menu entry
+scripts/install-linux.sh --uninstall  # removes the app, keeps your projects
+scripts/install-linux.sh --purge      # removes the app and all saved data
+```
+
+`pnpm desktop:build` produces `release/Weave-*.AppImage` and a `.deb` (Debian/Ubuntu). For Windows
+(`nsis`) and macOS (`dmg`) run `electron-builder` on that platform. `pnpm test:desktop` launches the
+real app twice and verifies that data persists across restarts.
+
 ## Keyboard shortcuts
 
 | Key | Action |
