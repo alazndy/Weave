@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HistoryState, HistorySnapshot } from '../../types';
-import { History, X, RotateCcw, Save, Clock, ArrowRight } from 'lucide-react';
+import { History, X, RotateCcw, Save, Clock } from 'lucide-react';
 
 interface HistoryModalProps {
   isOpen: boolean;

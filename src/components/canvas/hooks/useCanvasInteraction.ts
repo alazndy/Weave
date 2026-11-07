@@ -33,7 +33,7 @@ interface UseCanvasInteractionProps {
   activeTool: ActiveTool;
   scale: number;
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useCanvasInteraction({
@@ -139,7 +139,9 @@ export function useCanvasInteraction({
         case 'cursor':
         case 'scale':
         case 'move':
-            if (e.target === e.currentTarget && onSelectIds) {
+            // The paper frame sits between the container and the click target, so
+            // "empty canvas" means: not on any selectable item.
+            if (onSelectIds && !(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id]')) {
                 onSelectIds([], false);
             }
             break;
@@ -328,7 +330,7 @@ export function useCanvasInteraction({
       if (activeTool === 'cursor' || activeTool === 'move' || activeTool === 'scale') {
           const { x, y } = getMouseCoords(e);
           const inst = instances.find(i => i.id === id);
-          if (inst) {
+          if (inst && !inst.locked) {
               setDragOffset({ x: x - inst.x, y: y - inst.y });
               setDraggedInstance(id);
               onUndoCheckpoint();

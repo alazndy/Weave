@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Keyboard, X } from 'lucide-react';
 
 interface ShortcutsModalProps {
@@ -18,13 +17,24 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { keys: ['Yön Tuşları'], desc: 'Hassas Taşıma' },
     { keys: ['Shift', 'Yön'], desc: 'Hızlı Taşıma' },
     { keys: ['Shift', 'Sürükle'], desc: 'Çoklu Seçim' },
+    { keys: ['V'], desc: 'Seçim Aracı' },
+    { keys: ['M'], desc: 'Taşı Aracı' },
+    { keys: ['S'], desc: 'Ölçekle Aracı' },
+    { keys: ['B'], desc: 'Kutu Seçimi' },
+    { keys: ['R'], desc: 'Manuel Rota' },
+    { keys: ['Z'], desc: 'Bölge Ekle' },
+    { keys: ['T'], desc: 'Metin Ekle' },
+    { keys: ['C'], desc: 'Yorum Ekle' },
+    { keys: ['Alt', 'R'], desc: 'Otomatik Rota' },
+    { keys: ['Ctrl', 'G'], desc: 'Grupla / Ctrl+Shift+G Grubu Boz' },
+    { keys: ['Ctrl', 'S'], desc: 'Projeyi Dosyaya Kaydet' },
     { keys: ['Mouse Teker'], desc: 'Zoom' },
     { keys: ['Teker Tıkla'], desc: 'Kaydır (Pan)' },
   ];
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[150] no-print" onClick={onClose}>
-      <div className="bg-zinc-900 border border-zinc-700 p-6 rounded-2xl w-[500px] shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+      <div className="bg-zinc-900 border border-zinc-700 p-6 rounded-2xl w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-white flex items-center gap-3">
             <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 p-2 rounded-lg border border-teal-500/20">
@@ -32,7 +42,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             </div>
             Klavye Kısayolları
           </h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+          <button onClick={onClose} aria-label="Kapat" className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

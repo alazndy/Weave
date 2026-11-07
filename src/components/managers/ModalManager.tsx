@@ -8,9 +8,9 @@ import {
   AppSettings,
   ProductInstance,
   Connection,
-  Zone,
-  TextNode,
-  Comment
+  ExternalPart,
+  HistoryState,
+  HistorySnapshot
 } from '../../types';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { ShortcutsModal } from '../modals/ShortcutsModal';
@@ -21,10 +21,6 @@ import { AppSettingsModal } from '../modals/AppSettingsModal';
 // Lazy load heavy components
 const ProductEditor = React.lazy(() => import('../ProductEditor').then(module => ({ default: module.ProductEditor })));
 const ProjectSettingsModal = React.lazy(() => import('../modals/ProjectSettingsModal').then(module => ({ default: module.ProjectSettingsModal })));
-const InventoryImportModal = React.lazy(() => import('../modals/InventoryImportModal').then(module => ({ default: module.InventoryImportModal })));
-const UPHExportModal = React.lazy(() => import('../modals/UPHExportModal').then(module => ({ default: module.UPHExportModal })));
-const SendToEnvModal = React.lazy(() => import('../modals/SendToEnvModal').then(module => ({ default: module.SendToEnvModal })));
-const CloudSyncModal = React.lazy(() => import('../modals/CloudSyncModal').then(module => ({ default: module.CloudSyncModal })));
 
 interface ModalManagerProps {
   // Application State
@@ -38,9 +34,9 @@ interface ModalManagerProps {
   activePageId: string;
   
   // History
-  pastStates: any[]; // HistoryState[]
-  snapshots: any[]; // HistoryState[]
-  onRestoreHistoryState: (state: any) => void;
+  pastStates: HistoryState[];
+  snapshots: HistorySnapshot[];
+  onRestoreHistoryState: (state: HistoryState) => void;
   onCreateSnapshot: (name: string) => void;
 
   // Editor State
@@ -49,27 +45,13 @@ interface ModalManagerProps {
   editingTemplate: ProductTemplate | null;
   setEditingTemplate: (template: ProductTemplate | null) => void;
   onSaveTemplate: (template: ProductTemplate) => void;
-  onExtractParts: (parts: any[]) => void;
+  onExtractParts: (parts: ExternalPart[]) => void;
   
   // Settings Modals State
   isSettingsOpen: boolean;
   setIsSettingsOpen: (open: boolean) => void;
   isAppSettingsOpen: boolean;
   setIsAppSettingsOpen: (open: boolean) => void;
-  isProjectSettingsOpen: boolean; // Note: usually redundant with isSettingsOpen, checking usage
-  setIsProjectSettingsOpen: (open: boolean) => void;
-
-  // Integration Modals State
-  isInventoryImportOpen: boolean;
-  setIsInventoryImportOpen: (open: boolean) => void;
-  isUPHExportOpen: boolean;
-  setIsUPHExportOpen: (open: boolean) => void;
-  isSendToEnvModalOpen: boolean;
-  setIsSendToEnvModalOpen: (open: boolean) => void;
-  templateToSend: ProductTemplate | null;
-  setTemplateToSend: (t: ProductTemplate | null) => void;
-  isCloudSyncOpen: boolean;
-  setIsCloudSyncOpen: (open: boolean) => void;
 
   // Utility Modals State
   isClearModalOpen: boolean;
@@ -121,19 +103,6 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   setIsSettingsOpen,
   isAppSettingsOpen,
   setIsAppSettingsOpen,
-  isProjectSettingsOpen,
-  setIsProjectSettingsOpen,
-
-  isInventoryImportOpen,
-  setIsInventoryImportOpen,
-  isUPHExportOpen,
-  setIsUPHExportOpen,
-  isSendToEnvModalOpen,
-  setIsSendToEnvModalOpen,
-  templateToSend,
-  setTemplateToSend,
-  isCloudSyncOpen,
-  setIsCloudSyncOpen,
 
   isClearModalOpen,
   setIsClearModalOpen,
@@ -172,91 +141,18 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
               onExtractParts={onExtractParts}
               onCancel={() => { setIsEditorOpen(false); setEditingTemplate(null); }}
               pixelScale={projectMetadata.pixelScale}
+              geminiApiKey={appSettings.geminiApiKey}
           />
         )}
 
-        {/* Project Settings can be triggered by two states currently, consolidating usually better but keeping for safety */}
-        {(isSettingsOpen || isProjectSettingsOpen) && (
+        {isSettingsOpen && (
             <ProjectSettingsModal 
                 metadata={projectMetadata}
-                onSave={(data) => { performCheckpoint(); setProjectMetadata(data); setIsSettingsOpen(false); setIsProjectSettingsOpen(false); }}
+                onSave={(data) => { performCheckpoint(); setProjectMetadata(data); setIsSettingsOpen(false); }}
                 onRescaleInstances={onRescaleAll || (() => {})}
-                onCancel={() => { setIsSettingsOpen(false); setIsProjectSettingsOpen(false); }}
+                onCancel={() => { setIsSettingsOpen(false); }}
             />
         )}
-
-        {isInventoryImportOpen && (
-            <InventoryImportModal
-              isOpen={isInventoryImportOpen}
-              onClose={() => setIsInventoryImportOpen(false)}
-              templates={templates}
-              setTemplates={setTemplates}
-              onImportComplete={(template) => {
-                  if (!template.imageUrl && !template.weaveFileUrl) {
-                      setEditingTemplate(template);
-                      setIsEditorOpen(true);
-                      setIsInventoryImportOpen(false);
-                  } else {
-                      setIsInventoryImportOpen(false);
-                      setTimeout(() => alert(`${template.name} kütüphaneye eklendi.`), 100);
-                  }
-              }}
-            />
-        )}
-
-        <UPHExportModal
-            isOpen={isUPHExportOpen}
-            onClose={() => setIsUPHExportOpen(false)}
-            projectData={{
-                metadata: projectMetadata,
-                pages,
-                templates,
-                version: "1.0.0"
-            }}
-            projectName={projectMetadata.projectName || "Sistem Şeması"}
-        />
-
-        <SendToEnvModal
-            isOpen={isSendToEnvModalOpen}
-            onClose={() => {
-                setIsSendToEnvModalOpen(false);
-                setTemplateToSend(null);
-            }}
-            template={templateToSend}
-            templates={templates}
-            setTemplates={setTemplates}
-            onLinkComplete={async (template, targetProduct) => {
-                const updatedTemplate = {
-                    ...template,
-                    envInventoryId: targetProduct.id,
-                    externalId: targetProduct.externalId || targetProduct.id
-                };
-                
-                setTemplates(prev => prev.map(t => t.id === template.id ? updatedTemplate : t));
-                
-                try {
-                    const { syncTemplateToEnv } = await import('../../hooks/useInventorySync');
-                    const result = await syncTemplateToEnv(updatedTemplate);
-                    
-                    if (result.success) {
-                         setTimeout(() => alert(`✅ Başarılı!\n\n"${template.name}" ürünü "${targetProduct.name}" ile eşleştirildi ve ENV-I'a gönderildi.`), 100);
-                    } else {
-                         setTimeout(() => alert(`❌ Hata!\n\n${result.error}`), 100);
-                    }
-                } catch (e) {
-                    console.error("Link & Send failed", e);
-                    setTimeout(() => alert("❌ ENV-I'a gönderilirken bir hata oluştu."), 100);
-                }
-            }}
-        />
-
-        {isCloudSyncOpen && <CloudSyncModal
-            isOpen={isCloudSyncOpen}
-            onClose={() => setIsCloudSyncOpen(false)}
-            projectId="current-project"
-            userId="user-1"
-            onDownload={() => {}}
-        />}
 
       </Suspense>
 

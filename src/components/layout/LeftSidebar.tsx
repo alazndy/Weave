@@ -1,16 +1,14 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslation } from 'react-i18next';
 import {
   ProductTemplate,
   ProjectMetadata,
   PaperSize,
-  Orientation,
   LibraryMetadata,
 } from "../../types";
 import {
   Cable, Save, FolderOpen, Download, FileUp, Plus, Trash2, Edit2,
-  Library, BookPlus, Settings2, ChevronDown, Box, Cpu, Settings, Package, Send,
-  MoreVertical, FileText, Smartphone, Tablet, Monitor
+  BookPlus, ChevronDown, Box, Cpu, Settings, MoreVertical, FileText, Monitor
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,12 +49,8 @@ interface LeftSidebarProps {
 
   // New
   onOpenSettings?: () => void;
-  onOpenInventoryImport?: () => void;
-  onOpenUPHExport?: () => void;
-  onSaveToDrive?: () => void;
   onExportBOM?: () => void;
   onSingleExport?: (template: ProductTemplate) => void;
-  onSendToEnv?: (template: ProductTemplate) => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -80,12 +74,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDeleteLibrary,
   onRenameLibrary,
   onOpenSettings,
-  onOpenInventoryImport,
-  onOpenUPHExport,
-  onSaveToDrive,
   onExportBOM,
   onSingleExport,
-  onSendToEnv,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
@@ -146,9 +136,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSingleExport?.(template); }}>
                     <Download className="h-3.5 w-3.5 mr-2" /> Tekli Export
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendToEnv?.(template); }}>
-                    <Send className="h-3.5 w-3.5 mr-2" /> ENV'e Gönder
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
@@ -248,7 +235,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <div className="flex gap-1">
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startRename}>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startRename} aria-label="Kütüphaneyi yeniden adlandır">
                                         <Edit2 className="h-3 w-3" />
                                     </Button>
                                 </TooltipTrigger>
@@ -256,11 +243,26 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                              </Tooltip>
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={createNew}>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={createNew} aria-label="Yeni kütüphane">
                                         <BookPlus className="h-3 w-3" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>New Library</TooltipContent>
+                             </Tooltip>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 hover:text-destructive"
+                                        onClick={() => activeLibraryId && onDeleteLibrary?.(activeLibraryId)}
+                                        disabled={libraries.length <= 1}
+                                        aria-label="Kütüphaneyi sil"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete Library</TooltipContent>
                              </Tooltip>
                         </div>
                     </div>
@@ -348,10 +350,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </ScrollArea>
                 
                 {/* Library Actions Footer */}
-                <div className="p-3 border-t border-border bg-muted/10 grid grid-cols-4 gap-2">
+                <div className="p-3 border-t border-border bg-muted/10 grid grid-cols-3 gap-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={handleExportLibrary} className="w-full h-8">
+                            <Button variant="outline" size="sm" onClick={handleExportLibrary} className="w-full h-8" aria-label="Kütüphaneyi indir">
                                 <Download className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
@@ -360,7 +362,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => libraryInputRef.current?.click()} className="w-full h-8">
+                            <Button variant="outline" size="sm" onClick={() => libraryInputRef.current?.click()} className="w-full h-8" aria-label="Kütüphane içe aktar">
                                 <FileUp className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
@@ -369,16 +371,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={onOpenInventoryImport} className="w-full h-8 text-green-600 hover:text-green-700">
-                                <Package className="h-3.5 w-3.5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Inventory Import</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="default" size="sm" onClick={() => { setIsEditorOpen(true); setEditingTemplate(null); }} className="w-full h-8">
+                            <Button variant="default" size="sm" onClick={() => { setIsEditorOpen(true); setEditingTemplate(null); }} className="w-full h-8" aria-label="Yeni bileşen">
                                 <Plus className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
@@ -459,16 +452,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         {/* Export & Integrations */}
                         <div className="space-y-2">
                             <Label className="text-xs uppercase text-muted-foreground font-bold">Exports</Label>
-                             {onOpenUPHExport && (
-                                <Button onClick={onOpenUPHExport} variant="ghost" className="w-full justify-start h-8 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30">
-                                    <Send className="mr-2 h-3.5 w-3.5" /> Send to UPH
-                                </Button>
-                            )}
-                            {onSaveToDrive && (
-                                <Button onClick={onSaveToDrive} variant="ghost" className="w-full justify-start h-8 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30">
-                                    <Download className="mr-2 h-3.5 w-3.5" /> Backup to Drive
-                                </Button>
-                            )}
                             {onExportBOM && (
                                 <Button onClick={onExportBOM} variant="ghost" className="w-full justify-start h-8 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/30">
                                     <FileUp className="mr-2 h-3.5 w-3.5" /> Export BOM

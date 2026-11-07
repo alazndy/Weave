@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Point, ToolSettings, AlignmentGuide, PortDefinition } from '../../../types';
+import { Point, AlignmentGuide, PortDefinition } from '../../../types';
+import type { ToolSettings } from '../ToolSettingsBar';
 
 export interface CanvasState {
   // Grid & Display

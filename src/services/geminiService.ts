@@ -3,17 +3,30 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, ExternalPart } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// The key is supplied by the user at runtime (App Settings) and never bundled
+// into the build, where it would be readable by anyone with the app.
+const MODEL = "gemini-2.5-flash";
+export const MISSING_KEY_MESSAGE = "Gemini API anahtarı girilmemiş. Ayarlar > AI bölümünden ekleyin.";
+
+const clientCache = new Map<string, GoogleGenAI>();
+const getClient = (apiKey: string) => {
+  let client = clientCache.get(apiKey);
+  if (!client) {
+    client = new GoogleGenAI({ apiKey });
+    clientCache.set(apiKey, client);
+  }
+  return client;
+};
 
 export const analyzeSchematic = async (
+  apiKey: string | undefined,
   instances: ProductInstance[],
   connections: Connection[],
   templates: ProductTemplate[]
 ) => {
   if (!apiKey) {
     return {
-      summary: "API Key eksik. Lütfen ortam değişkenlerini kontrol edin.",
+      summary: MISSING_KEY_MESSAGE,
       warnings: ["AI analizi devre dışı."]
     };
   }
@@ -84,8 +97,8 @@ export const analyzeSchematic = async (
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+    const response = await getClient(apiKey).models.generateContent({
+      model: MODEL,
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -115,11 +128,8 @@ export const analyzeSchematic = async (
   }
 };
 
-export const extractPartListFromImage = async (imageData: string): Promise<ExternalPart[]> => {
-    if (!apiKey) {
-        console.error("API Key missing");
-        return [];
-    }
+export const extractPartListFromImage = async (apiKey: string | undefined, imageData: string): Promise<ExternalPart[]> => {
+    if (!apiKey) throw new Error(MISSING_KEY_MESSAGE);
 
     // Remove header if present (data:image/png;base64,...)
     const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
@@ -141,8 +151,8 @@ export const extractPartListFromImage = async (imageData: string): Promise<Exter
     `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+        const response = await getClient(apiKey).models.generateContent({
+            model: MODEL,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/png', data: base64Data } },
@@ -174,7 +184,7 @@ export const extractPartListFromImage = async (imageData: string): Promise<Exter
         const result = JSON.parse(text);
         
         // Map to internal structure with IDs
-        return (result.parts || []).map((p: any) => ({
+        return (result.parts || []).map((p: { name: string; count: unknown }) => ({
             id: crypto.randomUUID(),
             name: p.name,
             count: Number(p.count) || 1
@@ -184,174 +194,4 @@ export const extractPartListFromImage = async (imageData: string): Promise<Exter
         console.error("BOM Extraction error:", error);
         throw error;
     }
-};
-
-/**
- * Context-Aware Copilot: Answer questions about the current schematic
- */
-export const askCopilot = async (
-  question: string,
-  instances: ProductInstance[],
-  connections: Connection[],
-  templates: ProductTemplate[]
-): Promise<string> => {
-  if (!apiKey) {
-    return "API Key eksik. Lütfen ortam değişkenlerini kontrol edin.";
-  }
-
-  const systemContext = {
-    devices: instances.map(inst => {
-      const t = templates.find(t => t.id === inst.templateId);
-      return {
-        name: t?.name,
-        model: t?.modelNumber,
-        ports: t?.ports.map(p => ({
-          label: p.label,
-          type: p.type,
-          connector: CONNECTOR_LABELS[p.connectorType],
-          isPower: p.isPower,
-          voltage: p.voltage
-        }))
-      };
-    }),
-    connectionCount: connections.length
-  };
-
-  const prompt = `
-    Sen T-Weave uygulamasında çalışan bir AI tasarım asistanısın.
-    Kullanıcının şu anki şematik tasarımı hakkında bilgi:
-    
-    ${JSON.stringify(systemContext, null, 2)}
-    
-    Kullanıcı Sorusu: "${question}"
-    
-    Lütfen mühendislik bilgisi ve mevcut şematik bağlamında yardımcı ol.
-    Yanıtın kısa, net ve Türkçe olmalı.
-    Eğer kullanıcı bir bileşen eklenmesini istiyorsa, hangi bileşenin eklenmesi gerektiğini ve nereye bağlanacağını belirt.
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt
-    });
-
-    return response.text || "Yanıt alınamadı.";
-  } catch (error) {
-    console.error("Copilot error:", error);
-    return "Bir hata oluştu. Lütfen tekrar deneyin.";
-  }
-};
-
-/**
- * Suggest connections between two specific devices
- */
-export const suggestConnectionsAI = async (
-  device1Name: string,
-  device2Name: string,
-  templates: ProductTemplate[]
-): Promise<{ fromPort: string; toPort: string; reason: string }[]> => {
-  if (!apiKey) return [];
-
-  const template1 = templates.find(t => t.name.toLowerCase().includes(device1Name.toLowerCase()));
-  const template2 = templates.find(t => t.name.toLowerCase().includes(device2Name.toLowerCase()));
-
-  if (!template1 || !template2) return [];
-
-  const prompt = `
-    İki cihaz arasında mantıklı bağlantı önerileri oluştur:
-    
-    Cihaz 1: ${template1.name}
-    Portlar: ${template1.ports.map(p => `${p.label} (${p.type}, ${CONNECTOR_LABELS[p.connectorType]})`).join(', ')}
-    
-    Cihaz 2: ${template2.name}
-    Portlar: ${template2.ports.map(p => `${p.label} (${p.type}, ${CONNECTOR_LABELS[p.connectorType]})`).join(', ')}
-    
-    Hangi portların birbirine bağlanması mantıklı? Her öneri için kısa bir sebep ver.
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            suggestions: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  fromPort: { type: Type.STRING },
-                  toPort: { type: Type.STRING },
-                  reason: { type: Type.STRING }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-
-    const text = response.text;
-    if (!text) return [];
-    const result = JSON.parse(text);
-    return result.suggestions || [];
-  } catch (error) {
-    console.error("Connection suggestion error:", error);
-    return [];
-  }
-};
-
-/**
- * Generate decoupling capacitor suggestions for a processor/IC
- */
-export const suggestDecouplingCaps = async (
-  deviceName: string,
-  voltage: string
-): Promise<{ value: string; placement: string }[]> => {
-  if (!apiKey) return [];
-
-  const prompt = `
-    ${deviceName} için gereken dekuplaj kapasitörlerini öner.
-    Çalışma voltajı: ${voltage}
-    
-    Standart mühendislik uygulamalarına göre kapasitör değerlerini ve yerleşim önerilerini ver.
-    Yanıt JSON formatında olmalı: { "capacitors": [{ "value": "100nF", "placement": "VCC pinine yakın" }] }
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            capacitors: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  value: { type: Type.STRING },
-                  placement: { type: Type.STRING }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-
-    const text = response.text;
-    if (!text) return [];
-    const result = JSON.parse(text);
-    return result.capacitors || [];
-  } catch (error) {
-    console.error("Decoupling suggestion error:", error);
-    return [];
-  }
 };

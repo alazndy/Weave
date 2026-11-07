@@ -100,12 +100,6 @@ export interface ProductTemplate {
   physicalWidth?: number; // width in mm
   ports: PortDefinition[];
   isBlock?: boolean; // New: Marks if this template is a saved block/group
-  // ENV-I Integration Fields
-  envInventoryId?: string;    // Reference to ENV-I product ID
-  externalId?: string;        // Shared ID across ecosystem
-  isConfigured?: boolean;     // Whether ports are configured (false = basic template from ENV-I)
-  stockCount?: number;        // Synced stock count from ENV-I (readonly)
-  weaveFileUrl?: string;      // Link to the .weave file (if available)
 }
 
 export interface LibraryMetadata {
@@ -229,6 +223,7 @@ export interface HistoryState {
   pages: Page[];
   activePageId: string;
   templates: ProductTemplate[];
+  metadata?: ProjectMetadata;
 }
 
 export interface HistorySnapshot {
@@ -263,22 +258,11 @@ export interface ProjectMetadata {
 
 export type ColorPalette = 'weave' | 'ocean' | 'forest' | 'royal' | 'monochrome';
 
-export type UserRole = 'admin' | 'manager' | 'viewer';
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
 export interface AppSettings {
     theme: 'light' | 'dark';
     language: 'tr' | 'en';
     palette: ColorPalette; // ID of the color palette
-    enableUPHIntegration?: boolean;
-    enableGoogleDrive?: boolean;
-    teamMembers?: TeamMember[];
+    geminiApiKey?: string; // User-supplied, stored locally only
 }
 
 // Complete Project Data Structure for Export/Save

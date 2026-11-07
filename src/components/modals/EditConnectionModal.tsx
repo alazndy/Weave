@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Connection, ConnectionShape, LineStyle } from '../../types';
 import { Spline, Minus, CornerDownRight, Slash, GripHorizontal, MoreHorizontal } from 'lucide-react';
 

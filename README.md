@@ -1,89 +1,83 @@
-# Weave: Schematic Design & Engineering Canvas
+# Weave
 
-![Status](https://img.shields.io/badge/Status-Alpha-rose) ![License](https://img.shields.io/badge/License-MIT-green) ![Tech](https://img.shields.io/badge/Tech-React%2019%20%7C%20Vite%20%7C%20Canvas-FF6B6B)
+![Status](https://img.shields.io/badge/Status-Alpha-rose) ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Weave** is the premier engineering design tool of the **T-Ecosystem**. It provides an infinite, high-performance vector canvas for creating complex schematics, wiring diagrams, and process flows. Uniquely, Weave is deeply integrated with the ecosystem's data, allowing you to drag live inventory items directly into your technical drawings.
+Weave is a standalone editor for **system cabling schematics**: you photograph or import a product,
+mark its connection points (ports), then place products on multi-page drawing sheets and wire them
+together. The output is an installation document with a title block, a pin map and a bill of materials.
 
-## 🚀 Capabilities & Features
+It ships with a connector catalogue aimed at vehicle safety systems (camera, radar, ultrasonic sensor,
+CAN, FAKRA, M12, Deutsch and so on), but any product with a picture and ports works.
 
-### 🎨 Infinite Engineering Canvas
+Everything runs locally. There is no account, no backend and no telemetry.
 
-- **Vector Engine**: Zoom from 10% to 5000% without loss of fidelity.
-- **Layer Management**: Complex designs organized into selectable, lockable layers.
-- **Smart Connectors**: Auto-routing wires that snap to component ports and maintain connections during movement.
+## Features
 
-### 🔌 Ecosystem Integration
+- **Product editor**: import an image or PDF, crop and clean it, then place ports with direction,
+  connector type, voltage, current, power and ground flags.
+- **Libraries**: multiple local product libraries, with JSON import/export of a whole library or a single product.
+- **Canvas**: grid snapping, curved, straight and orthogonal wires, auto-routing around devices, zones,
+  text, comments, grouping, saved blocks and a minimap.
+- **Pages**: multiple sheets per project, A3/A4/A6 in portrait or landscape, with a title block and technical notes.
+- **Undo/redo and snapshots**: checkpoint history of up to 50 steps, plus named snapshots.
+- **Saving**: projects autosave to IndexedDB and appear on the welcome screen. A `.weave` file
+  (JSON) can be saved and opened with Ctrl+S.
+- **Exports**: PNG of the sheet, BOM as CSV (opens correctly in Excel), and a pin map table.
+- **AI (optional)**: schematic review and BOM-from-image extraction via Google Gemini. Enter your own
+  API key under *App Settings → AI*. The key stays on the device and is never bundled into the build.
 
-- **Live Inventory Sync (ENV-I)**: Drag a product from the sidebar, and it links to the real SKUs in your database.
-- **Stock Awareness**: Real-time stock level indicators directly on schematic components.
-- **BOM Generation**: One-click export of a Bill of Materials based on the components placed on the canvas.
+## Getting started
 
-### 🛠️ Professional Design Tools
-
-- **Component Library**: Extensive library of electrical, mechanical, and flow symbols.
-- **Custom Parts**: Create and save your own composable logic blocks.
-- **Grid & Snapping**: Precision alignment tools for professional layouts.
-- **History API**: Robust Undo/Redo (Ctrl+Z/Ctrl+Y) functionality tracking every move.
-
-### ☁️ Cloud & Collaboration
-
-- **Cloud Sync**: Designs are automatically saved to the ecosystem cloud.
-- **Version Control**: Save named snapshots and restore previous versions of your design.
-- **PDF Export**: High-resolution export for printing and technical documentation bundles.
-
-## 🛠️ Technology Architecture
-
-- **Core**: **React 19** + **Vite** for blazing fast performance.
-- **Canvas Engine**: Custom HTML5 Canvas implementation (referencing Fabric.js concepts) for maximum control.
-- **State Management**: **Zustand** + **Immer** for complex immutable state updates.
-- **Styling**: Tailwind CSS + Shadcn UI.
-- **Sync**: Custom hooks (`useEnviStock`, `useCloudSync`) connecting to Firebase.
-
-## 📂 Project Structure
+Requires Node.js 20+ and pnpm 9.
 
 ```bash
-src/
-├── components/
-│   ├── canvas/      # The core drawing engine
-│   ├── library/     # Component browser (ENV-I linked)
-│   └── ui/          # Toolbars and panels
-├── hooks/
-│   ├── useCanvas.ts # Main canvas logic
-│   └── useHistory.ts# Undo/Redo implementation
-├── services/        # Backend sync & asset loading
-└── types/           # Schematic data models (Node, Edge, Port)
+pnpm install
+pnpm dev          # http://localhost:3004
 ```
 
-## 🏁 Getting Started
+| Script | Purpose |
+|---|---|
+| `pnpm build` | Production web build to `dist/` |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Unit tests (Vitest) |
+| `pnpm test:e2e` | Browser UI tests (Playwright, `tests/e2e/`). Set `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium` to use a system Chromium |
+| `pnpm electron:dev` / `pnpm electron:build` | Desktop app (Electron) |
+| `pnpm mobile:build` | Build and sync Capacitor Android/iOS projects |
 
-### Prerequisites
+## Keyboard shortcuts
 
-- Node.js (v18+)
-- pnpm
+| Key | Action |
+|---|---|
+| V / M / S / B | Select / Move / Scale / Box select |
+| R / Alt+R | Manual route / Auto-route |
+| Z / T / C | Zone / Text / Comment |
+| Ctrl+Z / Ctrl+Y | Undo / Redo |
+| Ctrl+C / Ctrl+V | Copy / Paste device |
+| Ctrl+G / Ctrl+Shift+G | Group / Ungroup |
+| Ctrl+S | Save project as `.weave` |
+| Delete | Delete selection |
 
-### Installation
+## Project layout
 
-1.  **Clone the repository**
+```
+src/
+├── App.tsx                 # Document state (pages, templates, metadata) and actions
+├── components/
+│   ├── Canvas.tsx          # Drawing surface
+│   ├── canvas/             # Nodes, wires, zones, toolbars, minimap
+│   ├── ProductEditor.tsx   # Image → product template with ports
+│   ├── layout/             # Sidebars, toolbar, page bar
+│   └── modals/             # Settings, pin map, history, ...
+├── hooks/
+│   ├── useHistory.ts       # Checkpoint undo/redo + snapshots
+│   └── useLibraryManager.ts# Local product libraries (localStorage)
+├── services/
+│   ├── projectStore.ts     # IndexedDB autosave / recent projects
+│   └── geminiService.ts    # Optional AI features
+├── utils/                  # Geometry, routing, BOM export
+└── types/                  # Data model
+```
 
-    ```bash
-    git clone https://github.com/alazndy/Weave.git
-    cd Weave
-    ```
+## License
 
-2.  **Install Dependencies**
-
-    ```bash
-    pnpm install
-    ```
-
-3.  **Run Development Server**
-
-    ```bash
-    pnpm dev
-    ```
-
-    Open [http://localhost:3004](http://localhost:3004) to start designing.
-
----
-
-Part of the **T-Ecosystem**.
+MIT

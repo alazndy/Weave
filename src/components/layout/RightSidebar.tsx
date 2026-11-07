@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { ProductInstance, ProductTemplate, Connection, Zone, TextNode, Comment, CONNECTOR_LABELS } from '../../types';
-import { Layers, X, Trash2, CircuitBoard, Copy, ClipboardCopy, Type, Eye, EyeOff, Zap, ChevronRight, ChevronLeft, Lock, Unlock, Settings2, Box, MessageSquare, MoreVertical } from 'lucide-react';
+import { X, Trash2, CircuitBoard, Copy, ClipboardCopy, Type, Eye, EyeOff, Zap, ChevronRight, Lock, Unlock, Settings2, Box, MessageSquare } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 // shadcn/ui components
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RightSidebarProps {
@@ -117,7 +115,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                             <p className="font-bold text-primary">{selectedIds.size} Items Selected</p>
                                             <p className="text-xs text-muted-foreground">Use actions below</p>
                                         </div>
-                                        <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                                        <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} aria-label="Seçimi temizle">
                                             <X className="h-4 w-4" />
                                         </Button>
                                     </CardContent>
@@ -137,7 +135,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                     <CardHeader className="p-4 pb-2">
                                         <div className="flex justify-between items-start">
                                             <CardTitle className="text-base font-bold">{selectedTemplate.name}</CardTitle>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2" onClick={() => setSelectedIds(new Set())}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2" onClick={() => setSelectedIds(new Set())} aria-label="Seçimi temizle">
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>

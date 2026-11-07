@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.tek.weave',
-  appName: 'T-Weave',
+  appName: 'Weave',
   webDir: 'dist'
 };
 

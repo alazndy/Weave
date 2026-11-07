@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { TextNode } from '../../types';
 
 export const EditTextModal = ({ node, onSave, onCancel }: { node: TextNode, onSave: (t: TextNode) => void, onCancel: () => void }) => {

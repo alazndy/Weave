@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wand2, Ruler, Upload, Undo2, Redo2, RotateCcw, RotateCw, Move, Eraser, Scan, Scissors, Check, CheckCircle2, Loader2, FileUp, MousePointer2 } from 'lucide-react';
+import { Wand2, Ruler, Undo2, Redo2, RotateCcw, RotateCw, Eraser, Scan, Scissors, Check, Loader2, FileUp, MousePointer2 } from 'lucide-react';
 import { ExternalPart } from '../../types';
 
 interface EditorSidebarProps {

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PortDefinition, PortFlowType, ConnectorType, CONNECTOR_LABELS } from '../../types';
-import { Zap, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Zap, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
   port: PortDefinition;

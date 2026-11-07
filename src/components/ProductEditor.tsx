@@ -1,8 +1,8 @@
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
-import { PortDefinition, ProductTemplate, ConnectorType, CONNECTOR_LABELS, PortFlowType, ExternalPart } from '../types';
-import { X, Edit2, Crosshair, Plus, Zap, Trash2, ArrowRight, ArrowLeft, ArrowRightLeft, Cable, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Undo2, Upload } from 'lucide-react';
+import { PortDefinition, ProductTemplate, ConnectorType, PortFlowType, ExternalPart } from '../types';
+import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { extractPartListFromImage } from '../services/geminiService';
+import { extractPartListFromImage, MISSING_KEY_MESSAGE } from '../services/geminiService';
 import { EditorSidebar } from './editor/EditorSidebar';
 
 // Set worker for PDF.js - Ensure this URL is valid or hosted locally if possible, but for now using CDN
@@ -14,12 +14,13 @@ interface ProductEditorProps {
   onExtractParts: (parts: ExternalPart[]) => void;
   onCancel: () => void;
   pixelScale?: number; 
+  geminiApiKey?: string;
 }
 
 type EditorMode = 'upload' | 'preprocess' | 'ports';
 type ToolType = 'select' | 'eraser' | 'scan' | 'measure';
 
-export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, onSave, onExtractParts, onCancel, pixelScale = 2 }) => {
+export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, onSave, onExtractParts, onCancel, pixelScale = 2, geminiApiKey }) => {
   const [mode, setMode] = useState<EditorMode>('upload');
   const [name, setName] = useState('');
   const [modelNumber, setModelNumber] = useState('');
@@ -476,10 +477,10 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
           ctx.drawImage(img, selection.x, selection.y, selection.w, selection.h, 0, 0, selection.w, selection.h);
           const imageBase64 = tempCanvas.toDataURL('image/png');
           try {
-              const parts = await extractPartListFromImage(imageBase64);
+              const parts = await extractPartListFromImage(geminiApiKey, imageBase64);
               setScannedParts(parts);
           } catch (e) {
-              alert("Tarama başarısız oldu.");
+              alert(e instanceof Error && e.message === MISSING_KEY_MESSAGE ? e.message : "Tarama başarısız oldu.");
           }
       }
       setIsScanning(false);
@@ -674,16 +675,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     ? 'w-full max-w-4xl h-[600px]' 
     : 'w-auto h-auto max-w-[98vw] max-h-[98vh] min-w-[1200px] h-[90vh]'; 
 
-  const getTypeBadge = (type: PortFlowType) => {
-      switch(type) {
-          case 'input': return <span className="px-1.5 py-0.5 bg-blue-900 text-blue-200 text-[10px] font-bold rounded flex items-center gap-1"><ArrowRight size={10}/> GİRİŞ</span>;
-          case 'output': return <span className="px-1.5 py-0.5 bg-red-900 text-red-200 text-[10px] font-bold rounded flex items-center gap-1"><ArrowLeft size={10}/> ÇIKIŞ</span>;
-          case 'bidirectional': return <span className="px-1.5 py-0.5 bg-teal-900 text-teal-200 text-[10px] font-bold rounded flex items-center gap-1"><ArrowRightLeft size={10}/> ÇİFT</span>;
-      }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-6 backdrop-blur-md animate-in fade-in duration-300">
       <div className={`glass-panel rounded-3xl flex flex-col shadow-2xl overflow-hidden relative transition-all duration-300 border border-white/20 ${modalSizeClass}`}>
         
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.03] backdrop-blur-3xl shrink-0">
@@ -774,13 +767,13 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
              )}
 
              {mode === 'ports' && processedImage && (
-              <div className="relative shadow-2xl animate-in zoom-in-95 duration-500 group/image border border-white/10 rounded-xl overflow-hidden ring-4 ring-black/20">
+              <div className="relative shadow-2xl animate-in zoom-in-95 duration-500 group/image border border-white/10 rounded-xl ring-4 ring-black/20">
                 <img 
                   ref={imageRef}
                   src={processedImage} 
                   alt="Work area"
                   onClick={handleImageClick}
-                  className="max-h-[calc(85vh-80px)] max-w-[calc(90vw-26rem)] object-contain bg-white block cursor-crosshair"
+                  className="max-h-[calc(85vh-80px)] max-w-[calc(90vw-26rem)] object-contain bg-white block cursor-crosshair rounded-xl"
                   draggable={false}
                 />
                 {ports.map(p => (
@@ -826,11 +819,9 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
             {editingPortId && (
                 <div 
                     className="absolute z-50 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 animate-in fade-in zoom-in-95 duration-200"
-                    style={{
-                        left: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.x || 50))}%`,
-                        top: `${Math.min(80, Math.max(20, ports.find(p => p.id === editingPortId)?.y || 50))}%`,
-                        transform: 'translate(-50%, 10px)'
-                    }}
+                    style={(ports.find(p => p.id === editingPortId)?.x ?? 50) > 50
+                        ? { right: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }
+                        : { left: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
