@@ -164,13 +164,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {template.isBlock ? (
         <div className="absolute top-2 left-2">
-          <span className="text-[9px] font-bold text-orange-500 bg-background/80 px-1.5 py-0.5 rounded border border-orange-500/20 flex items-center gap-1 shadow-sm backdrop-blur-sm">
+          <span className="text-[10px] font-bold text-orange-500 bg-background/80 px-1.5 py-0.5 rounded border border-orange-500/20 flex items-center gap-1 shadow-sm backdrop-blur-sm">
             <Box size={8} /> {t('sidebar.block')}
           </span>
         </div>
       ) : (
         <div className="absolute top-2 left-2">
-          <span className="text-[9px] font-bold text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border group-hover:border-primary/20 group-hover:text-primary transition-colors shadow-sm backdrop-blur-sm">
+          <span className="text-[10px] font-bold text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border group-hover:border-primary/20 group-hover:text-primary transition-colors shadow-sm backdrop-blur-sm">
             {template.ports.length} P
           </span>
         </div>
@@ -453,7 +453,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <div className="space-y-2">
                             <Label className="text-xs uppercase text-muted-foreground font-bold">Exports</Label>
                             {onExportBOM && (
-                                <Button onClick={onExportBOM} variant="ghost" className="w-full justify-start h-8 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/30">
+                                <Button onClick={onExportBOM} variant="ghost" className="w-full justify-start h-8 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30">
                                     <FileUp className="mr-2 h-3.5 w-3.5" /> Export BOM
                                 </Button>
                             )}

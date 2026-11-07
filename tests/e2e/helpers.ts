@@ -113,3 +113,19 @@ export async function freePoint(page: Page, fx = 0.7, fy = 0.65) {
     return { x: Math.round(l + (r - l) * px), y: Math.round(t + (b - t) * py) };
   }, [fx, fy]);
 }
+
+/** Reads a template id from the IndexedDB library by product name. */
+export function libraryIdOf(page: Page, name: string): Promise<string> {
+  return page.evaluate((n) => new Promise<string>((resolve, reject) => {
+    const open = indexedDB.open('weave-library', 1);
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const store = open.result.transaction('kv').objectStore('kv');
+      const all = store.getAll();
+      all.onsuccess = () => {
+        const tpl = (all.result.flat() as { id?: string; name?: string }[]).find(t => t && t.name === n);
+        tpl?.id ? resolve(tpl.id) : reject(new Error('template not found: ' + n));
+      };
+    };
+  }), name);
+}

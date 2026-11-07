@@ -83,11 +83,11 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                         </div>
                         <div className="flex-1 flex" style={styles.cellBorder}>
                             <div className="flex-1 p-2 border-r flex flex-col justify-center" style={styles.cellBorder}>
-                                <span className="text-[9px] font-bold uppercase block tracking-wider opacity-70" style={styles.label}>Müşteri</span>
+                                <span className="text-[10px] font-bold uppercase block tracking-wider opacity-70" style={styles.label}>Müşteri</span>
                                 <span className="text-sm font-bold truncate">{metadata.customerName || '-'}</span>
                             </div>
                             <div className="flex-1 p-2 flex flex-col justify-center">
-                                <span className="text-[9px] font-bold uppercase block tracking-wider opacity-70" style={styles.label}>Firma</span>
+                                <span className="text-[10px] font-bold uppercase block tracking-wider opacity-70" style={styles.label}>Firma</span>
                                 <span className="text-sm font-bold truncate">{metadata.companyName || '-'}</span>
                             </div>
                         </div>
@@ -97,7 +97,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {/* Technical Notes Section (Optional) */}
                 {hasNotes && (
                     <div className="h-24 p-2 border-b overflow-hidden relative" style={styles.cellBorder}>
-                        <span className="text-[9px] font-bold uppercase block tracking-wider opacity-70 mb-1" style={styles.label}>Teknik Notlar</span>
+                        <span className="text-[10px] font-bold uppercase block tracking-wider opacity-70 mb-1" style={styles.label}>Teknik Notlar</span>
                         <p className="text-[10px] font-mono leading-tight whitespace-pre-wrap opacity-90 h-full overflow-y-auto no-scrollbar">
                             {metadata.technicalNotes}
                         </p>
@@ -107,18 +107,18 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {/* Custom Fields & People Grid */}
                 <div className="grid grid-cols-6 border-b h-14" style={styles.cellBorder}>
                     <div className="p-1 border-r flex flex-col justify-center col-span-1 bg-white/[0.02]" style={styles.cellBorder}>
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Hazırlayan</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Hazırlayan</span>
                         <span className="text-[11px] font-bold truncate block">{metadata.preparedBy || '-'}</span>
                     </div>
                     <div className="p-1 border-r flex flex-col justify-center col-span-1 bg-white/[0.02]" style={styles.cellBorder}>
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Onaylayan</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Onaylayan</span>
                         <span className="text-[11px] font-bold truncate block">{metadata.approvedBy || '-'}</span>
                     </div>
                     
                     {/* Render up to 2 custom fields in the middle space */}
                     {customFields.slice(0, 2).map((field, idx) => (
                         <div key={field.id} className="p-1 border-r flex flex-col justify-center col-span-1" style={styles.cellBorder}>
-                            <span className="text-[8px] font-bold uppercase block opacity-70 truncate" style={styles.label}>{field.label}</span>
+                            <span className="text-[10px] font-bold uppercase block opacity-80 truncate" style={styles.label}>{field.label}</span>
                             <span className="text-[11px] font-medium truncate block">{field.value}</span>
                         </div>
                     ))}
@@ -128,11 +128,11 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                     ))}
 
                     <div className="p-1 border-r flex flex-col justify-center col-span-1" style={styles.cellBorder}>
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Tarih</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Tarih</span>
                         <span className="text-[11px] font-mono font-medium truncate block">{metadata.date}</span>
                     </div>
                     <div className="p-1 flex flex-col justify-center col-span-1 bg-yellow-500/5">
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Revizyon</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Revizyon</span>
                         <span className="text-lg font-bold truncate block text-center text-yellow-600 dark:text-yellow-400">{metadata.revision}</span>
                     </div>
                 </div>
@@ -140,15 +140,15 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {/* Bottom Section: Info Bar */}
                 <div className="flex h-10 bg-black/5 dark:bg-white/5">
                     <div className="flex-[2] p-1 border-r flex flex-col justify-center pl-3" style={styles.cellBorder}>
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Döküman No</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Döküman No</span>
                         <span className="text-sm font-bold font-mono tracking-wide">{metadata.documentNo}</span>
                     </div>
                     <div className="w-32 p-1 border-r flex flex-col justify-center text-center" style={styles.cellBorder}>
-                         <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Sayfa Adı</span>
+                         <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Sayfa Adı</span>
                          <span className="text-[10px] font-bold truncate block">{pageName}</span>
                     </div>
                     <div className="w-24 p-1 border-r flex flex-col justify-center text-center" style={styles.cellBorder}>
-                        <span className="text-[8px] font-bold uppercase block opacity-70" style={styles.label}>Ölçek</span>
+                        <span className="text-[10px] font-bold uppercase block opacity-80" style={styles.label}>Ölçek</span>
                         <span className="text-[11px] font-bold">{metadata.scale}</span>
                     </div>
                     <div className="w-20 p-1 flex items-center justify-center font-black text-sm bg-black/10 dark:bg-white/10">

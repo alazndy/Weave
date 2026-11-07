@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
-import { openApp, trackErrors, nodes, dropTemplate, CAMERA, portOf } from './helpers';
+import { openApp, trackErrors, nodes, dropTemplate, CAMERA, portOf, libraryIdOf } from './helpers';
 
 /** Builds a solid-colour PNG without any image library. */
 function makePng(w: number, h: number): Buffer {
@@ -123,10 +123,7 @@ test.describe('Ürün editörü', () => {
     await page.locator('div.fixed.z-\\[110\\]').getByRole('button', { name: 'Kaydet', exact: true }).last().click();
     await expect(page.getByTitle('Yeni Sensör')).toBeVisible();
 
-    await dropTemplate(page, (await page.evaluate(() => {
-      const lib = JSON.parse(localStorage.getItem('techschematic_library_lib1') || '[]');
-      return lib.find((t: { name: string }) => t.name === 'Yeni Sensör')?.id ?? '';
-    })) || CAMERA.id, 450, 300);
+    await dropTemplate(page, await libraryIdOf(page, 'Yeni Sensör'), 450, 300);
     await expect(nodes(page)).toHaveCount(1);
     errors.expectNone();
   });

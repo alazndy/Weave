@@ -93,7 +93,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                     variant="default" // Using default for primary action look
                     size="sm"
                     className={cn(
-                        "text-xs font-bold gap-2 bg-gradient-to-r from-orange-400 to-amber-500 hover:shadow-orange-500/25 text-white border-0",
+                        "text-xs font-bold gap-2 bg-gradient-to-r from-orange-400 to-amber-500 hover:shadow-orange-500/25 text-zinc-900 border-0",
                         isAnalyzing && "animate-pulse"
                     )}
                 >
