@@ -201,6 +201,23 @@ test.describe('Uygulama ayarları', () => {
     expect(await page.evaluate(() => document.documentElement.style.getPropertyValue('--color-paprika'))).toBe(after);
   });
 
+  test('koyu temada metin ve ikonlar açık renkli kalır (her palette)', async ({ page }) => {
+    await openApp(page);
+    const dlg = await open(page);
+    const lightText = () => page.evaluate(() => {
+      const probes = [document.body, ...document.querySelectorAll('[role=tab]')];
+      return probes.slice(0, 40).every(el => {
+        const m = getComputedStyle(el).color.match(/[\d.]+/g)!.map(Number);
+        return (m[0] + m[1] + m[2]) / 3 > 90;
+      });
+    });
+    expect(await lightText()).toBe(true);
+    for (const name of [/Ocean Deep/, /Weave/]) {
+      await dlg.getByRole('button', { name }).first().click();
+      expect(await lightText()).toBe(true);
+    }
+  });
+
   test('dil seçimi arayüz dilini değiştirir', async ({ page }) => {
     await openApp(page);
     const dlg = await open(page);

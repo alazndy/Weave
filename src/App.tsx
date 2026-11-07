@@ -184,11 +184,20 @@ export default function App() {
       const root = document.documentElement;
       const palette = PALETTES.find(p => p.id === appSettings.palette) || PALETTES[0];
       
-      root.style.setProperty('--color-ink', palette.colors.ink);
-      root.style.setProperty('--color-paprika', palette.colors.paprika);
-      root.style.setProperty('--color-apricot', palette.colors.apricot);
-      root.style.setProperty('--color-vanilla', palette.colors.vanilla);
-      root.style.setProperty('--color-alabaster', palette.colors.alabaster);
+      // Palette values are raw "R G B" triplets; CSS needs a real color. Accents follow the
+      // palette in both themes, while ink/alabaster (surface/text) are only tinted in dark
+      // mode so light mode keeps its dark-on-light text.
+      const rgb = (triplet: string) => `rgb(${triplet})`;
+      root.style.setProperty('--color-paprika', rgb(palette.colors.paprika));
+      root.style.setProperty('--color-apricot', rgb(palette.colors.apricot));
+      root.style.setProperty('--color-vanilla', rgb(palette.colors.vanilla));
+      if (appSettings.theme === 'dark') {
+          root.style.setProperty('--color-ink', rgb(palette.colors.ink));
+          root.style.setProperty('--color-alabaster', rgb(palette.colors.alabaster));
+      } else {
+          root.style.removeProperty('--color-ink');
+          root.style.removeProperty('--color-alabaster');
+      }
 
   }, [appSettings]);
 
