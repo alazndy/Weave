@@ -111,7 +111,8 @@ export default function App() {
     handleCreateLibrary, 
     handleDeleteLibrary, 
     handleRenameLibrary, 
-    handleSwitchLibrary 
+    handleSwitchLibrary,
+    libraryError
   } = useLibraryManager();
 
   const {
@@ -880,6 +881,11 @@ export default function App() {
          {autosaveError && (
              <div role="alert" className="fixed bottom-16 right-4 z-[300] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-lg no-print">
                  Otomatik kayıt başarısız — projeyi dosyaya kaydedin (Ctrl+S).
+             </div>
+         )}
+         {libraryError && (
+             <div role="alert" className="fixed bottom-28 right-4 z-[300] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-lg no-print">
+                 Kütüphane kaydedilemedi — tarayıcı depolaması dolu veya kapalı olabilir. Kütüphaneyi dışa aktarın.
              </div>
          )}
          <div className="flex-1 flex overflow-hidden relative">
