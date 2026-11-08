@@ -4,9 +4,18 @@ import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, C
 import * as pdfjsLib from 'pdfjs-dist';
 import { extractPartListFromImage, MISSING_KEY_MESSAGE } from '../services/geminiService';
 import { EditorSidebar } from './editor/EditorSidebar';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import {
+  newRecipe, rotateRecipe, cropRecipe, addStroke, effectiveCrop, renderPdfRecipe,
+  WORK_LONG_SIDE, FINAL_LONG_SIDE, MAX_WORK_SCALE, MAX_FINAL_SCALE,
+  type PdfRecipe, type PdfSource, type Point,
+} from '../utils/pdfRecipe';
 
-// Set worker for PDF.js - Ensure this URL is valid or hosted locally if possible, but for now using CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+// The worker is bundled with the app (no CDN), so PDFs also open offline in the desktop build.
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+/** One undo step: the working image, plus the PDF recipe that produced it (PDFs only). */
+interface EditStep { img: string; recipe?: PdfRecipe }
 
 interface ProductEditorProps {
   initialTemplate?: ProductTemplate | null; 
@@ -32,7 +41,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   const [rawImage, setRawImage] = useState<string | null>(null); 
   const [processedImage, setProcessedImage] = useState<string | null>(null); 
   
-  const [editHistory, setEditHistory] = useState<string[]>([]);
+  const [editHistory, setEditHistory] = useState<EditStep[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
 
   const [ports, setPorts] = useState<PortDefinition[]>([]);
@@ -125,9 +134,15 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       }
   };
 
-  const addToHistory = (imageData: string) => {
+  // PDF source and its current non-destructive recipe (null while editing a plain image).
+  const pdfSrcRef = useRef<PdfSource | null>(null);
+  const recipeRef = useRef<PdfRecipe | null>(null);
+  const strokePtsRef = useRef<Point[]>([]);
+  const draggingRef = useRef(false); // mouse-up also fires on mouse-leave: handle each drag once
+
+  const addToHistory = (imageData: string, recipe?: PdfRecipe) => {
       const newHistory = editHistory.slice(0, historyStep + 1);
-      newHistory.push(imageData);
+      newHistory.push({ img: imageData, recipe });
       setEditHistory(newHistory);
       setHistoryStep(newHistory.length - 1);
   };
@@ -136,7 +151,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       if (historyStep > 0) {
           const prevIndex = historyStep - 1;
           setHistoryStep(prevIndex);
-          setRawImage(editHistory[prevIndex]);
+          setRawImage(editHistory[prevIndex].img);
+          if (editHistory[prevIndex].recipe) recipeRef.current = editHistory[prevIndex].recipe!;
       }
   };
 
@@ -144,7 +160,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       if (historyStep < editHistory.length - 1) {
           const nextIndex = historyStep + 1;
           setHistoryStep(nextIndex);
-          setRawImage(editHistory[nextIndex]);
+          setRawImage(editHistory[nextIndex].img);
+          if (editHistory[nextIndex].recipe) recipeRef.current = editHistory[nextIndex].recipe!;
       }
   };
 
@@ -183,25 +200,17 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const page = await pdf.getPage(1); 
-        
-        const viewport = page.getViewport({ scale: 2.0 }); 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        if (context) {
-          context.fillStyle = '#FFFFFF';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          
-          await page.render({ canvasContext: context, viewport: viewport } as any).promise;
-          const dataUrl = canvas.toDataURL('image/png');
-          setRawImage(dataUrl);
-          setEditHistory([dataUrl]);
-          setHistoryStep(0);
-          setMode('preprocess');
-        }
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 1 });
+        const src: PdfSource = { page, w0: vp.width, h0: vp.height };
+        const recipe = newRecipe();
+        const dataUrl = await renderPdfRecipe(src, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+        pdfSrcRef.current = src;
+        recipeRef.current = recipe;
+        setRawImage(dataUrl);
+        setEditHistory([{ img: dataUrl, recipe }]);
+        setHistoryStep(0);
+        setMode('preprocess');
       } catch (err) {
         console.error("PDF Error", err);
         alert("PDF işlenirken hata oluştu.");
@@ -210,8 +219,10 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
+        pdfSrcRef.current = null;
+        recipeRef.current = null;
         setRawImage(dataUrl);
-        setEditHistory([dataUrl]);
+        setEditHistory([{ img: dataUrl }]);
         setHistoryStep(0);
         setMode('preprocess');
       };
@@ -300,7 +311,18 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       renderOverlay();
   }, [selection, measurementLine, tool, isDragging, mousePos, eraserSize]);
 
-  const rotateImage = (degrees: number) => {
+  const rotateImage = async (degrees: number) => {
+    if (pdfSrcRef.current && recipeRef.current) {
+      // Vector PDF: rotate the recipe and re-render the page (crop and erasures follow).
+      const recipe = rotateRecipe(pdfSrcRef.current, recipeRef.current, degrees > 0 ? 90 : -90);
+      const dataUrl = await renderPdfRecipe(pdfSrcRef.current, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+      recipeRef.current = recipe;
+      setRawImage(dataUrl);
+      addToHistory(dataUrl, recipe);
+      setSelection(null);
+      setMeasurementLine(null);
+      return;
+    }
     if (!loadedImageRef.current) return;
     
     const canvas = document.createElement('canvas');
@@ -333,6 +355,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
 
+    draggingRef.current = true;
     setIsDragging(true);
     setStartPos({ x, y });
 
@@ -342,6 +365,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
         setMeasurementLine({ start: {x, y}, end: {x, y} });
         setShowMeasureInput(false);
     } else if (tool === 'eraser') {
+        strokePtsRef.current = [{ x, y }];
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
@@ -377,6 +401,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     } else if (tool === 'measure') {
         setMeasurementLine(prev => prev ? { ...prev, end: { x: currentX, y: currentY } } : null);
     } else if (tool === 'eraser') {
+        strokePtsRef.current.push({ x: currentX, y: currentY });
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
@@ -390,12 +415,24 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   };
 
   const handleCanvasMouseUp = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
     setIsDragging(false);
     
     if (tool === 'eraser' && canvasRef.current) {
         const newDataUrl = canvasRef.current.toDataURL();
         setRawImage(newDataUrl);
-        addToHistory(newDataUrl); 
+        if (pdfSrcRef.current && recipeRef.current && strokePtsRef.current.length > 0) {
+            // Remember the stroke in page units so it is re-applied after every crop/rotation.
+            const src = pdfSrcRef.current;
+            const pxPerUnit = canvasRef.current.width / effectiveCrop(src, recipeRef.current).w;
+            const recipe = addStroke(src, recipeRef.current, strokePtsRef.current, eraserSize, pxPerUnit);
+            recipeRef.current = recipe;
+            addToHistory(newDataUrl, recipe);
+        } else {
+            addToHistory(newDataUrl);
+        }
+        strokePtsRef.current = [];
         
         const newImg = new Image();
         newImg.onload = () => {
@@ -442,8 +479,22 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       alert(`Kalibrasyon tamamlandı. Ürün genişliği: ${calculatedPhysicalWidth.toFixed(1)} mm olarak ayarlandı.`);
   };
 
-  const applyCrop = () => {
+  const applyCrop = async () => {
       if (!selection || !loadedImageRef.current || selection.w < 10 || selection.h < 10) return;
+
+      if (pdfSrcRef.current && recipeRef.current && canvasRef.current) {
+          // Vector PDF: crop the recipe and render the page again for the cropped area,
+          // so the result is sharp instead of an enlarged bitmap. Erasures are re-applied.
+          const src = pdfSrcRef.current;
+          const pxPerUnit = canvasRef.current.width / effectiveCrop(src, recipeRef.current).w;
+          const recipe = cropRecipe(src, recipeRef.current, selection, pxPerUnit);
+          const dataUrl = await renderPdfRecipe(src, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+          recipeRef.current = recipe;
+          setRawImage(dataUrl);
+          addToHistory(dataUrl, recipe);
+          setSelection(null);
+          return;
+      }
       
       const tempCanvas = document.createElement('canvas');
       const img = loadedImageRef.current;
@@ -495,7 +546,19 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       }
   }
 
-  const finishPreprocessing = () => {
+  const finishPreprocessing = async () => {
+      if (pdfSrcRef.current && recipeRef.current) {
+          // Final export is rendered from the vector page at high resolution.
+          try {
+              const hi = await renderPdfRecipe(pdfSrcRef.current, recipeRef.current, FINAL_LONG_SIDE, MAX_FINAL_SCALE);
+              setProcessedImage(hi);
+              setMode('ports');
+          } catch (err) {
+              console.error('PDF export failed', err);
+              alert('PDF işlenirken hata oluştu.');
+          }
+          return;
+      }
       if (loadedImageRef.current) {
           const tempCanvas = document.createElement('canvas');
           const img = loadedImageRef.current;
