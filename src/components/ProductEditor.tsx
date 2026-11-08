@@ -1,12 +1,22 @@
-import React, { useState, useRef, MouseEvent, useEffect } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { PortDefinition, ProductTemplate, ConnectorType, PortFlowType, ExternalPart } from '../types';
 import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { extractPartListFromImage, MISSING_KEY_MESSAGE } from '../services/geminiService';
 import { EditorSidebar } from './editor/EditorSidebar';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import {
+  newRecipe, rotateRecipe, cropRecipe, addStroke, effectiveCrop, renderPdfRecipe,
+  WORK_LONG_SIDE, FINAL_LONG_SIDE, MAX_WORK_SCALE, MAX_FINAL_SCALE,
+  type PdfRecipe, type PdfSource, type Point,
+} from '../utils/pdfRecipe';
 
-// Set worker for PDF.js - Ensure this URL is valid or hosted locally if possible, but for now using CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+// The worker is bundled with the app (no CDN), so PDFs also open offline in the desktop build.
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+/** One undo step: the working image, plus the PDF recipe that produced it (PDFs only). */
+interface EditStep { img: string; recipe?: PdfRecipe }
 
 interface ProductEditorProps {
   initialTemplate?: ProductTemplate | null; 
@@ -32,7 +42,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   const [rawImage, setRawImage] = useState<string | null>(null); 
   const [processedImage, setProcessedImage] = useState<string | null>(null); 
   
-  const [editHistory, setEditHistory] = useState<string[]>([]);
+  const [editHistory, setEditHistory] = useState<EditStep[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
 
   const [ports, setPorts] = useState<PortDefinition[]>([]);
@@ -125,9 +135,56 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       }
   };
 
-  const addToHistory = (imageData: string) => {
+  // PDF source and its current non-destructive recipe (null while editing a plain image).
+  const pdfSrcRef = useRef<PdfSource | null>(null);
+  const recipeRef = useRef<PdfRecipe | null>(null);
+  const strokePtsRef = useRef<Point[]>([]);
+  const draggingRef = useRef(false); // mouse-up also fires on mouse-leave: handle each drag once
+
+  // Port editor popover: rendered in a portal above everything and positioned next to its
+  // port marker, always kept fully inside the window (never behind a panel or clipped).
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ left: number; top: number; maxHeight: number } | null>(null);
+  const placePopover = () => {
+    const pop = popoverRef.current;
+    const marker = editingPortId ? document.querySelector<HTMLElement>(`[data-port-marker="${editingPortId}"]`) : null;
+    if (!pop || !marker) return;
+    const a = marker.getBoundingClientRect();
+    const M = 8, GAP = 14;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pw = pop.offsetWidth, ph = Math.min(pop.scrollHeight, vh - 2 * M);
+    const clampX = (x: number) => Math.min(Math.max(M, x), vw - pw - M);
+    const clampY = (y: number) => Math.min(Math.max(M, y), vh - ph - M);
+    const cx = a.left + a.width / 2, cy = a.top + a.height / 2;
+    // Preferred placements (right, left, below, above). Each is clamped into the window; the
+    // first one that does not cover the marker wins, otherwise the least-overlapping one.
+    const candidates = [
+      { left: a.right + GAP, top: cy - ph / 2 },
+      { left: a.left - GAP - pw, top: cy - ph / 2 },
+      { left: cx - pw / 2, top: a.bottom + GAP },
+      { left: cx - pw / 2, top: a.top - GAP - ph },
+    ].map(c => ({ left: clampX(c.left), top: clampY(c.top) }));
+    const overlap = (c: { left: number; top: number }) => {
+      const ox = Math.min(c.left + pw, a.right + 6) - Math.max(c.left, a.left - 6);
+      const oy = Math.min(c.top + ph, a.bottom + 6) - Math.max(c.top, a.top - 6);
+      return ox > 0 && oy > 0 ? ox * oy : 0;
+    };
+    const best = candidates.find(c => overlap(c) === 0)
+      ?? candidates.reduce((m, c) => (overlap(c) < overlap(m) ? c : m), candidates[0]);
+    const next = { left: Math.round(best.left), top: Math.round(best.top), maxHeight: vh - 2 * M };
+    setPopoverPos(prev => prev && prev.left === next.left && prev.top === next.top && prev.maxHeight === next.maxHeight ? prev : next);
+  };
+  // Re-place after every render (the form grows when power fields appear) and on resize.
+  useLayoutEffect(() => { if (editingPortId) placePopover(); });
+  useEffect(() => {
+    if (!editingPortId) { setPopoverPos(null); return; }
+    window.addEventListener('resize', placePopover);
+    return () => window.removeEventListener('resize', placePopover);
+  }, [editingPortId]);
+
+  const addToHistory = (imageData: string, recipe?: PdfRecipe) => {
       const newHistory = editHistory.slice(0, historyStep + 1);
-      newHistory.push(imageData);
+      newHistory.push({ img: imageData, recipe });
       setEditHistory(newHistory);
       setHistoryStep(newHistory.length - 1);
   };
@@ -136,7 +193,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       if (historyStep > 0) {
           const prevIndex = historyStep - 1;
           setHistoryStep(prevIndex);
-          setRawImage(editHistory[prevIndex]);
+          setRawImage(editHistory[prevIndex].img);
+          if (editHistory[prevIndex].recipe) recipeRef.current = editHistory[prevIndex].recipe!;
       }
   };
 
@@ -144,7 +202,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       if (historyStep < editHistory.length - 1) {
           const nextIndex = historyStep + 1;
           setHistoryStep(nextIndex);
-          setRawImage(editHistory[nextIndex]);
+          setRawImage(editHistory[nextIndex].img);
+          if (editHistory[nextIndex].recipe) recipeRef.current = editHistory[nextIndex].recipe!;
       }
   };
 
@@ -183,25 +242,17 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const page = await pdf.getPage(1); 
-        
-        const viewport = page.getViewport({ scale: 2.0 }); 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        if (context) {
-          context.fillStyle = '#FFFFFF';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          
-          await page.render({ canvasContext: context, viewport: viewport } as any).promise;
-          const dataUrl = canvas.toDataURL('image/png');
-          setRawImage(dataUrl);
-          setEditHistory([dataUrl]);
-          setHistoryStep(0);
-          setMode('preprocess');
-        }
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 1 });
+        const src: PdfSource = { page, w0: vp.width, h0: vp.height };
+        const recipe = newRecipe();
+        const dataUrl = await renderPdfRecipe(src, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+        pdfSrcRef.current = src;
+        recipeRef.current = recipe;
+        setRawImage(dataUrl);
+        setEditHistory([{ img: dataUrl, recipe }]);
+        setHistoryStep(0);
+        setMode('preprocess');
       } catch (err) {
         console.error("PDF Error", err);
         alert("PDF işlenirken hata oluştu.");
@@ -210,8 +261,10 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
+        pdfSrcRef.current = null;
+        recipeRef.current = null;
         setRawImage(dataUrl);
-        setEditHistory([dataUrl]);
+        setEditHistory([{ img: dataUrl }]);
         setHistoryStep(0);
         setMode('preprocess');
       };
@@ -300,7 +353,18 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       renderOverlay();
   }, [selection, measurementLine, tool, isDragging, mousePos, eraserSize]);
 
-  const rotateImage = (degrees: number) => {
+  const rotateImage = async (degrees: number) => {
+    if (pdfSrcRef.current && recipeRef.current) {
+      // Vector PDF: rotate the recipe and re-render the page (crop and erasures follow).
+      const recipe = rotateRecipe(pdfSrcRef.current, recipeRef.current, degrees > 0 ? 90 : -90);
+      const dataUrl = await renderPdfRecipe(pdfSrcRef.current, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+      recipeRef.current = recipe;
+      setRawImage(dataUrl);
+      addToHistory(dataUrl, recipe);
+      setSelection(null);
+      setMeasurementLine(null);
+      return;
+    }
     if (!loadedImageRef.current) return;
     
     const canvas = document.createElement('canvas');
@@ -333,6 +397,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
 
+    draggingRef.current = true;
     setIsDragging(true);
     setStartPos({ x, y });
 
@@ -342,6 +407,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
         setMeasurementLine({ start: {x, y}, end: {x, y} });
         setShowMeasureInput(false);
     } else if (tool === 'eraser') {
+        strokePtsRef.current = [{ x, y }];
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
@@ -377,6 +443,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     } else if (tool === 'measure') {
         setMeasurementLine(prev => prev ? { ...prev, end: { x: currentX, y: currentY } } : null);
     } else if (tool === 'eraser') {
+        strokePtsRef.current.push({ x: currentX, y: currentY });
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
@@ -390,12 +457,24 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   };
 
   const handleCanvasMouseUp = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
     setIsDragging(false);
     
     if (tool === 'eraser' && canvasRef.current) {
         const newDataUrl = canvasRef.current.toDataURL();
         setRawImage(newDataUrl);
-        addToHistory(newDataUrl); 
+        if (pdfSrcRef.current && recipeRef.current && strokePtsRef.current.length > 0) {
+            // Remember the stroke in page units so it is re-applied after every crop/rotation.
+            const src = pdfSrcRef.current;
+            const pxPerUnit = canvasRef.current.width / effectiveCrop(src, recipeRef.current).w;
+            const recipe = addStroke(src, recipeRef.current, strokePtsRef.current, eraserSize, pxPerUnit);
+            recipeRef.current = recipe;
+            addToHistory(newDataUrl, recipe);
+        } else {
+            addToHistory(newDataUrl);
+        }
+        strokePtsRef.current = [];
         
         const newImg = new Image();
         newImg.onload = () => {
@@ -442,8 +521,22 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       alert(`Kalibrasyon tamamlandı. Ürün genişliği: ${calculatedPhysicalWidth.toFixed(1)} mm olarak ayarlandı.`);
   };
 
-  const applyCrop = () => {
+  const applyCrop = async () => {
       if (!selection || !loadedImageRef.current || selection.w < 10 || selection.h < 10) return;
+
+      if (pdfSrcRef.current && recipeRef.current && canvasRef.current) {
+          // Vector PDF: crop the recipe and render the page again for the cropped area,
+          // so the result is sharp instead of an enlarged bitmap. Erasures are re-applied.
+          const src = pdfSrcRef.current;
+          const pxPerUnit = canvasRef.current.width / effectiveCrop(src, recipeRef.current).w;
+          const recipe = cropRecipe(src, recipeRef.current, selection, pxPerUnit);
+          const dataUrl = await renderPdfRecipe(src, recipe, WORK_LONG_SIDE, MAX_WORK_SCALE);
+          recipeRef.current = recipe;
+          setRawImage(dataUrl);
+          addToHistory(dataUrl, recipe);
+          setSelection(null);
+          return;
+      }
       
       const tempCanvas = document.createElement('canvas');
       const img = loadedImageRef.current;
@@ -495,7 +588,19 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       }
   }
 
-  const finishPreprocessing = () => {
+  const finishPreprocessing = async () => {
+      if (pdfSrcRef.current && recipeRef.current) {
+          // Final export is rendered from the vector page at high resolution.
+          try {
+              const hi = await renderPdfRecipe(pdfSrcRef.current, recipeRef.current, FINAL_LONG_SIDE, MAX_FINAL_SCALE);
+              setProcessedImage(hi);
+              setMode('ports');
+          } catch (err) {
+              console.error('PDF export failed', err);
+              alert('PDF işlenirken hata oluştu.');
+          }
+          return;
+      }
       if (loadedImageRef.current) {
           const tempCanvas = document.createElement('canvas');
           const img = loadedImageRef.current;
@@ -779,6 +884,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                 {ports.map(p => (
                   <div 
                     key={p.id}
+                    data-port-marker={p.id}
                     onClick={(e) => { e.stopPropagation(); startEditingPort(p); }}
                     onMouseEnter={() => setHoveredPortId(p.id)}
                     onMouseLeave={() => setHoveredPortId(null)}
@@ -815,13 +921,18 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                   </div>
                 ))}
             
-            {/* Context Menu for Port Editing */}
-            {editingPortId && (
+            {/* Context Menu for Port Editing (portal: never clipped or covered by panels) */}
+            {editingPortId && createPortal(
                 <div 
-                    className="absolute z-50 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 animate-in fade-in zoom-in-95 duration-200"
-                    style={(ports.find(p => p.id === editingPortId)?.x ?? 50) > 50
-                        ? { right: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }
-                        : { left: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }}
+                    ref={popoverRef}
+                    data-testid="port-popover"
+                    className="fixed z-[130] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 overflow-y-auto"
+                    style={{
+                        left: popoverPos?.left ?? 0,
+                        top: popoverPos?.top ?? 0,
+                        maxHeight: popoverPos?.maxHeight,
+                        visibility: popoverPos ? 'visible' : 'hidden',
+                    }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
@@ -908,7 +1019,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             </div>
