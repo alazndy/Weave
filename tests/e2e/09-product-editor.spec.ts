@@ -114,7 +114,7 @@ test.describe('Ürün editörü', () => {
     const b = (await img.boundingBox())!;
     await img.click({ position: { x: b.width * 0.8, y: b.height * 0.5 } });
     await page.getByTitle('Port 1').click();
-    const popover = page.locator('div.absolute', { has: page.getByRole('heading', { name: 'Port Düzenle' }) });
+    const popover = page.getByTestId('port-popover');
     await expect(popover).toBeVisible();
     await popover.getByRole('textbox').first().fill('SİNYAL');
     await popover.getByRole('button', { name: 'Kaydet' }).click();
@@ -136,7 +136,7 @@ test.describe('Ürün editörü', () => {
     const b = (await img.boundingBox())!;
     await img.click({ position: { x: b.width * 0.3, y: b.height * 0.4 } });
     await page.getByTitle('Port 1').click();
-    const popover = page.locator('div.absolute', { has: page.getByRole('heading', { name: 'Port Düzenle' }) });
+    const popover = page.getByTestId('port-popover');
     await popover.locator('button:has(svg.lucide-trash-2)').click();
     await expect(page.getByTitle('Port 1')).toHaveCount(0);
   });
@@ -153,3 +153,74 @@ test.describe('Ürün editörü', () => {
     await expect(portOf(nodes(page).first(), 'cam-out')).toBeAttached();
   });
 });
+
+test.describe('Port düzenleme kutusu konumu', () => {
+  const SPOTS: [string, number, number][] = [
+    ['sol kenar', 0.03, 0.5], ['sağ kenar', 0.97, 0.5], ['üst kenar', 0.5, 0.03],
+    ['alt kenar', 0.5, 0.97], ['sağ alt köşe', 0.97, 0.97], ['sol üst köşe', 0.03, 0.03],
+  ];
+
+  for (const [label, w, h] of [['küçük görsel', 300, 200], ['büyük görsel', 1600, 1200]] as const) {
+    test(`kutu her zaman ekranda ve üstte kalır (${label})`, async ({ page }) => {
+      await openApp(page);
+      await page.getByRole('button', { name: 'Yeni bileşen' }).click();
+      await page.locator('input[type=file][accept*=".png"]').setInputFiles({ name: 'p.png', mimeType: 'image/png', buffer: makePng(w, h) });
+      await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
+      const img = page.getByAltText('Work area');
+      await expect(img).toBeVisible();
+      const box = (await img.boundingBox())!;
+
+      let n = 0;
+      for (const [spot, fx, fy] of SPOTS) {
+        n++;
+        await img.click({ position: { x: box.width * fx, y: box.height * fy } });
+        await page.getByTitle(`Port ${n}`).click();
+        const pop = page.getByTestId('port-popover');
+        await expect(pop).toBeVisible();
+        const r = await pop.evaluate((el, markerTitle) => {
+          const b = el.getBoundingClientRect();
+          const marker = document.querySelector(`[title="${markerTitle}"]`)!.getBoundingClientRect();
+          const probes = [[.1, .1], [.9, .1], [.5, .5], [.1, .9], [.9, .9]];
+          const covered = probes.some(([fx2, fy2]) => {
+            const top = document.elementFromPoint(b.left + b.width * fx2, b.top + b.height * fy2);
+            return !top || !el.contains(top);
+          });
+          const mx = marker.left + marker.width / 2, my = marker.top + marker.height / 2;
+          return {
+            l: b.left, t: b.top, r: b.right, b: b.bottom, vw: innerWidth, vh: innerHeight, covered,
+            overMarker: mx >= b.left && mx <= b.right && my >= b.top && my <= b.bottom,
+          };
+        }, `Port ${n}`);
+        expect(r.l, spot).toBeGreaterThanOrEqual(0);
+        expect(r.t, spot).toBeGreaterThanOrEqual(0);
+        expect(r.r, spot).toBeLessThanOrEqual(r.vw);
+        expect(r.b, spot).toBeLessThanOrEqual(r.vh);
+        expect(r.covered, `${spot}: kutu bir panelin arkasında`).toBe(false);
+        expect(r.overMarker, `${spot}: kutu portu örtüyor`).toBe(false);
+        // Save closes the popover; the next port can then be added.
+        await pop.getByRole('button', { name: 'Kaydet' }).click();
+        await expect(pop).toBeHidden();
+      }
+    });
+  }
+
+  test('güç alanları açılınca kutu büyür ve yine ekranda kalır', async ({ page }) => {
+    await openApp(page);
+    await page.getByRole('button', { name: 'Yeni bileşen' }).click();
+    await page.locator('input[type=file][accept*=".png"]').setInputFiles({ name: 'p.png', mimeType: 'image/png', buffer: makePng(300, 200) });
+    await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
+    const img = page.getByAltText('Work area');
+    const box = (await img.boundingBox())!;
+    await img.click({ position: { x: box.width * 0.5, y: box.height * 0.9 } });
+    await page.getByTitle('Port 1').click();
+    const pop = page.getByTestId('port-popover');
+    await pop.getByText('Güç', { exact: true }).click();
+    await expect(pop.getByPlaceholder('Voltaj (5V)')).toBeVisible();
+    const b = (await pop.boundingBox())!;
+    const vp = page.viewportSize()!;
+    expect(b.y).toBeGreaterThanOrEqual(0);
+    expect(b.y + b.height).toBeLessThanOrEqual(vp.height);
+    await expect(pop.getByRole('button', { name: 'Kaydet' })).toBeInViewport();
+  });
+});
+

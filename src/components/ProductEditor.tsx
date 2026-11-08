@@ -1,4 +1,5 @@
-import React, { useState, useRef, MouseEvent, useEffect } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { PortDefinition, ProductTemplate, ConnectorType, PortFlowType, ExternalPart } from '../types';
 import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -139,6 +140,47 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
   const recipeRef = useRef<PdfRecipe | null>(null);
   const strokePtsRef = useRef<Point[]>([]);
   const draggingRef = useRef(false); // mouse-up also fires on mouse-leave: handle each drag once
+
+  // Port editor popover: rendered in a portal above everything and positioned next to its
+  // port marker, always kept fully inside the window (never behind a panel or clipped).
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ left: number; top: number; maxHeight: number } | null>(null);
+  const placePopover = () => {
+    const pop = popoverRef.current;
+    const marker = editingPortId ? document.querySelector<HTMLElement>(`[data-port-marker="${editingPortId}"]`) : null;
+    if (!pop || !marker) return;
+    const a = marker.getBoundingClientRect();
+    const M = 8, GAP = 14;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pw = pop.offsetWidth, ph = Math.min(pop.scrollHeight, vh - 2 * M);
+    const clampX = (x: number) => Math.min(Math.max(M, x), vw - pw - M);
+    const clampY = (y: number) => Math.min(Math.max(M, y), vh - ph - M);
+    const cx = a.left + a.width / 2, cy = a.top + a.height / 2;
+    // Preferred placements (right, left, below, above). Each is clamped into the window; the
+    // first one that does not cover the marker wins, otherwise the least-overlapping one.
+    const candidates = [
+      { left: a.right + GAP, top: cy - ph / 2 },
+      { left: a.left - GAP - pw, top: cy - ph / 2 },
+      { left: cx - pw / 2, top: a.bottom + GAP },
+      { left: cx - pw / 2, top: a.top - GAP - ph },
+    ].map(c => ({ left: clampX(c.left), top: clampY(c.top) }));
+    const overlap = (c: { left: number; top: number }) => {
+      const ox = Math.min(c.left + pw, a.right + 6) - Math.max(c.left, a.left - 6);
+      const oy = Math.min(c.top + ph, a.bottom + 6) - Math.max(c.top, a.top - 6);
+      return ox > 0 && oy > 0 ? ox * oy : 0;
+    };
+    const best = candidates.find(c => overlap(c) === 0)
+      ?? candidates.reduce((m, c) => (overlap(c) < overlap(m) ? c : m), candidates[0]);
+    const next = { left: Math.round(best.left), top: Math.round(best.top), maxHeight: vh - 2 * M };
+    setPopoverPos(prev => prev && prev.left === next.left && prev.top === next.top && prev.maxHeight === next.maxHeight ? prev : next);
+  };
+  // Re-place after every render (the form grows when power fields appear) and on resize.
+  useLayoutEffect(() => { if (editingPortId) placePopover(); });
+  useEffect(() => {
+    if (!editingPortId) { setPopoverPos(null); return; }
+    window.addEventListener('resize', placePopover);
+    return () => window.removeEventListener('resize', placePopover);
+  }, [editingPortId]);
 
   const addToHistory = (imageData: string, recipe?: PdfRecipe) => {
       const newHistory = editHistory.slice(0, historyStep + 1);
@@ -842,6 +884,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                 {ports.map(p => (
                   <div 
                     key={p.id}
+                    data-port-marker={p.id}
                     onClick={(e) => { e.stopPropagation(); startEditingPort(p); }}
                     onMouseEnter={() => setHoveredPortId(p.id)}
                     onMouseLeave={() => setHoveredPortId(null)}
@@ -878,13 +921,18 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                   </div>
                 ))}
             
-            {/* Context Menu for Port Editing */}
-            {editingPortId && (
+            {/* Context Menu for Port Editing (portal: never clipped or covered by panels) */}
+            {editingPortId && createPortal(
                 <div 
-                    className="absolute z-50 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 animate-in fade-in zoom-in-95 duration-200"
-                    style={(ports.find(p => p.id === editingPortId)?.x ?? 50) > 50
-                        ? { right: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }
-                        : { left: 'calc(100% + 16px)', top: '50%', transform: 'translateY(-50%)' }}
+                    ref={popoverRef}
+                    data-testid="port-popover"
+                    className="fixed z-[130] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-4 w-72 overflow-y-auto"
+                    style={{
+                        left: popoverPos?.left ?? 0,
+                        top: popoverPos?.top ?? 0,
+                        maxHeight: popoverPos?.maxHeight,
+                        visibility: popoverPos ? 'visible' : 'hidden',
+                    }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
@@ -971,7 +1019,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             </div>
