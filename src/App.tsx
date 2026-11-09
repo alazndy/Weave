@@ -1,5 +1,6 @@
 
 import { numberBySpace } from './utils/numbering';
+import { buildPdf, type PdfPageImage } from './utils/pdfWriter';
 import { documentNoFor } from './utils/docNumbering';
 const fileSafeDocNo = (m: ProjectMetadata, sheet: number) => documentNoFor(m, sheet).trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -130,6 +131,7 @@ export default function App() {
   const [activePageId, setActivePageId] = useState<string>(() => pages[0].id);
   const [projectId, setProjectId] = useState<string>(() => crypto.randomUUID());
   const [isGridView, setIsGridView] = useState(false); 
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [activeTool, setActiveTool] = useState<ActiveTool>('cursor'); 
 
   const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>(INITIAL_METADATA);
@@ -661,6 +663,70 @@ export default function App() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /** Moves a page to a new position (sheet numbers and document numbers follow the order). */
+  const handleMovePage = (id: string, toIndex: number) => {
+      const from = pages.findIndex(p => p.id === id);
+      const to = Math.max(0, Math.min(pages.length - 1, toIndex));
+      if (from < 0 || from === to) return;
+      performCheckpoint();
+      setPages(prev => {
+          const next = [...prev];
+          const [moved] = next.splice(from, 1);
+          next.splice(to, 0, moved);
+          return next.map((p, i) => ({ ...p, order: i + 1 }));
+      });
+  };
+
+  /** Exports every page, in page order, to one PDF (page size = paper size, one sheet per page). */
+  const handleExportPdf = async () => {
+      if (pdfBusy) return;
+      setPdfBusy(true);
+      const prevTheme = appSettings.theme;
+      const prevSelection = new Set(selectedIds);
+      const prevLegendCollapsed = isLegendCollapsed;
+      const prevActive = activePageId;
+      const prevGrid = isGridView;
+      try {
+          setAppSettings(prev => ({ ...prev, theme: 'light' }));
+          setSelectedIds(new Set()); setIsLegendCollapsed(false); setIsGridView(false);
+          const dims = PAPER_DIMENSIONS[projectMetadata.paperSize];
+          const portrait = projectMetadata.orientation === 'portrait';
+          const wMm = portrait ? dims.h : dims.w, hMm = portrait ? dims.w : dims.h;
+          const finalW = wMm * projectMetadata.pixelScale, finalH = hMm * projectMetadata.pixelScale;
+          const scale = Math.min(1.5, 6000 / Math.max(finalW, finalH));
+          const images: PdfPageImage[] = [];
+          for (let i = 0; i < pages.length; i++) {
+              setActivePageId(pages[i].id);
+              await new Promise(r => setTimeout(r, i === 0 ? 900 : 600));
+              const element = document.getElementById('canvas-export-area');
+              if (!element) throw new Error('Canvas alanı bulunamadı.');
+              const canvas = await html2canvas(element as HTMLElement, {
+                  scale, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
+                  width: finalW, height: finalH, x: 0, y: 0, windowWidth: finalW, windowHeight: finalH,
+                  ignoreElements: (el: Element) => el.classList.contains('no-print'),
+                  onclone: (doc: Document) => {
+                      const c = doc.getElementById('canvas-export-area');
+                      if (c) { (c as HTMLElement).style.transform = 'none'; (c as HTMLElement).style.width = `${finalW}px`; (c as HTMLElement).style.height = `${finalH}px`; }
+                  },
+              });
+              const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+              if (!blob) throw new Error('Sayfa görüntüsü oluşturulamadı.');
+              images.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), widthPx: canvas.width, heightPx: canvas.height, widthMm: wMm, heightMm: hMm });
+          }
+          const pdf = buildPdf(images, { title: projectMetadata.projectName, author: projectMetadata.preparedBy || projectMetadata.companyName, creator: 'Weave' });
+          const base = fileSafeDocNo(projectMetadata, 1).replace(/-\d\d(?=_Rev)/, '') || 'Weave';
+          downloadBlob(new Blob([pdf as BlobPart], { type: 'application/pdf' }), `${base}.pdf`);
+      } catch (err) {
+          console.error('PDF export failed', err);
+          alert('PDF oluşturulurken bir hata oluştu.');
+      } finally {
+          setActivePageId(prevActive);
+          setAppSettings(prev => ({ ...prev, theme: prevTheme }));
+          setSelectedIds(prevSelection); setIsLegendCollapsed(prevLegendCollapsed); setIsGridView(prevGrid);
+          setPdfBusy(false);
+      }
+  };
+
   const handleExportImage = async () => {
       const prevTheme = appSettings.theme;
       const prevSelection = new Set(selectedIds);
@@ -933,6 +999,7 @@ export default function App() {
                         onSwitchPage={(id) => { setActivePageId(id); setIsGridView(false); }}
                         onRemovePage={handleRemovePage}
                         onDuplicatePage={handleDuplicatePage}
+                        onMovePage={handleMovePage}
                         theme={appSettings.theme}
                    />
                ) : (
@@ -986,7 +1053,7 @@ export default function App() {
                     canUndo={canUndo} canRedo={canRedo}
                     isAnalyzing={isAnalyzing} runAnalysis={runAnalysis}
                     handleAutoRoute={handleAutoRoute} hasConnections={connections.length > 0}
-                    requestClear={requestClear} handleExportImage={handleExportImage}
+                    requestClear={requestClear} handleExportImage={handleExportImage} handleExportPdf={handleExportPdf} pdfBusy={pdfBusy}
                     theme={appSettings.theme} setTheme={(t) => setAppSettings({...appSettings, theme: t})}
                     openShortcuts={() => setIsShortcutsOpen(true)}
                     openPinout={() => setIsPinoutOpen(true)}
@@ -1008,6 +1075,7 @@ export default function App() {
               onDuplicatePage={handleDuplicatePage}
               onRemovePage={handleRemovePage}
               onRenamePage={handleRenamePage}
+              onMovePage={handleMovePage}
               onToggleGridView={() => setIsGridView(!isGridView)}
               isGridView={isGridView}
               theme={appSettings.theme}
