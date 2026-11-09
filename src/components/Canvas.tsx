@@ -17,6 +17,8 @@ import { CommentMarker } from './canvas/CommentMarker';
 import { Minimap } from './canvas/Minimap';
 import { CanvasToolbar, ActiveTool } from './canvas/CanvasToolbar';
 import { ToolSettingsBar } from './canvas/ToolSettingsBar';
+import { ConnectionToolbar } from './canvas/ConnectionToolbar';
+import { getRouteEnds, normalizeInner, moveWaypoint, moveSegment, insertWaypoint, removeWaypoint, type Handle } from '../utils/connectionRoute';
 import { CanvasControls } from './canvas/CanvasControls';
 import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
@@ -162,6 +164,92 @@ export const Canvas: React.FC<CanvasProps> = ({
       return () => clearTimeout(timer);
   }, [connectionWarning]);
 
+  // ---- Connection selection & manual route editing ----
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const connDragRef = useRef<{ id: string; handle: Handle; inner: Point[]; moved: boolean } | null>(null);
+  const connectionsRef = useRef(connections);
+  connectionsRef.current = connections;
+  const selectedConnection = connections.find(c => c.id === selectedConnectionId) || null;
+
+  const patchConnection = (id: string, patch: Partial<Connection>, checkpoint = true) => {
+      if (checkpoint) onUndoCheckpoint();
+      onConnectionsChange(connectionsRef.current.map(c => c.id === id ? { ...c, ...patch } : c));
+  };
+
+  const routeOf = (conn: Connection) => {
+      const ends = getRouteEnds(conn, instances, templates);
+      return ends ? { ends, inner: normalizeInner(conn.shape || 'curved', ends, conn.controlPoints) } : null;
+  };
+
+  const handleConnectionHandleDown = (e: React.MouseEvent, id: string, handle: Handle) => {
+      if (e.button !== 0) return;
+      e.stopPropagation(); e.preventDefault();
+      const conn = connectionsRef.current.find(c => c.id === id);
+      const r = conn && routeOf(conn);
+      if (!conn || !r) return;
+      let inner = r.inner;
+      let h = handle;
+      if (handle.kind === 'add') {
+          inner = insertWaypoint(inner, handle.index, handle.at);
+          h = { kind: 'point', index: handle.index + 1, at: handle.at };
+      }
+      onUndoCheckpoint();
+      connDragRef.current = { id, handle: h, inner, moved: false };
+      setSelectedConnectionId(id);
+  };
+
+  useEffect(() => {
+      const move = (ev: MouseEvent) => {
+          const d = connDragRef.current;
+          if (!d) return;
+          const conn = connectionsRef.current.find(c => c.id === d.id);
+          const ends = conn && getRouteEnds(conn, instances, templates);
+          if (!conn || !ends) return;
+          let p = getMouseCoords(ev as unknown as React.MouseEvent);
+          if (isGridSnapEnabled && !ev.altKey) p = { x: snapToGrid(p.x), y: snapToGrid(p.y) };
+          const shape = conn.shape || 'curved';
+          const next = d.handle.kind === 'segment'
+              ? moveSegment(ends, d.inner, d.handle.index, p)
+              : moveWaypoint(shape, ends, d.inner, d.handle.index, p);
+          d.moved = true;
+          d.inner = next;
+          onConnectionsChange(connectionsRef.current.map(c => c.id === d.id ? { ...c, controlPoints: next } : c));
+      };
+      const up = () => { connDragRef.current = null; };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+      return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, [instances, templates, isGridSnapEnabled, scale]);
+
+  const handleHandleDoubleClick = (e: React.MouseEvent, id: string, handle: Handle) => {
+      e.stopPropagation();
+      const conn = connectionsRef.current.find(c => c.id === id);
+      const r = conn && routeOf(conn);
+      if (!conn || !r || handle.kind !== 'point') return;
+      patchConnection(id, { controlPoints: removeWaypoint(conn.shape || 'curved', r.ends, r.inner, handle.index) });
+  };
+
+  useEffect(() => {
+      if (selectedConnectionId && !selectedConnection) setSelectedConnectionId(null);
+  }, [selectedConnectionId, selectedConnection]);
+  useEffect(() => {
+      const onKey = (ev: KeyboardEvent) => {
+          if (!selectedConnectionId) return;
+          const t = ev.target as HTMLElement;
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable) return;
+          const conn = connectionsRef.current.find(c => c.id === selectedConnectionId);
+          if (ev.key === 'Escape') setSelectedConnectionId(null);
+          else if ((ev.key === 'Delete' || ev.key === 'Backspace') && conn && !conn.locked) {
+              ev.preventDefault(); ev.stopImmediatePropagation();
+              onUndoCheckpoint();
+              onConnectionsChange(connectionsRef.current.filter(c => c.id !== selectedConnectionId));
+              setSelectedConnectionId(null);
+          }
+      };
+      window.addEventListener('keydown', onKey, true);
+      return () => window.removeEventListener('keydown', onKey, true);
+  }, [selectedConnectionId]);
+
   const findPort = (instId: string, portId: string) => {
       const inst = instances.find(i => i.id === instId);
       return templates.find(t => t.id === inst?.templateId)?.ports.find(p => p.id === portId);
@@ -279,7 +367,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         ref={containerRef}
         className="absolute w-full h-full origin-top-left print:transform-none"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => { if (!(e.target as HTMLElement).closest('[data-connection-id],[data-testid="connection-toolbar"]')) setSelectedConnectionId(null); handleMouseDown(e); }}
         onMouseMove={handleMouseMoveWrapper}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -379,6 +467,10 @@ export const Canvas: React.FC<CanvasProps> = ({
                     editingConnectionId={editingConnectionId}
                     setEditingConnectionId={setEditingConnectionId}
                     handleConnectionDoubleClick={(e, id) => setEditingConnectionId(id)}
+                    selected={selectedConnectionId === conn.id}
+                    onSelect={setSelectedConnectionId}
+                    onHandleDown={handleConnectionHandleDown}
+                    onHandleDoubleClick={handleHandleDoubleClick}
                     handleControlPointMouseDown={() => {}} 
                     handleControlPointDoubleClick={() => {}} 
                     removeConnection={(id) => { onUndoCheckpoint(); onConnectionsChange(connections.filter(c => c.id !== id)); }}
@@ -524,6 +616,21 @@ export const Canvas: React.FC<CanvasProps> = ({
           theme={theme}
       />
       
+      {selectedConnection && (
+          <ConnectionToolbar
+              conn={selectedConnection}
+              theme={theme}
+              onChange={(patch) => patchConnection(selectedConnection.id, patch)}
+              onResetRoute={() => {
+                  const r = routeOf({ ...selectedConnection, controlPoints: undefined });
+                  patchConnection(selectedConnection.id, { controlPoints: r ? r.inner : undefined });
+              }}
+              onDelete={() => { onUndoCheckpoint(); onConnectionsChange(connections.filter(c => c.id !== selectedConnection.id)); setSelectedConnectionId(null); }}
+              onEditDetails={() => setEditingConnectionId(selectedConnection.id)}
+              onClose={() => setSelectedConnectionId(null)}
+          />
+      )}
+
       <ToolSettingsBar 
          activeTool={activeTool}
          settings={toolSettings}
