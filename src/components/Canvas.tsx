@@ -9,6 +9,7 @@ import { ContextMenu } from './canvas/ContextMenu';
 import { ISOFrame } from './canvas/ISOFrame';
 import { TitleBlock } from './canvas/TitleBlock';
 import { BOMTable } from './canvas/BOMTable';
+import { LegendStack } from './canvas/LegendStack';
 import { ConnectionLine } from './canvas/ConnectionLine';
 import { ProductNode } from './canvas/ProductNode';
 import { ZoneNode } from './canvas/ZoneNode';
@@ -449,6 +450,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             >
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
                 
+                <LegendStack paperHeight={finalH}>
                 <BOMTable 
                     instances={instances}
                     templates={templates}
@@ -464,6 +466,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     totalPages={totalPages}
                     onEdit={onEditMetadata}
                 />
+                </LegendStack>
             </div>
         )}
 

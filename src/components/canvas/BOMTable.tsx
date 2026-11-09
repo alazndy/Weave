@@ -47,9 +47,8 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
 
     return (
         <div 
-            className="absolute right-[20px] bottom-[180px] z-10 print-bom select-none pointer-events-none overflow-hidden"
+            className="relative w-full max-w-[600px] z-10 print-bom select-none pointer-events-none"
             style={{ 
-                width: 'min(100% - 40px, 600px)',
                 borderColor: borderColor,
                 color: textColor,
                 backgroundColor: bgColor,
@@ -68,10 +67,10 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
             {/* Rows */}
             <div className="flex flex-col">
                 {bomData.map((item, index) => (
-                    <div key={index} className="flex border-b last:border-b-0" style={{ borderColor: borderColor }}>
+                    <div key={index} className="flex border-b last:border-b-0 items-stretch" style={{ borderColor: borderColor }}>
                         <div className="w-12 p-1 border-r flex items-center justify-center text-[10px] font-bold" style={{ borderColor: borderColor }}>{index + 1}</div>
-                        <div className="flex-1 p-1 border-r flex items-center text-[10px] font-medium truncate" style={{ borderColor: borderColor }}>{item.name}</div>
-                        <div className="w-24 p-1 border-r flex items-center text-[10px] font-mono truncate" style={{ borderColor: borderColor }}>{item.model}</div>
+                        <div className="flex-1 min-w-0 p-1 border-r flex items-center text-[10px] font-medium break-words" style={{ borderColor: borderColor }}>{item.name}</div>
+                        <div className="w-24 shrink-0 p-1 border-r flex items-center text-[10px] font-mono break-all" style={{ borderColor: borderColor }}>{item.model}</div>
                         <div className="w-16 p-1 flex items-center justify-center text-[10px] font-bold">{item.count}</div>
                     </div>
                 ))}
