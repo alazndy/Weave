@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { 
   ProjectMetadata, ProductInstance, Connection, ProductTemplate, Zone, TextNode, Comment 
@@ -56,6 +56,11 @@ export function useCanvasInteraction({
       resizingTarget, setResizingTarget,
       setContextMenu
   } = canvasState;
+
+  // A drag only starts after the pointer moved a few pixels, so a plain click never nudges
+  // (or grid-snaps) an item.
+  const dragGateRef = useRef<{ x: number; y: number; open: boolean } | null>(null);
+  const DRAG_THRESHOLD_PX = 4;
 
   // Coordinate Helpers
   const getMouseCoords = useCallback((e: React.MouseEvent) => {
@@ -157,6 +162,13 @@ export function useCanvasInteraction({
          return;
      }
 
+     // The button was released outside the canvas (sidebar, another window …): finish the
+     // interaction instead of letting the item follow the cursor when it comes back.
+     if (e.buttons === 0 && (draggedInstance || resizingTarget || rotatingInstance || selectionBox || drawingZone)) {
+         handleMouseUp();
+         return;
+     }
+
      const { x, y } = getMouseCoords(e);
 
      // --- RESIZING LOGIC ---
@@ -202,6 +214,11 @@ export function useCanvasInteraction({
 
      // --- DRAGGING LOGIC ---
      if (draggedInstance) {
+         const gate = dragGateRef.current;
+         if (gate && !gate.open) {
+             if (Math.hypot(x - gate.x, y - gate.y) * scale < DRAG_THRESHOLD_PX) return;
+             gate.open = true;
+         }
          let newX = x - dragOffset.x;
          let newY = y - dragOffset.y;
 
@@ -214,7 +231,10 @@ export function useCanvasInteraction({
                 const t = templates.find(temp => temp.id === inst.templateId);
                 const w = inst.width || t?.width || 100;
                 const h = inst.height || t?.height || 100;
-                const snapResult = calculateSnapGuides(draggedInstance, newX, newY, w, h, instances, templates);
+                // items that travel with the dragged one must not act as snap targets
+                const movingWith = selectedIds.has(draggedInstance) ? selectedIds : null;
+                const targets = movingWith ? instances.filter(i => i.id === draggedInstance || !movingWith.has(i.id)) : instances;
+                const snapResult = calculateSnapGuides(draggedInstance, newX, newY, w, h, targets, templates);
                 newX = snapResult.x;
                 newY = snapResult.y;
                 setAlignmentGuides(snapResult.guides);
@@ -258,6 +278,7 @@ export function useCanvasInteraction({
   };
 
   const handleMouseUp = () => {
+      dragGateRef.current = null;
       setIsMiddlePanning(false);
       setDraggedInstance(null);
       setRotatingInstance(null);
@@ -332,6 +353,7 @@ export function useCanvasInteraction({
           const inst = instances.find(i => i.id === id);
           if (inst && !inst.locked) {
               setDragOffset({ x: x - inst.x, y: y - inst.y });
+              dragGateRef.current = { x, y, open: false };
               setDraggedInstance(id);
               onUndoCheckpoint();
           }
@@ -369,6 +391,19 @@ export function useCanvasInteraction({
       if (onSelectIds) onSelectIds([id], false);
       setContextMenu({ x: e.clientX, y: e.clientY, instanceId: id });
   };
+
+  // Releasing the button anywhere (even outside the canvas) ends the interaction.
+  const mouseUpRef = useRef(handleMouseUp);
+  mouseUpRef.current = handleMouseUp;
+  useEffect(() => {
+      const up = (ev: MouseEvent) => {
+          // inside the canvas the regular React onMouseUp already handles it
+          if (ev.target instanceof Node && containerRef.current?.contains(ev.target)) return;
+          mouseUpRef.current();
+      };
+      window.addEventListener('mouseup', up);
+      return () => window.removeEventListener('mouseup', up);
+  }, []);
 
   return {
     handleMouseDown,

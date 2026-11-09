@@ -193,3 +193,24 @@ test.describe('Tuval araçları', () => {
     expect(Math.abs(reverted!.x - before!.x)).toBeLessThan(2);
   });
 });
+
+test.describe('Sürükleme kararlılığı', () => {
+  test('tıklamak parçayı oynatmaz; düğmeyi tuval dışında bırakınca sürükleme biter', async ({ page }) => {
+    await openApp(page);
+    const { camera } = await placePair(page);
+    const b0 = await camera.boundingBox();
+    await page.mouse.click(b0!.x + 30, b0!.y + 30);
+    const b1 = await camera.boundingBox();
+    expect(Math.abs(b1!.x - b0!.x) + Math.abs(b1!.y - b0!.y)).toBeLessThan(1);
+
+    await page.mouse.move(b1!.x + 30, b1!.y + 30);
+    await page.mouse.down();
+    await page.mouse.move(b1!.x + 90, b1!.y + 70, { steps: 5 });
+    await page.mouse.move(100, 400, { steps: 5 });     // sol panelin üstü
+    await page.mouse.up();                              // tuval dışında bırak
+    const rel = await camera.boundingBox();
+    await page.mouse.move(600, 500, { steps: 5 });      // tuvale dön, düğme basılı değil
+    const after = await camera.boundingBox();
+    expect(Math.abs(after!.x - rel!.x) + Math.abs(after!.y - rel!.y)).toBeLessThan(1);
+  });
+});
