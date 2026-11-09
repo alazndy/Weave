@@ -9,6 +9,7 @@ import { ContextMenu } from './canvas/ContextMenu';
 import { ISOFrame } from './canvas/ISOFrame';
 import { TitleBlock } from './canvas/TitleBlock';
 import { BOMTable } from './canvas/BOMTable';
+import { instanceNumber, duplicateNumbers } from '../utils/numbering';
 import { LegendStack } from './canvas/LegendStack';
 import { ConnectionLine } from './canvas/ConnectionLine';
 import { ProductNode } from './canvas/ProductNode';
@@ -84,6 +85,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   onAddInstance
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const dupNumbers = duplicateNumbers(instances);
   const canvasState = useCanvasState();
   const { scale, pan, setPan, handleWheel, handleFitScreen, handleZoomIn, handleZoomOut } = useCanvasView(window.innerWidth, window.innerHeight);
 
@@ -496,7 +498,9 @@ export const Canvas: React.FC<CanvasProps> = ({
                     key={inst.id}
                     inst={inst}
                     template={t}
-                    itemIndex={idx + 1}
+                    itemIndex={instanceNumber(inst, idx)}
+                    isDuplicateNumber={dupNumbers.has(instanceNumber(inst, idx).toLowerCase())}
+                    onRenumber={(id, value) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, number: value || undefined } : i)); }}
                     isSelected={selectedIds.has(inst.id)}
                     isDragged={draggedInstance === inst.id}
                     isScaleToolActive={activeTool === 'scale'}

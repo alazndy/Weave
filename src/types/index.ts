@@ -126,6 +126,7 @@ export interface ProductInstance {
   rotation?: number; // Rotation in degrees
   mirrored?: boolean; // Horizontal flip
   labelConfig?: InstanceLabelConfig; // Custom label settings
+  number?: string; // Custom component number (shown on the badge); empty = automatic
   locked?: boolean;
   hidden?: boolean;
   groupId?: string;

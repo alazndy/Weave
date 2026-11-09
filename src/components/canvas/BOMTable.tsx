@@ -1,5 +1,6 @@
 
 import React, { useMemo } from 'react';
+import { instanceNumber } from '../../utils/numbering';
 import { ProductInstance, ProductTemplate, ExternalPart } from '../../types';
 
 interface BOMTableProps {
@@ -12,18 +13,19 @@ interface BOMTableProps {
 export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, externalParts, theme }) => {
     // Aggregation Logic
     const bomData = useMemo(() => {
-        const map = new Map<string, { name: string, model: string, count: number }>();
+        const map = new Map<string, { name: string, model: string, count: number, refs: string[] }>();
 
         // 1. Count Canvas Instances
-        instances.forEach(inst => {
+        instances.forEach((inst, idx) => {
             const t = templates.find(temp => temp.id === inst.templateId);
             if (t) {
                 const key = t.modelNumber ? `${t.name}-${t.modelNumber}` : t.name;
                 const existing = map.get(key);
                 if (existing) {
                     existing.count++;
+                    existing.refs.push(instanceNumber(inst, idx));
                 } else {
-                    map.set(key, { name: t.name, model: t.modelNumber || '-', count: 1 });
+                    map.set(key, { name: t.name, model: t.modelNumber || '-', count: 1, refs: [instanceNumber(inst, idx)] });
                 }
             }
         });
@@ -31,7 +33,7 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
         // 2. Add External Parts
         externalParts.forEach(part => {
             const key = `EXT-${part.name}`;
-            map.set(key, { name: part.name, model: '-', count: part.count });
+            map.set(key, { name: part.name, model: '-', count: part.count, refs: [] });
         });
 
         return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -61,6 +63,7 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
                 <div className="w-12 p-1 border-r flex items-center justify-center font-bold text-[10px]" style={{ borderColor: borderColor }}>NO</div>
                 <div className="flex-1 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>PARÇA ADI / AÇIKLAMA</div>
                 <div className="w-24 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>MODEL</div>
+                <div className="w-28 shrink-0 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>REF. NO</div>
                 <div className="w-16 p-1 flex items-center justify-center font-bold text-[10px]">ADET</div>
             </div>
 
@@ -71,6 +74,7 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
                         <div className="w-12 p-1 border-r flex items-center justify-center text-[10px] font-bold" style={{ borderColor: borderColor }}>{index + 1}</div>
                         <div className="flex-1 min-w-0 p-1 border-r flex items-center text-[10px] font-medium break-words" style={{ borderColor: borderColor }}>{item.name}</div>
                         <div className="w-24 shrink-0 p-1 border-r flex items-center text-[10px] font-mono break-all" style={{ borderColor: borderColor }}>{item.model}</div>
+                        <div className="w-28 shrink-0 p-1 border-r flex items-center text-[10px] font-mono break-words" style={{ borderColor: borderColor }} data-testid="bom-refs">{item.refs.join(', ') || '-'}</div>
                         <div className="w-16 p-1 flex items-center justify-center text-[10px] font-bold">{item.count}</div>
                     </div>
                 ))}

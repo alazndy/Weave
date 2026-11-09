@@ -1,4 +1,5 @@
 
+import { numberBySpace } from './utils/numbering';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ProductInstance, 
@@ -910,6 +911,8 @@ export default function App() {
                 onDeleteLibrary={handleDeleteLibrary}
                 onRenameLibrary={handleRenameLibrary}
                 onOpenSettings={() => setIsAppSettingsOpen(true)}
+                onNumberBySpace={() => { performCheckpoint(); const m = numberBySpace(instances); setInstances(prev => prev.map(i => m.has(i.id) ? { ...i, number: m.get(i.id) } : i)); }}
+                onResetNumbers={() => { performCheckpoint(); setInstances(prev => prev.map(i => i.number ? { ...i, number: undefined } : i)); }}
                 onExportBOM={() => exportBOM(activePage.instances, templates, projectMetadata.projectName, projectMetadata.externalParts)}
                 onSingleExport={(template) => {
                     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
