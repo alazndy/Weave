@@ -88,6 +88,8 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   const {
       handleMouseDown,
+      trackPointerDown,
+      startItemDrag,
       handleMouseMove,
       handleMouseUp,
       handleInstanceMouseDown,
@@ -108,8 +110,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       manualRoutePoints, setManualRoutePoints,
       hoveredConnectionId, setHoveredConnectionId,
       isMiddlePanning,
-      draggedInstance, setDraggedInstance,
-      setDragOffset,
+      draggedInstance,
       alignmentGuides,
       selectionBox,
       drawingZone,
@@ -434,6 +435,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         ref={containerRef}
         className="absolute w-full h-full origin-top-left print:transform-none"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
+        onMouseDownCapture={trackPointerDown}
         onMouseDown={(e) => { if (!(e.target as HTMLElement).closest('[data-connection-id],[data-testid="connection-toolbar"]')) setSelectedConnectionId(null); handleMouseDown(e); }}
         onMouseMove={handleMouseMoveWrapper}
         onMouseUp={handleMouseUp}
@@ -475,7 +477,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 theme={theme}
                 onSelectIds={onSelectIds}
                 onUndoCheckpoint={onUndoCheckpoint}
-                setDraggedInstance={(id) => { setDraggedInstance(id); setDragOffset({ x: 0, y: 0 }); }} 
+                setDraggedInstance={(id) => startItemDrag(id)} 
                 setEditingZoneId={setEditingZoneId}
                 removeZone={(id) => { if (!onZonesChange) return; onUndoCheckpoint(); onZonesChange(zones.filter(z => z.id !== id)); }}
                 handleResizeMouseDown={(e) => handleResizeStart(e, zone.id, 'zone')}
@@ -604,8 +606,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     if(onSelectIds) onSelectIds([id], e.ctrlKey); 
                     if ((activeTool === 'cursor' || activeTool === 'move') && !text.locked) {
                         onUndoCheckpoint();
-                        setDraggedInstance(id); 
-                        setDragOffset({ x: 0, y: 0 }); 
+                        startItemDrag(id);
                     }
                 }}
                 setEditingTextId={setEditingTextId}
@@ -624,8 +625,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     if(onSelectIds) onSelectIds([comment.id], false); 
                     if ((activeTool === 'cursor' || activeTool === 'move') && !comment.locked) {
                         onUndoCheckpoint();
-                        setDraggedInstance(comment.id); 
-                        setDragOffset({ x: 0, y: 0 }); 
+                        startItemDrag(comment.id);
                     }
                 }}
                 onUpdate={(id, content, color, isResolved) => { if (!onCommentsChange) return; onUndoCheckpoint(); onCommentsChange(comments.map(c => c.id === id ? { ...c, content, color, isResolved } : c)); }}

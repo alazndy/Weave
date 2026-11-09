@@ -195,6 +195,40 @@ test.describe('Tuval araçları', () => {
 });
 
 test.describe('Sürükleme kararlılığı', () => {
+  test('bölge ve metin tutulan noktadan sürüklenir, imlecin köşesine fırlamaz', async ({ page }) => {
+    await openApp(page);
+    // metin
+    await tool(page, /Metin Ekle/).click();
+    const p = await freePoint(page, 0.3, 0.5);
+    await page.mouse.click(p.x, p.y);
+    const text = texts(page).first();
+    const t0 = (await text.boundingBox())!;
+    const gx = t0.x + t0.width - 6, gy = t0.y + t0.height - 4;       // sağ-alt köşeden tut
+    await page.mouse.move(gx, gy);
+    await page.mouse.down();
+    await page.mouse.move(gx + 40, gy + 30, { steps: 6 });
+    await page.mouse.up();
+    const t1 = (await text.boundingBox())!;
+    expect(Math.abs(t1.x - (t0.x + 40))).toBeLessThan(25);            // grid snap payı
+    expect(Math.abs(t1.y - (t0.y + 30))).toBeLessThan(25);
+
+    // bölge
+    await tool(page, /Bölge Ekle/).click();
+    const a = await freePoint(page, 0.55, 0.05), b = await freePoint(page, 0.95, 0.3);
+    await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 6 }); await page.mouse.up();
+    await tool(page, /Seçim \(V\)/).click();
+    const zone = zones(page).first();
+    const z0 = (await zone.boundingBox())!;
+    const zx = z0.x + z0.width - 20, zy = z0.y + z0.height - 20;
+    await page.mouse.move(zx, zy);
+    await page.mouse.down();
+    await page.mouse.move(zx - 30, zy + 25, { steps: 6 });
+    await page.mouse.up();
+    const z1 = (await zone.boundingBox())!;
+    expect(Math.abs(z1.x - (z0.x - 30))).toBeLessThan(25);
+    expect(Math.abs(z1.y - (z0.y + 25))).toBeLessThan(25);
+  });
+
   test('tıklamak parçayı oynatmaz; düğmeyi tuval dışında bırakınca sürükleme biter', async ({ page }) => {
     await openApp(page);
     const { camera } = await placePair(page);

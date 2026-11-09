@@ -62,6 +62,8 @@ export function useCanvasInteraction({
   const dragGateRef = useRef<{ x: number; y: number; open: boolean } | null>(null);
   const DRAG_THRESHOLD_PX = 4;
   const additiveBoxRef = useRef(false);
+  // Pointer position of the latest mouse-down (children stop propagation, so it is captured separately).
+  const lastDownRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Coordinate Helpers
   const getMouseCoords = useCallback((e: React.MouseEvent) => {
@@ -72,6 +74,18 @@ export function useCanvasInteraction({
       y: (e.clientY - rect.top) / scale
     };
   }, [scale]);
+
+  /** Call from the container's onMouseDownCapture. */
+  const trackPointerDown = (e: React.MouseEvent) => { lastDownRef.current = getMouseCoords(e); };
+
+  /** Starts dragging a zone / text / comment so it keeps its grab point under the cursor. */
+  const startItemDrag = (id: string) => {
+      const item = zones.find(z => z.id === id) || textNodes.find(t => t.id === id) || comments.find(c => c.id === id);
+      const p = lastDownRef.current;
+      setDragOffset(item ? { x: p.x - item.x, y: p.y - item.y } : { x: 0, y: 0 });
+      dragGateRef.current = { x: p.x, y: p.y, open: false };
+      setDraggedInstance(id);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     // Middle Mouse Button PAN Logic
@@ -416,6 +430,8 @@ export function useCanvasInteraction({
 
   return {
     handleMouseDown,
+    trackPointerDown,
+    startItemDrag,
     handleMouseMove,
     handleMouseUp,
     handleInstanceMouseDown,
