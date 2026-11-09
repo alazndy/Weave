@@ -61,6 +61,7 @@ export function useCanvasInteraction({
   // (or grid-snaps) an item.
   const dragGateRef = useRef<{ x: number; y: number; open: boolean } | null>(null);
   const DRAG_THRESHOLD_PX = 4;
+  const additiveBoxRef = useRef(false);
 
   // Coordinate Helpers
   const getMouseCoords = useCallback((e: React.MouseEvent) => {
@@ -146,8 +147,13 @@ export function useCanvasInteraction({
         case 'move':
             // The paper frame sits between the container and the click target, so
             // "empty canvas" means: not on any selectable item.
-            if (onSelectIds && !(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id]')) {
-                onSelectIds([], false);
+            if (!(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id],[data-group-scale]')) {
+                additiveBoxRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
+                if (onSelectIds && !additiveBoxRef.current) onSelectIds([], false);
+                // Rubber-band selection straight from empty paper with the cursor tool.
+                if (activeTool === 'cursor' && e.button === 0 && (e.target as HTMLElement).closest('#canvas-export-area')) {
+                    setSelectionBox({ startX: x, startY: y, currentX: x, currentY: y });
+                }
             }
             break;
     }
@@ -290,25 +296,28 @@ export function useCanvasInteraction({
           const y1 = Math.min(selectionBox.startY, selectionBox.currentY);
           const x2 = Math.max(selectionBox.startX, selectionBox.currentX);
           const y2 = Math.max(selectionBox.startY, selectionBox.currentY);
-          
-          const newSelectedIds: string[] = [];
-          instances.forEach(i => {
-              const t = templates.find(temp => temp.id === i.templateId);
-              const w = i.width || t?.width || 0;
-              const h = i.height || t?.height || 0;
-              if (i.x >= x1 && i.x + w <= x2 && i.y >= y1 && i.y + h <= y2) {
-                  newSelectedIds.push(i.id);
-              }
-          });
-          zones.forEach(z => {
-              if (z.x >= x1 && z.x + z.width <= x2 && z.y >= y1 && z.y + z.height <= y2) {
-                  newSelectedIds.push(z.id);
-              }
-          });
-          
-          onSelectIds(newSelectedIds, false);
+          const tiny = Math.hypot(x2 - x1, y2 - y1) * scale < 4;
+          // left→right = window (fully inside), right→left = crossing (any overlap)
+          const crossing = selectionBox.currentX < selectionBox.startX;
+          const hit = (x: number, y: number, w: number, h: number) => crossing
+              ? x < x2 && x + w > x1 && y < y2 && y + h > y1
+              : x >= x1 && x + w <= x2 && y >= y1 && y + h <= y2;
+
+          if (!tiny) {
+              const newSelectedIds: string[] = [];
+              instances.forEach(i => {
+                  if (i.hidden) return;
+                  const t = templates.find(temp => temp.id === i.templateId);
+                  if (hit(i.x, i.y, i.width || t?.width || 0, i.height || t?.height || 0)) newSelectedIds.push(i.id);
+              });
+              zones.forEach(z => { if (!z.hidden && hit(z.x, z.y, z.width, z.height)) newSelectedIds.push(z.id); });
+              textNodes.forEach(tn => {
+                  if (!tn.hidden && hit(tn.x, tn.y, Math.max(20, tn.content.length * tn.fontSize * 0.6), tn.fontSize * 1.4)) newSelectedIds.push(tn.id);
+              });
+              onSelectIds(newSelectedIds, additiveBoxRef.current);
+          }
           setSelectionBox(null);
-          onSetActiveTool('cursor');
+          if (activeTool === 'select-box') onSetActiveTool('cursor');
       }
 
       if (drawingZone && onZonesChange) {

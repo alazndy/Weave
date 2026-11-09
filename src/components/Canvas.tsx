@@ -167,6 +167,8 @@ export const Canvas: React.FC<CanvasProps> = ({
   // ---- Connection selection & manual route editing ----
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const connDragRef = useRef<{ id: string; handle: Handle; inner: Point[]; moved: boolean } | null>(null);
+  const connSetterRef = useRef(onConnectionsChange);
+  connSetterRef.current = onConnectionsChange;
   const connectionsRef = useRef(connections);
   connectionsRef.current = connections;
   const selectedConnection = connections.find(c => c.id === selectedConnectionId) || null;
@@ -213,7 +215,7 @@ export const Canvas: React.FC<CanvasProps> = ({
               : moveWaypoint(shape, ends, d.inner, d.handle.index, p);
           d.moved = true;
           d.inner = next;
-          onConnectionsChange(connectionsRef.current.map(c => c.id === d.id ? { ...c, controlPoints: next } : c));
+          connSetterRef.current(connectionsRef.current.map(c => c.id === d.id ? { ...c, controlPoints: next } : c));
       };
       const up = () => { connDragRef.current = null; };
       window.addEventListener('mousemove', move);
@@ -249,6 +251,71 @@ export const Canvas: React.FC<CanvasProps> = ({
       window.addEventListener('keydown', onKey, true);
       return () => window.removeEventListener('keydown', onKey, true);
   }, [selectedConnectionId]);
+
+  // ---- Group (bulk) scaling of the selection ----
+  const instancesRef = useRef(instances); instancesRef.current = instances;
+  const zonesRef = useRef(zones); zonesRef.current = zones;
+  const textsRef = useRef(textNodes); textsRef.current = textNodes;
+  // the drag effect outlives renders: always call the latest setters (they bind the active page)
+  const settersRef = useRef({ onInstancesChange, onZonesChange, onTextNodesChange });
+  settersRef.current = { onInstancesChange, onZonesChange, onTextNodesChange };
+  const groupDragRef = useRef<{ bx: number; by: number; bw: number; bh: number; ids: Set<string>;
+      inst: ProductInstance[]; zn: Zone[]; tx: TextNode[] } | null>(null);
+
+  const textBox = (t: TextNode) => ({ w: Math.max(20, t.content.length * t.fontSize * 0.6), h: t.fontSize * 1.4 });
+  const groupBounds = (() => {
+      if (selectedIds.size < 2) return null;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, n = 0;
+      const grow = (x: number, y: number, w: number, h: number) => {
+          minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h); n++;
+      };
+      instances.forEach(i => { if (selectedIds.has(i.id) && !i.locked && !i.hidden) {
+          const t = templates.find(tp => tp.id === i.templateId);
+          grow(i.x, i.y, i.width || t?.width || 100, i.height || t?.height || 100);
+      } });
+      zones.forEach(z => { if (selectedIds.has(z.id) && !z.locked && !z.hidden) grow(z.x, z.y, z.width, z.height); });
+      textNodes.forEach(t => { if (selectedIds.has(t.id) && !t.locked && !t.hidden) { const b = textBox(t); grow(t.x, t.y, b.w, b.h); } });
+      return n >= 2 ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : null;
+  })();
+
+  const startGroupScale = (e: React.MouseEvent) => {
+      if (e.button !== 0 || !groupBounds) return;
+      e.stopPropagation(); e.preventDefault();
+      onUndoCheckpoint();
+      groupDragRef.current = {
+          bx: groupBounds.x, by: groupBounds.y, bw: groupBounds.w, bh: groupBounds.h, ids: new Set(selectedIds),
+          inst: instancesRef.current.map(i => ({ ...i })), zn: zonesRef.current.map(z => ({ ...z })), tx: textsRef.current.map(t => ({ ...t })),
+      };
+  };
+
+  useEffect(() => {
+      const move = (ev: MouseEvent) => {
+          const d = groupDragRef.current;
+          if (!d) return;
+          if (ev.buttons === 0) { groupDragRef.current = null; return; }
+          const m = getMouseCoords(ev as unknown as React.MouseEvent);
+          // uniform factor from the pointer's projection on the box diagonal
+          const raw = ((m.x - d.bx) * d.bw + (m.y - d.by) * d.bh) / (d.bw * d.bw + d.bh * d.bh);
+          const f = Math.min(10, Math.max(0.1, raw));
+          const fx = (v: number) => d.bx + (v - d.bx) * f;
+          const fy = (v: number) => d.by + (v - d.by) * f;
+          const mv = (id: string) => d.ids.has(id);
+          const { onInstancesChange: setInst, onZonesChange: setZn, onTextNodesChange: setTxt } = settersRef.current;
+          setInst(d.inst.map(i => {
+              if (!mv(i.id) || i.locked || i.hidden) return i;
+              const t = templates.find(tp => tp.id === i.templateId);
+              return { ...i, x: fx(i.x), y: fy(i.y), width: (i.width || t?.width || 100) * f, height: (i.height || t?.height || 100) * f };
+          }));
+          if (setZn && d.zn.some(z => mv(z.id))) setZn(d.zn.map(z => !mv(z.id) || z.locked || z.hidden ? z
+              : { ...z, x: fx(z.x), y: fy(z.y), width: z.width * f, height: z.height * f }));
+          if (setTxt && d.tx.some(t => mv(t.id))) setTxt(d.tx.map(t => !mv(t.id) || t.locked || t.hidden ? t
+              : { ...t, x: fx(t.x), y: fy(t.y), fontSize: Math.max(6, Math.round(t.fontSize * f)) }));
+      };
+      const up = () => { groupDragRef.current = null; };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+      return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, [templates, scale]);
 
   const findPort = (instId: string, portId: string) => {
       const inst = instances.find(i => i.id === instId);
@@ -580,6 +647,16 @@ export const Canvas: React.FC<CanvasProps> = ({
                 }}
             />
         ))}
+
+        {/* Group bounds + bulk scale handle */}
+        {groupBounds && (
+            <div data-testid="group-bounds" className="absolute z-[60] pointer-events-none border border-dashed border-sky-400"
+                style={{ left: groupBounds.x - 4, top: groupBounds.y - 4, width: groupBounds.w + 8, height: groupBounds.h + 8 }}>
+                <div data-group-scale data-testid="group-scale-handle" title="Seçilenleri birlikte ölçekle"
+                    onMouseDown={startGroupScale}
+                    className="pointer-events-auto absolute -right-6 -bottom-6 h-4 w-4 cursor-nwse-resize rounded-sm border-2 border-white bg-sky-500 shadow" />
+            </div>
+        )}
 
         {/* Selection Box */}
         {selectionBox && (
