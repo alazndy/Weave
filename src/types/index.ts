@@ -237,6 +237,28 @@ export interface HistorySnapshot {
 export type PaperSize = 'A3' | 'A4' | 'A6';
 export type Orientation = 'landscape' | 'portrait';
 
+export interface RevisionEntry {
+  id: string;
+  rev: string;          // e.g. "Rev-0", "Draft-1"
+  date: string;
+  description: string;
+  by: string;
+  chkd: string;
+}
+
+/** AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R (see Document Numbering and Revisioning System). */
+export interface DocNumbering {
+  enabled: boolean;
+  originator: string;   // AAA  document originator
+  type: string;         // BBB  document type
+  discipline: string;   // CCC  document discipline
+  location: string;     // DDD  location / area code
+  sequence: string;     // XXX  sequential number
+  sheetFromPage: boolean; // YY  sheet number (optional) = page number of the drawing
+  phase: string;        // PP   project phase (P0–P9)
+  revision: string;     // R    revision number
+}
+
 export interface ProjectMetadata {
   projectName: string;
   companyName: string;
@@ -252,6 +274,13 @@ export interface ProjectMetadata {
   revision: string;
   date: string;
   technicalNotes?: string;
+  drawingName?: string;   // title block: DRAWING NAME (project name stays PROJECT NAME)
+  checkedBy?: string;
+  drawnDate?: string;
+  checkedDate?: string;
+  approvedDate?: string;
+  revisions?: RevisionEntry[];
+  docNumbering?: DocNumbering;
   customFields: CustomField[];
   externalParts: ExternalPart[];
 }

@@ -31,7 +31,7 @@ export const LegendStack: React.FC<Props> = ({ paperHeight, children }) => {
       data-testid="legend-stack"
       data-scale={scale.toFixed(3)}
       className="absolute right-[20px] bottom-[20px] z-10 flex flex-col items-end gap-2 pointer-events-none"
-      style={{ width: 'min(100% - 40px, 800px)', transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: 'bottom right' }}
+      style={{ width: 'min(100% - 40px, 1100px)', transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: 'bottom right' }}
     >
       {children}
     </div>

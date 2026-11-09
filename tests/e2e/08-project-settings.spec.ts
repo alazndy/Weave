@@ -138,7 +138,7 @@ test.describe('Antet / proje detayları', () => {
   test('özel alan eklenir, düzenlenir ve silinir', async ({ page }) => {
     await openApp(page);
     const modal = await openTitleBlockEditor(page);
-    await modal.getByRole('button', { name: /Ekle|Alan/ }).first().click();
+    await modal.getByRole('button', { name: 'Alan Ekle' }).click();
     const label = modal.getByPlaceholder('Başlık (Örn: Kontrol Eden)');
     await expect(label).toHaveCount(1);
     await label.fill('Kontrol Eden');

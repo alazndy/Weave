@@ -1,5 +1,7 @@
 
 import { numberBySpace } from './utils/numbering';
+import { documentNoFor } from './utils/docNumbering';
+const fileSafeDocNo = (m: ProjectMetadata, sheet: number) => documentNoFor(m, sheet).trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ProductInstance, 
@@ -709,7 +711,7 @@ export default function App() {
               const now = new Date();
               const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); 
               const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); 
-              const filenameBase = `${projectMetadata.documentNo || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
+              const filenameBase = `${fileSafeDocNo(projectMetadata, pages.indexOf(activePage) + 1) || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
               canvas.toBlob((blob: Blob | null) => downloadBlob(blob, `${filenameBase}.png`));
           } catch (err) { console.error("Export failed", err); alert("Görüntü oluşturulurken bir hata meydana geldi."); }
       } else { alert("Dışa aktarılacak alan bulunamadı."); }
@@ -722,7 +724,7 @@ export default function App() {
       const projectData = { version: '2.0', timestamp: new Date().toISOString(), metadata: projectMetadata, templates, pages, activePageId };
       // Blob instead of a data: URI — embedded product images easily exceed URL length limits.
       const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
-      downloadBlob(blob, `${projectMetadata.documentNo || 'Project'}.weave`);
+      downloadBlob(blob, `${fileSafeDocNo(projectMetadata, 1) || 'Project'}.weave`);
   };
 
   useAppShortcuts({

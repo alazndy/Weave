@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { ProjectMetadata, CustomField, PaperSize, Orientation } from '../../types';
+import { ProjectMetadata, CustomField, PaperSize, Orientation, RevisionEntry, DocNumbering } from '../../types';
+import { DOCUMENT_TYPES, DOCUMENT_DISCIPLINES, LOCATION_CODES, PROJECT_PHASES, type CodeEntry } from '../../data/documentCodes';
+import { DEFAULT_DOC_NUMBERING, composeDocumentNo, missingParts } from '../../utils/docNumbering';
 import { Settings, Upload, RefreshCw, LayoutTemplate, ArrowLeftRight, Plus, Trash2, Save, FileText, Briefcase, User, Calendar } from 'lucide-react';
 import { PremiumModal } from '../ui/PremiumModal';
 
@@ -44,6 +46,35 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
     const newNo = generateDocNo(formData.projectName, formData.revision);
     setFormData(prev => ({ ...prev, documentNo: newNo }));
   };
+
+  const numbering: DocNumbering = formData.docNumbering ?? DEFAULT_DOC_NUMBERING;
+  const setNumbering = (patch: Partial<DocNumbering>) =>
+    setFormData(prev => ({ ...prev, docNumbering: { ...(prev.docNumbering ?? DEFAULT_DOC_NUMBERING), ...patch } }));
+
+  const revisions = formData.revisions ?? [];
+  const addRevision = () => {
+    const next: RevisionEntry = { id: crypto.randomUUID(), rev: `Rev-${revisions.length}`, date: new Date().toLocaleDateString('tr-TR'), description: '', by: '', chkd: '' };
+    setFormData(prev => ({ ...prev, revisions: [...(prev.revisions ?? []), next] }));
+  };
+  const updateRevision = (id: string, key: keyof Omit<RevisionEntry, 'id'>, val: string) =>
+    setFormData(prev => ({ ...prev, revisions: (prev.revisions ?? []).map(r => r.id === id ? { ...r, [key]: val } : r) }));
+  const removeRevision = (id: string) =>
+    setFormData(prev => ({ ...prev, revisions: (prev.revisions ?? []).filter(r => r.id !== id) }));
+
+  const inp = "w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm font-medium text-white focus:border-teal-500/50 outline-none";
+  const lbl = "block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5";
+  const CodePicker: React.FC<{ label: string; list: CodeEntry[]; value: string; onChange: (v: string) => void; id: string; hint: string }> = ({ label, list, value, onChange, id, hint }) => {
+    const found = list.find(c => c.code === value.toUpperCase());
+    return (
+      <div>
+        <label className={lbl} htmlFor={id}>{label}</label>
+        <input id={id} list={`${id}-list`} value={value} maxLength={3} onChange={e => onChange(e.target.value.toUpperCase())} className={`${inp} font-mono`} placeholder={hint} />
+        <datalist id={`${id}-list`}>{list.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</datalist>
+        <p className="text-[10px] mt-1 min-h-[14px] text-zinc-500">{found ? found.name : value ? 'Listede yok — özel kod olarak kullanılır' : ''}</p>
+      </div>
+    );
+  };
+  const missing = numbering.enabled ? missingParts(numbering) : [];
 
   const addCustomField = () => {
     const newField: CustomField = {
@@ -290,6 +321,106 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                         <ArrowLeftRight size={16}/> Tümünü Yeniden Boyutlandır
                     </button>
                 </div>
+            </div>
+          </div>
+
+          {/* Drawing info: names, signatures */}
+          <div className="border-t border-white/5 pt-6" data-testid="drawing-info-section">
+            <label className="block text-sm font-bold text-zinc-200 mb-4">Çizim / İmza Bilgileri (Antet)</label>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-3">
+                <label className={lbl} htmlFor="drawing-name">Çizim Adı (Drawing Name)</label>
+                <input id="drawing-name" className={inp} value={formData.drawingName || ''} onChange={e => setFormData({ ...formData, drawingName: e.target.value })} placeholder="Örn: CAS General Configuration" />
+              </div>
+              <div>
+                <label className={lbl} htmlFor="checked-by">Kontrol Eden (Checked)</label>
+                <input id="checked-by" className={inp} value={formData.checkedBy || ''} onChange={e => setFormData({ ...formData, checkedBy: e.target.value })} />
+              </div>
+              <div>
+                <label className={lbl} htmlFor="drawn-date">Çizim Tarihi (Drawn)</label>
+                <input id="drawn-date" className={inp} value={formData.drawnDate || ''} onChange={e => setFormData({ ...formData, drawnDate: e.target.value })} placeholder={formData.date} />
+              </div>
+              <div>
+                <label className={lbl} htmlFor="checked-date">Kontrol Tarihi</label>
+                <input id="checked-date" className={inp} value={formData.checkedDate || ''} onChange={e => setFormData({ ...formData, checkedDate: e.target.value })} />
+              </div>
+              <div>
+                <label className={lbl} htmlFor="approved-date">Onay Tarihi</label>
+                <input id="approved-date" className={inp} value={formData.approvedDate || ''} onChange={e => setFormData({ ...formData, approvedDate: e.target.value })} />
+              </div>
+            </div>
+            <p className="text-[10px] text-zinc-500 mt-2">Hazırlayan = DRAWN, Onaylayan = APPROVED. Sayfa adı antette PAGE NAME olarak görünür.</p>
+          </div>
+
+          {/* Revision history */}
+          <div className="border-t border-white/5 pt-6" data-testid="revisions-section">
+            <div className="flex justify-between items-center mb-4">
+              <label className="block text-sm font-bold text-zinc-200">Revizyon Geçmişi</label>
+              <button onClick={addRevision} className="text-xs font-bold bg-white/5 hover:bg-white/10 text-teal-400 border border-white/5 px-3 py-2 rounded-lg flex items-center gap-2">
+                <Plus size={14} /> Revizyon Ekle
+              </button>
+            </div>
+            {revisions.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p className="text-xs text-zinc-500">Henüz revizyon yok.</p></div>
+            ) : (
+              <div className="space-y-2">
+                <div className="grid grid-cols-[90px_100px_1fr_60px_60px_36px] gap-2 text-[10px] font-bold text-zinc-500 uppercase"><span>Rev</span><span>Tarih</span><span>Açıklama</span><span>By</span><span>Chkd.</span><span /></div>
+                {revisions.map((r, i) => (
+                  <div key={r.id} className="grid grid-cols-[90px_100px_1fr_60px_60px_36px] gap-2 items-center">
+                    <input aria-label={`Revizyon ${i + 1} no`} className={inp} value={r.rev} onChange={e => updateRevision(r.id, 'rev', e.target.value)} />
+                    <input aria-label={`Revizyon ${i + 1} tarih`} className={inp} value={r.date} onChange={e => updateRevision(r.id, 'date', e.target.value)} />
+                    <input aria-label={`Revizyon ${i + 1} açıklama`} className={inp} value={r.description} onChange={e => updateRevision(r.id, 'description', e.target.value)} />
+                    <input aria-label={`Revizyon ${i + 1} by`} className={inp} value={r.by} onChange={e => updateRevision(r.id, 'by', e.target.value)} />
+                    <input aria-label={`Revizyon ${i + 1} chkd`} className={inp} value={r.chkd} onChange={e => updateRevision(r.id, 'chkd', e.target.value)} />
+                    <button aria-label={`Revizyon ${i + 1} sil`} onClick={() => removeRevision(r.id)} className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10"><Trash2 size={15} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Document numbering protocol */}
+          <div className="border-t border-white/5 pt-6" data-testid="doc-numbering-section">
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-bold text-zinc-200">Döküman Numaralandırma (Protokol)</label>
+              <label className="flex items-center gap-2 text-xs font-bold text-zinc-300 cursor-pointer">
+                <input type="checkbox" checked={numbering.enabled} onChange={e => setNumbering({ enabled: e.target.checked })} /> Protokolü kullan
+              </label>
+            </div>
+            <p className="text-[10px] text-zinc-500 mb-4 font-mono">AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R · originator · tip · disiplin · lokasyon · sıra no · sheet · revizyon-faz-no</p>
+            <div className={`grid grid-cols-3 gap-4 ${numbering.enabled ? '' : 'opacity-50'}`}>
+              <div>
+                <label className={lbl} htmlFor="dn-originator">Originator (AAA)</label>
+                <input id="dn-originator" value={numbering.originator} maxLength={3} onChange={e => setNumbering({ originator: e.target.value.toUpperCase() })} className={`${inp} font-mono`} placeholder="Örn: ANC" />
+                <p className="text-[10px] mt-1 text-zinc-500">Dökümanı hazırlayan kuruluş kodu (3 harf)</p>
+              </div>
+              <CodePicker id="dn-type" label="Döküman Tipi (BBB)" list={DOCUMENT_TYPES} value={numbering.type} onChange={v => setNumbering({ type: v })} hint="DWD" />
+              <CodePicker id="dn-discipline" label="Disiplin (CCC)" list={DOCUMENT_DISCIPLINES} value={numbering.discipline} onChange={v => setNumbering({ discipline: v })} hint="ELE" />
+              <CodePicker id="dn-location" label="Lokasyon / Alan (DDD)" list={LOCATION_CODES} value={numbering.location} onChange={v => setNumbering({ location: v })} hint="GEN" />
+              <div>
+                <label className={lbl} htmlFor="dn-sequence">Sıra No (XXX)</label>
+                <input id="dn-sequence" value={numbering.sequence} maxLength={3} inputMode="numeric" onChange={e => setNumbering({ sequence: e.target.value.replace(/\D/g, '') })} className={`${inp} font-mono`} placeholder="001" />
+              </div>
+              <div>
+                <label className={lbl} htmlFor="dn-phase">Proje Fazı (PP)</label>
+                <select id="dn-phase" value={numbering.phase} onChange={e => setNumbering({ phase: e.target.value })} className={inp}>
+                  {PROJECT_PHASES.map(p => <option key={p.code} value={p.code}>{p.code} — {p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={lbl} htmlFor="dn-revision">Revizyon No (R)</label>
+                <input id="dn-revision" value={numbering.revision} maxLength={3} onChange={e => setNumbering({ revision: e.target.value.toUpperCase() })} className={`${inp} font-mono`} placeholder="0" />
+              </div>
+              <label className="col-span-2 flex items-center gap-2 text-xs text-zinc-300 cursor-pointer self-end pb-2">
+                <input type="checkbox" checked={numbering.sheetFromPage} onChange={e => setNumbering({ sheetFromPage: e.target.checked })} />
+                Sayfa numarasını Sheet (YY) olarak ekle — her sayfa kendi numarasını alır
+              </label>
+            </div>
+            <div className="mt-4 p-3 rounded-xl bg-black/30 border border-white/10">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase">Önizleme (Sayfa 1)</span>
+              <div className="font-mono text-base font-bold text-teal-400 break-all" data-testid="doc-number-preview">{composeDocumentNo(numbering, 1)}</div>
+              {missing.length > 0 && <p className="text-[11px] text-amber-400 mt-1">Eksik: {missing.join(', ')}</p>}
+              {!numbering.enabled && <p className="text-[11px] text-zinc-500 mt-1">Kapalı: antette yukarıdaki "Döküman No" alanı kullanılır.</p>}
             </div>
           </div>
 
