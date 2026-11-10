@@ -48,6 +48,7 @@ export async function printSheetToPdf(source: HTMLElement, sheet: SheetSpec): Pr
     @page{size:${widthMm}mm ${heightMm}mm;margin:0}
     @media print{
       html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
+      html::before,html::after,body::before,body::after{display:none!important;content:none!important;background:none!important}
       body>*:not(#pdf-print-root){display:none!important}
       #pdf-print-root{position:absolute!important;left:0!important;top:0!important}
     }`;
