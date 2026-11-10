@@ -170,4 +170,27 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await page.getByRole('button', { name: 'Parça tablosunu geri getir' }).click();
     await expect(bom).toBeVisible();
   });
+
+  test('lejantın boyutu köşe tutamacıyla ayarlanır; çift tık sıfırlar; tek geri alma', async ({ page }) => {
+    await openApp(page);
+    const stack = page.getByTestId('legend-stack');
+    const sc = async () => Number(await stack.getAttribute('data-scale'));
+    const s0 = await sc();
+    // tutamak görünür alanın dışında olabilir: işaretçi olaylarını doğrudan gönder
+    await page.getByTestId('legend-scale-handle').evaluate((el) => {
+      const r = el.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+      const ev = (type: string, dx: number, dy: number) => new PointerEvent(type, { bubbles: true, clientX: x + dx, clientY: y + dy, pointerId: 1 });
+      el.dispatchEvent(ev('pointerdown', 0, 0));
+      for (let i = 1; i <= 8; i++) window.dispatchEvent(ev('pointermove', 15 * i, 7.5 * i));   // aşağı/sağ = küçült
+      window.dispatchEvent(ev('pointerup', 120, 60));
+    });
+    const s1 = await sc();
+    expect(s1).toBeLessThan(s0 - 0.05);
+    await undoBtn(page).click();
+    await expect.poll(sc).toBeCloseTo(s0, 2);
+    await redoBtn(page).click();
+    await expect.poll(sc).toBeCloseTo(s1, 2);
+    await page.getByTestId('legend-scale-handle').dispatchEvent('dblclick');
+    await expect.poll(sc).toBeCloseTo(s0, 2);
+  });
 });

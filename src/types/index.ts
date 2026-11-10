@@ -294,6 +294,8 @@ export interface ProjectMetadata {
   legendSizes?: Record<string, number>;
   /** Parts/numbers table (BOM) removed from the sheet; restorable from the legend toolbar. */
   hideBom?: boolean;
+  /** User legend size factor (1 = default width); still limited so the legend fits the sheet. */
+  legendScale?: number;
   legendOrder?: string[];
   legendExtraOrder?: string[];
   customFields: CustomField[];

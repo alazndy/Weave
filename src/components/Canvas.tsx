@@ -458,7 +458,15 @@ export const Canvas: React.FC<CanvasProps> = ({
             >
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
                 
-                <LegendStack paperHeight={finalH}>
+                <LegendStack
+                    paperWidth={finalW}
+                    paperHeight={finalH}
+                    userScale={projectMetadata.legendScale}
+                    onUserScaleChange={onMetadataChange ? (v, o) => {
+                        if (o?.checkpoint) onMetadataChange({}, undefined);
+                        else onMetadataChange({ legendScale: v }, { silent: true });
+                    } : undefined}
+                >
                 {!activePageHideBom && (
                 <BOMTable 
                     instances={instances}
