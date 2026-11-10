@@ -224,3 +224,30 @@ test.describe('Port düzenleme kutusu konumu', () => {
   });
 });
 
+
+
+test.describe('Silgi imleci', () => {
+  test('silgi halkası görünür kalır: basılıyken ve bıraktıktan sonra da', async ({ page }) => {
+    await openApp(page);
+    await upload(page);
+    await page.getByRole('button', { name: 'Sil', exact: true }).first().click();
+    const overlay = page.locator('canvas').last();
+    const box = (await overlay.boundingBox())!;
+    const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+    // overlay kanvasında, imleç çevresinde opak (halka) piksel sayısı
+    const ringPixels = () => overlay.evaluate((c: HTMLCanvasElement) => {
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 4) if (d[i] > 200) n++;
+      return n;
+    });
+    await page.mouse.move(cx, cy, { steps: 3 });
+    await expect.poll(ringPixels).toBeGreaterThan(50);
+    await page.mouse.down();
+    await page.mouse.move(cx + 20, cy + 10, { steps: 3 });
+    await expect.poll(ringPixels).toBeGreaterThan(50);       // sürüklerken kaybolmaz
+    await page.mouse.up();
+    await page.waitForTimeout(400);                           // görüntü yeniden yüklenirken
+    await expect.poll(ringPixels).toBeGreaterThan(50);       // bıraktıktan sonra kaybolmaz
+  });
+});

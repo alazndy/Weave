@@ -50,6 +50,8 @@ interface LeftSidebarProps {
   // New
   onOpenSettings?: () => void;
   onExportBOM?: () => void;
+  onNumberBySpace?: () => void;
+  onResetNumbers?: () => void;
   onSingleExport?: (template: ProductTemplate) => void;
 }
 
@@ -74,7 +76,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDeleteLibrary,
   onRenameLibrary,
   onOpenSettings,
-  onExportBOM,
+  onExportBOM, onNumberBySpace, onResetNumbers,
   onSingleExport,
 }) => {
   const { t } = useTranslation();
@@ -448,6 +450,26 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         </div>
 
                         <Separator />
+
+                        {(onNumberBySpace || onResetNumbers) && (
+                            <>
+                                <div className="space-y-2" data-testid="numbering-section">
+                                    <Label className="text-xs uppercase text-muted-foreground font-bold">Numaralandırma</Label>
+                                    <p className="text-[10px] text-muted-foreground">Rozete çift tıklayarak tek tek değiştirebilirsin.</p>
+                                    {onNumberBySpace && (
+                                        <Button onClick={onNumberBySpace} variant="outline" size="sm" className="w-full justify-start h-8 text-xs" title="Sayfadaki bileşenleri yukarıdan aşağı, soldan sağa 1, 2, 3… numarala">
+                                            Konuma göre numarala
+                                        </Button>
+                                    )}
+                                    {onResetNumbers && (
+                                        <Button onClick={onResetNumbers} variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" title="Elle verilen numaraları sil, otomatik sıraya dön">
+                                            Otomatiğe sıfırla
+                                        </Button>
+                                    )}
+                                </div>
+                                <Separator />
+                            </>
+                        )}
 
                         {/* Export & Integrations */}
                         <div className="space-y-2">

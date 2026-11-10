@@ -126,6 +126,7 @@ export interface ProductInstance {
   rotation?: number; // Rotation in degrees
   mirrored?: boolean; // Horizontal flip
   labelConfig?: InstanceLabelConfig; // Custom label settings
+  number?: string; // Custom component number (shown on the badge); empty = automatic
   locked?: boolean;
   hidden?: boolean;
   groupId?: string;
@@ -217,6 +218,10 @@ export interface Page {
     textNodes: TextNode[];
     comments: Comment[];
     order: number;
+    /** Per-page drawing number; when empty the number comes from the project protocol/document no. */
+    drawingNo?: string;
+    /** Per-page parts table visibility; when unset the project-level hideBom applies. */
+    hideBom?: boolean;
 }
 
 export interface HistoryState {
@@ -236,11 +241,34 @@ export interface HistorySnapshot {
 export type PaperSize = 'A3' | 'A4' | 'A6';
 export type Orientation = 'landscape' | 'portrait';
 
+export interface RevisionEntry {
+  id: string;
+  rev: string;          // e.g. "Rev-0", "Draft-1"
+  date: string;
+  description: string;
+  by: string;
+  chkd: string;
+}
+
+/** AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R (see Document Numbering and Revisioning System). */
+export interface DocNumbering {
+  enabled: boolean;
+  originator: string;   // AAA  document originator
+  type: string;         // BBB  document type
+  discipline: string;   // CCC  document discipline
+  location: string;     // DDD  location / area code
+  sequence: string;     // XXX  sequential number
+  sheetFromPage: boolean; // YY  sheet number (optional) = page number of the drawing
+  phase: string;        // PP   project phase (P0–P9)
+  revision: string;     // R    revision number
+}
+
 export interface ProjectMetadata {
   projectName: string;
   companyName: string;
   companyLogo: string | null;
   customerName?: string; // New: Customer Name
+  customerNo?: string;   // customer number / code shown next to the customer in the legend
   preparedBy: string;
   approvedBy: string;
   documentNo: string;
@@ -251,6 +279,26 @@ export interface ProjectMetadata {
   revision: string;
   date: string;
   technicalNotes?: string;
+  drawingName?: string;   // title block: DRAWING NAME (project name stays PROJECT NAME)
+  checkedBy?: string;
+  drawnDate?: string;
+  checkedDate?: string;
+  approvedDate?: string;
+  revisions?: RevisionEntry[];
+  docNumbering?: DocNumbering;
+  /** Title-block heading overrides, keyed by heading id (see TitleBlock LABEL_DEFAULTS). */
+  legendLabels?: Record<string, string>;
+  /** Order of the three main title-block sections / of the extra-info cells. */
+  /** Hidden heading ids (deleted headings; restorable from the legend toolbar). */
+  legendHidden?: string[];
+  /** Cell sizes in legend px: section/cell widths by id, plus 'mainH' / 'extraH' row heights. */
+  legendSizes?: Record<string, number>;
+  /** Parts/numbers table (BOM) removed from the sheet; restorable from the legend toolbar. */
+  hideBom?: boolean;
+  /** User legend size factor (1 = default width); still limited so the legend fits the sheet. */
+  legendScale?: number;
+  legendOrder?: string[];
+  legendExtraOrder?: string[];
   customFields: CustomField[];
   externalParts: ExternalPart[];
 }

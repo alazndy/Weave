@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Page } from '../../types';
-import { Plus, X, Copy, FileText, ChevronUp, ChevronDown, LayoutGrid } from 'lucide-react';
+import { Plus, X, Copy, FileText, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 
 interface PageBarProps {
     pages: Page[];
@@ -10,17 +10,20 @@ interface PageBarProps {
     onDuplicatePage: (id: string) => void;
     onRemovePage: (id: string) => void;
     onRenamePage: (id: string, newName: string) => void;
+    onMovePage?: (id: string, toIndex: number) => void;
     onToggleGridView: () => void;
     isGridView: boolean;
     theme: 'light' | 'dark';
 }
 
 export const PageBar: React.FC<PageBarProps> = ({ 
-    pages, activePageId, onSwitchPage, onAddPage, onDuplicatePage, onRemovePage, onRenamePage, onToggleGridView, isGridView, theme 
+    pages, activePageId, onSwitchPage, onAddPage, onDuplicatePage, onRemovePage, onRenamePage, onMovePage, onToggleGridView, isGridView, theme 
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [dragId, setDragId] = useState<string | null>(null);
+    const [overId, setOverId] = useState<string | null>(null);
 
     const handleDoubleClick = (page: Page) => {
         setEditingId(page.id);
@@ -53,7 +56,7 @@ export const PageBar: React.FC<PageBarProps> = ({
     }
 
     return (
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center max-w-[90vw] no-print">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center max-w-[96%] no-print">
             <button 
                 onClick={() => setIsCollapsed(true)}
                 className="h-5 w-16 rounded-t-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-all bg-black/20 text-white/50 hover:bg-black/40 hover:text-white backdrop-blur-sm"
@@ -76,7 +79,15 @@ export const PageBar: React.FC<PageBarProps> = ({
                 {pages.map((page, index) => (
                     <div 
                         key={page.id}
-                        className={`group relative flex items-center h-10 min-w-[140px] max-w-[200px] px-3 rounded-t-xl border-t border-x border-b-0 cursor-pointer select-none transition-all duration-200 ${
+                        data-testid="page-tab"
+                        data-page-id={page.id}
+                        draggable={!!onMovePage && editingId !== page.id}
+                        onDragStart={(e) => { setDragId(page.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', page.id); }}
+                        onDragOver={(e) => { if (dragId && dragId !== page.id) { e.preventDefault(); setOverId(page.id); } }}
+                        onDragLeave={() => setOverId(o => (o === page.id ? null : o))}
+                        onDrop={(e) => { e.preventDefault(); if (dragId && onMovePage) onMovePage(dragId, index); setDragId(null); setOverId(null); }}
+                        onDragEnd={() => { setDragId(null); setOverId(null); }}
+                        className={`${overId === page.id ? 'outline outline-2 outline-paprika ' : ''}${dragId === page.id ? 'opacity-40 ' : ''}group relative flex items-center h-10 ${page.id === activePageId ? 'min-w-[150px] max-w-[260px]' : 'min-w-[100px] max-w-[150px]'} px-3 rounded-t-xl border-t border-x border-b-0 cursor-pointer select-none transition-all duration-200 ${
                             page.id === activePageId && !isGridView
                             ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white border-zinc-200 dark:border-white/10 shadow-lg z-10' 
                             : 'bg-zinc-100/50 dark:bg-white/5 text-zinc-500 border-transparent hover:bg-zinc-200/50 dark:hover:bg-white/10 hover:text-zinc-800 dark:hover:text-zinc-300'
@@ -106,6 +117,16 @@ export const PageBar: React.FC<PageBarProps> = ({
                         )}
 
                         <div className={`flex items-center gap-1 ml-2 ${page.id === activePageId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                            {onMovePage && pages.length > 1 && page.id === activePageId && (
+                                <>
+                                    <button type="button" aria-label={`${page.name} sayfasını sola taşı`} title="Sola taşı" disabled={index === 0}
+                                        onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index - 1); }}
+                                        className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-emerald-500 disabled:opacity-30 transition-colors"><ChevronLeft size={12}/></button>
+                                    <button type="button" aria-label={`${page.name} sayfasını sağa taşı`} title="Sağa taşı" disabled={index === pages.length - 1}
+                                        onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index + 1); }}
+                                        className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-emerald-500 disabled:opacity-30 transition-colors"><ChevronRight size={12}/></button>
+                                </>
+                            )}
                             <button 
                                 onClick={(e) => { e.stopPropagation(); onDuplicatePage(page.id); }}
                                 className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-blue-500 transition-colors"

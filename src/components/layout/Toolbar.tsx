@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Undo2, Redo2, Sparkles, Route, Trash2, Printer, 
   Moon, Sun, HelpCircle, TableProperties, History, 
-  Group, Ungroup, PackagePlus 
+  Group, Ungroup, PackagePlus, FileText 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -22,6 +22,8 @@ interface ToolbarProps {
   hasConnections: boolean;
   requestClear: () => void;
   handleExportImage: () => void;
+  handleExportPdf?: () => void;
+  pdfBusy?: boolean;
   theme: 'light' | 'dark';
   setTheme: (t: 'light' | 'dark') => void;
   openShortcuts: () => void;
@@ -38,7 +40,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
     handleUndo, handleRedo, canUndo, canRedo,
     isAnalyzing, runAnalysis,
     handleAutoRoute, hasConnections,
-    requestClear, handleExportImage,
+    requestClear, handleExportImage, handleExportPdf, pdfBusy,
     theme, setTheme,
     openShortcuts, openPinout, openHistory,
     selectedCount = 0, handleGroup, handleUngroup, handleSaveBlock
@@ -77,6 +79,25 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
             <ToolbarBtn onClick={handleRedo} disabled={!canRedo} icon={Redo2} label={t('redo')} />
         </div>
         
+        {handleExportPdf && (
+          <Tooltip>
+             <TooltipTrigger asChild>
+                <Button
+                    onClick={handleExportPdf}
+                    disabled={pdfBusy}
+                    variant="outline"
+                    size="sm"
+                    aria-label="PDF olarak dışa aktar"
+                    className="text-xs font-bold gap-2"
+                >
+                    <FileText className="w-3.5 h-3.5 mr-1" />
+                    <span className="hidden sm:inline">{pdfBusy ? 'PDF…' : 'PDF'}</span>
+                </Button>
+             </TooltipTrigger>
+             <TooltipContent><p>Tüm sayfaları tek PDF olarak dışa aktar (masaüstünde vektör: yazılar seçilebilir, yakınlaşınca pikselleşmez)</p></TooltipContent>
+          </Tooltip>
+        )}
+
         <Separator orientation="vertical" className="h-6 mx-1 bg-border/50" />
         
         {openHistory && (

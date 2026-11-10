@@ -9,6 +9,8 @@ import { ContextMenu } from './canvas/ContextMenu';
 import { ISOFrame } from './canvas/ISOFrame';
 import { TitleBlock } from './canvas/TitleBlock';
 import { BOMTable } from './canvas/BOMTable';
+import { instanceNumber, duplicateNumbers } from '../utils/numbering';
+import { LegendStack } from './canvas/LegendStack';
 import { ConnectionLine } from './canvas/ConnectionLine';
 import { ProductNode } from './canvas/ProductNode';
 import { ZoneNode } from './canvas/ZoneNode';
@@ -17,6 +19,8 @@ import { CommentMarker } from './canvas/CommentMarker';
 import { Minimap } from './canvas/Minimap';
 import { CanvasToolbar, ActiveTool } from './canvas/CanvasToolbar';
 import { ToolSettingsBar } from './canvas/ToolSettingsBar';
+import { ConnectionToolbar } from './canvas/ConnectionToolbar';
+import { getRouteEnds, normalizeInner, moveWaypoint, moveSegment, insertWaypoint, removeWaypoint, type Handle } from '../utils/connectionRoute';
 import { CanvasControls } from './canvas/CanvasControls';
 import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
@@ -44,6 +48,8 @@ interface CanvasProps {
   onCommentsChange?: (comments: Comment[]) => void;
   onTemplateChange: (template: ProductTemplate) => void;
   onEditMetadata?: () => void;
+  onMetadataChange?: (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => void;
+  onRenameActivePage?: (name: string) => void;
   onUndoCheckpoint: () => void;
   onSelectInstance?: (id: string | null) => void;
   onCopyInstance?: (id: string) => void;
@@ -55,6 +61,10 @@ interface CanvasProps {
   onUngroupSelected?: () => void;
   onSaveBlock?: () => void;
   activePageName?: string;
+  activePageDrawingNo?: string;
+  activePageHideBom?: boolean;
+  onPageHideBomChange?: (hide: boolean) => void;
+  onPageDrawingNoChange?: (value: string) => void;
   activePageNumber?: number;
   totalPages?: number;
   activeTool: ActiveTool;
@@ -73,19 +83,22 @@ export const Canvas: React.FC<CanvasProps> = ({
   selectedInstanceId, selectedIds = new Set(), onSelectIds, theme = 'dark',
   editingPortInfo, onSetEditingPortInfo,
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange,
-  onTemplateChange, onEditMetadata, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
+  onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
-  activePageName = 'Sayfa 1', activePageNumber = 1, totalPages = 1,
+  activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
   onAddInstance
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const dupNumbers = duplicateNumbers(instances);
   const canvasState = useCanvasState();
   const { scale, pan, setPan, handleWheel, handleFitScreen, handleZoomIn, handleZoomOut } = useCanvasView(window.innerWidth, window.innerHeight);
 
   const {
       handleMouseDown,
+      trackPointerDown,
+      startItemDrag,
       handleMouseMove,
       handleMouseUp,
       handleInstanceMouseDown,
@@ -106,8 +119,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       manualRoutePoints, setManualRoutePoints,
       hoveredConnectionId, setHoveredConnectionId,
       isMiddlePanning,
-      draggedInstance, setDraggedInstance,
-      setDragOffset,
+      draggedInstance,
       alignmentGuides,
       selectionBox,
       drawingZone,
@@ -161,6 +173,159 @@ export const Canvas: React.FC<CanvasProps> = ({
       const timer = setTimeout(() => setConnectionWarning(null), 5000);
       return () => clearTimeout(timer);
   }, [connectionWarning]);
+
+  // ---- Connection selection & manual route editing ----
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const connDragRef = useRef<{ id: string; handle: Handle; inner: Point[]; moved: boolean } | null>(null);
+  const connSetterRef = useRef(onConnectionsChange);
+  connSetterRef.current = onConnectionsChange;
+  const connectionsRef = useRef(connections);
+  connectionsRef.current = connections;
+  const selectedConnection = connections.find(c => c.id === selectedConnectionId) || null;
+
+  const patchConnection = (id: string, patch: Partial<Connection>, checkpoint = true) => {
+      if (checkpoint) onUndoCheckpoint();
+      onConnectionsChange(connectionsRef.current.map(c => c.id === id ? { ...c, ...patch } : c));
+  };
+
+  const routeOf = (conn: Connection) => {
+      const ends = getRouteEnds(conn, instances, templates);
+      return ends ? { ends, inner: normalizeInner(conn.shape || 'curved', ends, conn.controlPoints) } : null;
+  };
+
+  const handleConnectionHandleDown = (e: React.MouseEvent, id: string, handle: Handle) => {
+      if (e.button !== 0) return;
+      e.stopPropagation(); e.preventDefault();
+      const conn = connectionsRef.current.find(c => c.id === id);
+      const r = conn && routeOf(conn);
+      if (!conn || !r) return;
+      let inner = r.inner;
+      let h = handle;
+      if (handle.kind === 'add') {
+          inner = insertWaypoint(inner, handle.index, handle.at);
+          h = { kind: 'point', index: handle.index + 1, at: handle.at };
+      }
+      onUndoCheckpoint();
+      connDragRef.current = { id, handle: h, inner, moved: false };
+      setSelectedConnectionId(id);
+  };
+
+  useEffect(() => {
+      const move = (ev: MouseEvent) => {
+          const d = connDragRef.current;
+          if (!d) return;
+          const conn = connectionsRef.current.find(c => c.id === d.id);
+          const ends = conn && getRouteEnds(conn, instances, templates);
+          if (!conn || !ends) return;
+          let p = getMouseCoords(ev as unknown as React.MouseEvent);
+          if (isGridSnapEnabled && !ev.altKey) p = { x: snapToGrid(p.x), y: snapToGrid(p.y) };
+          const shape = conn.shape || 'curved';
+          const next = d.handle.kind === 'segment'
+              ? moveSegment(ends, d.inner, d.handle.index, p)
+              : moveWaypoint(shape, ends, d.inner, d.handle.index, p);
+          d.moved = true;
+          d.inner = next;
+          connSetterRef.current(connectionsRef.current.map(c => c.id === d.id ? { ...c, controlPoints: next } : c));
+      };
+      const up = () => { connDragRef.current = null; };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+      return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, [instances, templates, isGridSnapEnabled, scale]);
+
+  const handleHandleDoubleClick = (e: React.MouseEvent, id: string, handle: Handle) => {
+      e.stopPropagation();
+      const conn = connectionsRef.current.find(c => c.id === id);
+      const r = conn && routeOf(conn);
+      if (!conn || !r || handle.kind !== 'point') return;
+      patchConnection(id, { controlPoints: removeWaypoint(conn.shape || 'curved', r.ends, r.inner, handle.index) });
+  };
+
+  useEffect(() => {
+      if (selectedConnectionId && !selectedConnection) setSelectedConnectionId(null);
+  }, [selectedConnectionId, selectedConnection]);
+  useEffect(() => {
+      const onKey = (ev: KeyboardEvent) => {
+          if (!selectedConnectionId) return;
+          const t = ev.target as HTMLElement;
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable) return;
+          const conn = connectionsRef.current.find(c => c.id === selectedConnectionId);
+          if (ev.key === 'Escape') setSelectedConnectionId(null);
+          else if ((ev.key === 'Delete' || ev.key === 'Backspace') && conn && !conn.locked) {
+              ev.preventDefault(); ev.stopImmediatePropagation();
+              onUndoCheckpoint();
+              onConnectionsChange(connectionsRef.current.filter(c => c.id !== selectedConnectionId));
+              setSelectedConnectionId(null);
+          }
+      };
+      window.addEventListener('keydown', onKey, true);
+      return () => window.removeEventListener('keydown', onKey, true);
+  }, [selectedConnectionId]);
+
+  // ---- Group (bulk) scaling of the selection ----
+  const instancesRef = useRef(instances); instancesRef.current = instances;
+  const zonesRef = useRef(zones); zonesRef.current = zones;
+  const textsRef = useRef(textNodes); textsRef.current = textNodes;
+  // the drag effect outlives renders: always call the latest setters (they bind the active page)
+  const settersRef = useRef({ onInstancesChange, onZonesChange, onTextNodesChange });
+  settersRef.current = { onInstancesChange, onZonesChange, onTextNodesChange };
+  const groupDragRef = useRef<{ bx: number; by: number; bw: number; bh: number; ids: Set<string>;
+      inst: ProductInstance[]; zn: Zone[]; tx: TextNode[] } | null>(null);
+
+  const textBox = (t: TextNode) => ({ w: Math.max(20, t.content.length * t.fontSize * 0.6), h: t.fontSize * 1.4 });
+  const groupBounds = (() => {
+      if (selectedIds.size < 2) return null;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, n = 0;
+      const grow = (x: number, y: number, w: number, h: number) => {
+          minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h); n++;
+      };
+      instances.forEach(i => { if (selectedIds.has(i.id) && !i.locked && !i.hidden) {
+          const t = templates.find(tp => tp.id === i.templateId);
+          grow(i.x, i.y, i.width || t?.width || 100, i.height || t?.height || 100);
+      } });
+      zones.forEach(z => { if (selectedIds.has(z.id) && !z.locked && !z.hidden) grow(z.x, z.y, z.width, z.height); });
+      textNodes.forEach(t => { if (selectedIds.has(t.id) && !t.locked && !t.hidden) { const b = textBox(t); grow(t.x, t.y, b.w, b.h); } });
+      return n >= 2 ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : null;
+  })();
+
+  const startGroupScale = (e: React.MouseEvent) => {
+      if (e.button !== 0 || !groupBounds) return;
+      e.stopPropagation(); e.preventDefault();
+      onUndoCheckpoint();
+      groupDragRef.current = {
+          bx: groupBounds.x, by: groupBounds.y, bw: groupBounds.w, bh: groupBounds.h, ids: new Set(selectedIds),
+          inst: instancesRef.current.map(i => ({ ...i })), zn: zonesRef.current.map(z => ({ ...z })), tx: textsRef.current.map(t => ({ ...t })),
+      };
+  };
+
+  useEffect(() => {
+      const move = (ev: MouseEvent) => {
+          const d = groupDragRef.current;
+          if (!d) return;
+          if (ev.buttons === 0) { groupDragRef.current = null; return; }
+          const m = getMouseCoords(ev as unknown as React.MouseEvent);
+          // uniform factor from the pointer's projection on the box diagonal
+          const raw = ((m.x - d.bx) * d.bw + (m.y - d.by) * d.bh) / (d.bw * d.bw + d.bh * d.bh);
+          const f = Math.min(10, Math.max(0.1, raw));
+          const fx = (v: number) => d.bx + (v - d.bx) * f;
+          const fy = (v: number) => d.by + (v - d.by) * f;
+          const mv = (id: string) => d.ids.has(id);
+          const { onInstancesChange: setInst, onZonesChange: setZn, onTextNodesChange: setTxt } = settersRef.current;
+          setInst(d.inst.map(i => {
+              if (!mv(i.id) || i.locked || i.hidden) return i;
+              const t = templates.find(tp => tp.id === i.templateId);
+              return { ...i, x: fx(i.x), y: fy(i.y), width: (i.width || t?.width || 100) * f, height: (i.height || t?.height || 100) * f };
+          }));
+          if (setZn && d.zn.some(z => mv(z.id))) setZn(d.zn.map(z => !mv(z.id) || z.locked || z.hidden ? z
+              : { ...z, x: fx(z.x), y: fy(z.y), width: z.width * f, height: z.height * f }));
+          if (setTxt && d.tx.some(t => mv(t.id))) setTxt(d.tx.map(t => !mv(t.id) || t.locked || t.hidden ? t
+              : { ...t, x: fx(t.x), y: fy(t.y), fontSize: Math.max(6, Math.round(t.fontSize * f)) }));
+      };
+      const up = () => { groupDragRef.current = null; };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+      return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+  }, [templates, scale]);
 
   const findPort = (instId: string, portId: string) => {
       const inst = instances.find(i => i.id === instId);
@@ -279,7 +444,8 @@ export const Canvas: React.FC<CanvasProps> = ({
         ref={containerRef}
         className="absolute w-full h-full origin-top-left print:transform-none"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
-        onMouseDown={handleMouseDown}
+        onMouseDownCapture={trackPointerDown}
+        onMouseDown={(e) => { if (!(e.target as HTMLElement).closest('[data-connection-id],[data-testid="connection-toolbar"]')) setSelectedConnectionId(null); handleMouseDown(e); }}
         onMouseMove={handleMouseMoveWrapper}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -292,21 +458,40 @@ export const Canvas: React.FC<CanvasProps> = ({
             >
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
                 
+                <LegendStack
+                    paperWidth={finalW}
+                    paperHeight={finalH}
+                    userScale={projectMetadata.legendScale}
+                    onUserScaleChange={onMetadataChange ? (v, o) => {
+                        if (o?.checkpoint) onMetadataChange({}, undefined);
+                        else onMetadataChange({ legendScale: v }, { silent: true });
+                    } : undefined}
+                >
+                {!activePageHideBom && (
                 <BOMTable 
                     instances={instances}
                     templates={templates}
                     externalParts={projectMetadata.externalParts || []}
                     theme={theme}
+                    onHide={onPageHideBomChange ? () => onPageHideBomChange(true) : undefined}
                 />
+                )}
 
                 <TitleBlock 
                     metadata={projectMetadata} 
                     theme={theme}
                     pageName={activePageName}
+                    pageDrawingNo={activePageDrawingNo}
+                    bomHidden={!!activePageHideBom}
+                    onBomHiddenChange={onPageHideBomChange}
+                    onPageDrawingNoChange={onPageDrawingNoChange}
                     pageNumber={activePageNumber}
                     totalPages={totalPages}
                     onEdit={onEditMetadata}
+                    onMetadataChange={onMetadataChange}
+                    onRenamePage={onRenameActivePage}
                 />
+                </LegendStack>
             </div>
         )}
 
@@ -320,7 +505,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 theme={theme}
                 onSelectIds={onSelectIds}
                 onUndoCheckpoint={onUndoCheckpoint}
-                setDraggedInstance={(id) => { setDraggedInstance(id); setDragOffset({ x: 0, y: 0 }); }} 
+                setDraggedInstance={(id) => startItemDrag(id)} 
                 setEditingZoneId={setEditingZoneId}
                 removeZone={(id) => { if (!onZonesChange) return; onUndoCheckpoint(); onZonesChange(zones.filter(z => z.id !== id)); }}
                 handleResizeMouseDown={(e) => handleResizeStart(e, zone.id, 'zone')}
@@ -336,7 +521,9 @@ export const Canvas: React.FC<CanvasProps> = ({
                     key={inst.id}
                     inst={inst}
                     template={t}
-                    itemIndex={idx + 1}
+                    itemIndex={instanceNumber(inst, idx)}
+                    isDuplicateNumber={dupNumbers.has(instanceNumber(inst, idx).toLowerCase())}
+                    onRenumber={(id, value) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, number: value || undefined } : i)); }}
                     isSelected={selectedIds.has(inst.id)}
                     isDragged={draggedInstance === inst.id}
                     isScaleToolActive={activeTool === 'scale'}
@@ -379,6 +566,10 @@ export const Canvas: React.FC<CanvasProps> = ({
                     editingConnectionId={editingConnectionId}
                     setEditingConnectionId={setEditingConnectionId}
                     handleConnectionDoubleClick={(e, id) => setEditingConnectionId(id)}
+                    selected={selectedConnectionId === conn.id}
+                    onSelect={setSelectedConnectionId}
+                    onHandleDown={handleConnectionHandleDown}
+                    onHandleDoubleClick={handleHandleDoubleClick}
                     handleControlPointMouseDown={() => {}} 
                     handleControlPointDoubleClick={() => {}} 
                     removeConnection={(id) => { onUndoCheckpoint(); onConnectionsChange(connections.filter(c => c.id !== id)); }}
@@ -445,8 +636,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     if(onSelectIds) onSelectIds([id], e.ctrlKey); 
                     if ((activeTool === 'cursor' || activeTool === 'move') && !text.locked) {
                         onUndoCheckpoint();
-                        setDraggedInstance(id); 
-                        setDragOffset({ x: 0, y: 0 }); 
+                        startItemDrag(id);
                     }
                 }}
                 setEditingTextId={setEditingTextId}
@@ -465,8 +655,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     if(onSelectIds) onSelectIds([comment.id], false); 
                     if ((activeTool === 'cursor' || activeTool === 'move') && !comment.locked) {
                         onUndoCheckpoint();
-                        setDraggedInstance(comment.id); 
-                        setDragOffset({ x: 0, y: 0 }); 
+                        startItemDrag(comment.id);
                     }
                 }}
                 onUpdate={(id, content, color, isResolved) => { if (!onCommentsChange) return; onUndoCheckpoint(); onCommentsChange(comments.map(c => c.id === id ? { ...c, content, color, isResolved } : c)); }}
@@ -488,6 +677,16 @@ export const Canvas: React.FC<CanvasProps> = ({
                 }}
             />
         ))}
+
+        {/* Group bounds + bulk scale handle */}
+        {groupBounds && (
+            <div data-testid="group-bounds" className="absolute z-[60] pointer-events-none border border-dashed border-sky-400"
+                style={{ left: groupBounds.x - 4, top: groupBounds.y - 4, width: groupBounds.w + 8, height: groupBounds.h + 8 }}>
+                <div data-group-scale data-testid="group-scale-handle" title="Seçilenleri birlikte ölçekle"
+                    onMouseDown={startGroupScale}
+                    className="pointer-events-auto absolute -right-6 -bottom-6 h-4 w-4 cursor-nwse-resize rounded-sm border-2 border-white bg-sky-500 shadow" />
+            </div>
+        )}
 
         {/* Selection Box */}
         {selectionBox && (
@@ -524,6 +723,21 @@ export const Canvas: React.FC<CanvasProps> = ({
           theme={theme}
       />
       
+      {selectedConnection && (
+          <ConnectionToolbar
+              conn={selectedConnection}
+              theme={theme}
+              onChange={(patch) => patchConnection(selectedConnection.id, patch)}
+              onResetRoute={() => {
+                  const r = routeOf({ ...selectedConnection, controlPoints: undefined });
+                  patchConnection(selectedConnection.id, { controlPoints: r ? r.inner : undefined });
+              }}
+              onDelete={() => { onUndoCheckpoint(); onConnectionsChange(connections.filter(c => c.id !== selectedConnection.id)); setSelectedConnectionId(null); }}
+              onEditDetails={() => setEditingConnectionId(selectedConnection.id)}
+              onClose={() => setSelectedConnectionId(null)}
+          />
+      )}
+
       <ToolSettingsBar 
          activeTool={activeTool}
          settings={toolSettings}

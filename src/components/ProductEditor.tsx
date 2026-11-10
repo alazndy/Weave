@@ -293,12 +293,13 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
             overlayRef.current.height = img.height;
         }
 
-        renderOverlay();
+        renderOverlayRef.current();
       };
       img.src = rawImage;
     }
   }, [mode, rawImage]);
 
+  const renderOverlayRef = useRef<() => void>(() => {});
   const renderOverlay = () => {
     if (!overlayRef.current) return;
     const canvas = overlayRef.current;
@@ -333,22 +334,34 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
         ctx.fill();
     }
 
-    if (tool === 'eraser' && mousePos && !isDragging) {
+    if (tool === 'eraser' && mousePos) {
+        // Ring + centre dot stay visible while pressing/dragging and on any background:
+        // dark outline under a bright ring, line widths measured in screen pixels.
+        const rect = canvas.getBoundingClientRect();
+        const px = rect.width > 0 ? canvas.width / rect.width : 1;
         ctx.save();
         ctx.beginPath();
         ctx.arc(mousePos.x, mousePos.y, eraserSize, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillStyle = isDragging ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.12)';
         ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 5 * px;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2.5 * px;
+        ctx.strokeStyle = isDragging ? '#f87171' : '#ffffff';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(mousePos.x, mousePos.y, 3 * px, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 1.5 * px;
+        ctx.strokeStyle = '#000000';
         ctx.stroke();
         ctx.restore();
     }
   };
 
+  renderOverlayRef.current = renderOverlay;
   useEffect(() => {
       renderOverlay();
   }, [selection, measurementLine, tool, isDragging, mousePos, eraserSize]);
@@ -400,6 +413,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     draggingRef.current = true;
     setIsDragging(true);
     setStartPos({ x, y });
+    setMousePos({ x, y });
 
     if (tool === 'select' || tool === 'scan') {
         setSelection({ x, y, w: 0, h: 0 });
@@ -456,10 +470,15 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     }
   };
 
-  const handleCanvasMouseUp = () => {
+  const handleCanvasMouseUp = (e?: React.MouseEvent<HTMLCanvasElement>) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
     setIsDragging(false);
+    const ov = overlayRef.current;
+    if (e && ov) {
+        const r = ov.getBoundingClientRect();
+        setMousePos({ x: (e.clientX - r.left) * (ov.width / r.width), y: (e.clientY - r.top) * (ov.height / r.height) });
+    }
     
     if (tool === 'eraser' && canvasRef.current) {
         const newDataUrl = canvasRef.current.toDataURL();

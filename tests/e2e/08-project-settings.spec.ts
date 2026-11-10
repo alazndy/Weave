@@ -138,7 +138,7 @@ test.describe('Antet / proje detayları', () => {
   test('özel alan eklenir, düzenlenir ve silinir', async ({ page }) => {
     await openApp(page);
     const modal = await openTitleBlockEditor(page);
-    await modal.getByRole('button', { name: /Ekle|Alan/ }).first().click();
+    await modal.getByRole('button', { name: 'Alan Ekle' }).click();
     const label = modal.getByPlaceholder('Başlık (Örn: Kontrol Eden)');
     await expect(label).toHaveCount(1);
     await label.fill('Kontrol Eden');
@@ -248,5 +248,46 @@ test.describe('Uygulama ayarları', () => {
     const dlg = await open(page);
     await dlg.getByRole('button', { name: 'Close' }).first().click();
     await expect(dlg).toBeHidden();
+  });
+});
+
+
+test.describe('Lejant: hiçbir alan kesilmez', () => {
+  test('uzun notlar ve çok sayıda özel alan tam görünür, BOM antetle çakışmaz', async ({ page }) => {
+    await openApp(page);
+    await placePair(page);
+    const modal = await openTitleBlockEditor(page);
+    const notes = Array.from({ length: 9 }, (_, i) => `${i + 1}. Bu bir uzun teknik not satırıdır ve kesilmemelidir.`).join('\n');
+    await modal.locator('textarea').fill(notes);
+    for (let i = 0; i < 5; i++) {
+      await modal.getByRole('button', { name: 'Alan Ekle' }).click();
+      await modal.getByPlaceholder('Başlık (Örn: Kontrol Eden)').nth(i).fill(`Alan ${i + 1}`);
+      await modal.getByPlaceholder('Değer').nth(i).fill(`Değer numarası ${i + 1} biraz uzun bir metin`);
+    }
+    await modal.getByRole('button', { name: 'Kaydet' }).click();
+    await expect(modal).toBeHidden();
+
+    const block = page.locator('#legend-export-area');
+    for (let i = 1; i <= 5; i++) await expect(block).toContainText(`Alan ${i}`);
+    await expect(block).toContainText('9. Bu bir uzun teknik not satırıdır');
+
+    const report = await block.evaluate(root => {
+      const clipped: string[] = [];
+      root.querySelectorAll<HTMLElement>('*').forEach(el => {
+        const cs = getComputedStyle(el);
+        const scrolls = /(auto|scroll|hidden)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 0;
+        const ellipsis = cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1;
+        if (scrolls || ellipsis) clipped.push(`${el.tagName}.${el.className}`.slice(0, 80));
+      });
+      const paper = root.closest('[style*="width"][style*="height"]') as HTMLElement;
+      const r = root.getBoundingClientRect(), pr = (root.parentElement!.parentElement as HTMLElement).getBoundingClientRect();
+      return { clipped, insideTop: r.top >= pr.top - 1, insideLeft: r.left >= pr.left - 1, hasPaper: !!paper };
+    });
+    expect(report.clipped, 'kesilen öğeler').toEqual([]);
+    expect(report.insideLeft).toBe(true);
+
+    const bom = await page.locator('.print-bom').boundingBox();
+    const title = await block.boundingBox();
+    expect(bom!.y + bom!.height).toBeLessThanOrEqual(title!.y + 1);   // BOM, antetin üstünde, çakışmıyor
   });
 });
