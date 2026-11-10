@@ -18,7 +18,10 @@
     "mobile:build": "npm run build && npx cap sync",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "desktop:run": "npm run build && npm run electron:compile && electron .",
+    "desktop:build": "npm run build && npm run electron:compile && electron-builder --linux",
+    "test:desktop": "node tests/desktop-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -73,27 +76,57 @@
     "wait-on": "^8.0.0"
   },
   "build": {
-    "appId": "com.tek.t-weave",
+    "appId": "com.weave.app",
     "productName": "Weave",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "package.json"
+      "build/icon.png",
+      "package.json",
+      "!**/node_modules/**/*"
     ],
     "directories": {
-      "output": "C:/Users/turha/Desktop/Weave-Release"
+      "output": "release",
+      "buildResources": "build"
     },
     "win": {
       "target": [
-        "nsis",
-        "dir"
-      ]
+        "nsis"
+      ],
+      "icon": "build/icon.png"
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Graphics",
+      "icon": "build/icon.png",
+      "synopsis": "Cabling schematic editor",
+      "maintainer": "Weave <info@ancyraajans.com>",
+      "desktop": {
+        "Name": "Weave",
+        "Comment": "Vehicle system cabling schematic editor",
+        "StartupWMClass": "Weave"
+      }
     },
     "mac": {
-      "target": "dmg"
-    }
-  }
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.graphics-design"
+    },
+    "artifactName": "Weave-${version}-${os}-${arch}.${ext}",
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "npmRebuild": false
+  },
+  "description": "Weave - vehicle system cabling schematic editor",
+  "author": {
+    "name": "Weave",
+    "email": "info@ancyraajans.com"
+  },
+  "homepage": "https://github.com/alazndy/Weave"
 }
