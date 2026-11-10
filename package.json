@@ -1,7 +1,7 @@
 {
   "name": "weave",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "dist-electron/main.cjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "electron:compile": "tsc -p electron/tsconfig.json && shx mv dist-electron/main.js dist-electron/main.cjs && shx mv dist-electron/preload.js dist-electron/preload.cjs",
+    "electron:compile": "esbuild electron/main.ts electron/preload.ts --bundle --platform=node --format=cjs --target=node20 --external:electron --outdir=dist-electron --out-extension:.js=.cjs",
     "electron:dev": "concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3004 && npm run electron:compile && cross-env NODE_ENV=development electron .\"",
     "electron:build": "npm run build && npm run electron:compile && electron-builder",
     "cap:sync": "npx cap sync",
@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "desktop:run": "npm run build && npm run electron:compile && electron .",
     "desktop:build": "npm run build && npm run electron:compile && electron-builder --linux",
-    "test:desktop": "node tests/desktop-smoke.mjs"
+    "test:desktop": "node tests/desktop-smoke.mjs",
+    "electron:typecheck": "tsc -p electron/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -43,6 +44,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-updater": "6.3.9",
     "html2canvas-pro": "^2.6.3",
     "i18next": "^25.7.3",
     "i18next-http-backend": "^3.0.2",
@@ -68,6 +70,7 @@
     "cross-env": "^7.0.0",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "esbuild": "0.24.2",
     "jsdom": "^27.3.0",
     "shx": "^0.4.0",
     "tailwindcss": "^4.1.18",
@@ -122,7 +125,14 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
-    "npmRebuild": false
+    "npmRebuild": false,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "alazndy",
+        "repo": "Weave"
+      }
+    ]
   },
   "description": "Weave - vehicle system cabling schematic editor",
   "author": {

@@ -1,3 +1,4 @@
+import { UpdateSettings } from '../UpdateBanner';
 import React, { useState } from 'react';
 import { AppSettings, ColorPalette } from '../../types';
 import { Settings, Moon, Sun, Monitor, Check, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -148,6 +149,7 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                             ))}
                         </div>
                     </div>
+                    <UpdateSettings />
                 </TabsContent>
 
                 {/* --- AI TAB --- */}

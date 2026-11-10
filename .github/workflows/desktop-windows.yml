@@ -30,6 +30,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Release builds take the app version from the tag (v1.2.3 -> 1.2.3); the in-app updater compares versions.
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}'.TrimStart('v')
+          npm pkg set version=$v
+
       - name: Typecheck and unit tests
         run: |
           pnpm typecheck
@@ -38,6 +46,7 @@ jobs:
       - name: Build web app and Electron main process
         run: |
           pnpm run build
+          pnpm run electron:typecheck
           pnpm run electron:compile
 
       # Code signing is optional: when the WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD secrets exist
@@ -55,6 +64,8 @@ jobs:
           path: |
             release/*.exe
             release/*.zip
+            release/*.blockmap
+            release/latest.yml
           if-no-files-found: error
 
       - name: Publish release (tag builds only)
@@ -64,3 +75,5 @@ jobs:
           files: |
             release/*.exe
             release/*.zip
+            release/*.blockmap
+            release/latest.yml

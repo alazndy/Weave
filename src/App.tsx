@@ -1,6 +1,7 @@
 
 import { numberBySpace } from './utils/numbering';
 import { buildPdf, type PdfPageImage } from './utils/pdfWriter';
+import { UpdateBanner } from './components/UpdateBanner';
 import { canPrintVectorPdf, printSheetToPdf, mergePdfs } from './utils/vectorPdf';
 import { documentNoFor } from './utils/docNumbering';
 const fileSafeDocNo = (m: ProjectMetadata, sheet: number) => documentNoFor(m, sheet).trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
@@ -965,6 +966,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
+    <UpdateBanner />
     <div className="flex h-screen w-full bg-ink text-alabaster overflow-hidden font-sans select-none transition-colors duration-300 relative">
          {showWelcome && (
              <WelcomeScreen

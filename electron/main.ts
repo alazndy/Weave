@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, net, protocol, shell, screen } from 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { autoUpdater } from 'electron-updater';
 
 /**
  * Weave desktop shell.
@@ -80,6 +81,43 @@ ipcMain.handle('weave:print-pdf', async (event, opts: { widthMm: number; heightM
   return new Uint8Array(buf);
 });
 
+// ---- auto update (installer / AppImage builds; portable zip and dev builds skip it) ----
+type UpdateStatus = {
+  state: 'unsupported' | 'idle' | 'checking' | 'available' | 'none' | 'downloading' | 'ready' | 'error';
+  version?: string;
+  percent?: number;
+  message?: string;
+};
+const updaterSupported = () =>
+  app.isPackaged && (process.platform === 'win32' || process.platform === 'darwin' || !!process.env.APPIMAGE);
+let updateStatus: UpdateStatus = { state: updaterSupported() ? 'idle' : 'unsupported' };
+const setUpdateStatus = (s: UpdateStatus) => {
+  updateStatus = s;
+  mainWindow?.webContents.send('weave:update-event', s);
+};
+
+function setupAutoUpdate() {
+  if (!updaterSupported()) return;
+  autoUpdater.autoDownload = false;              // the user decides when to download
+  autoUpdater.autoInstallOnAppQuit = true;       // a downloaded update installs on the next quit anyway
+  autoUpdater.on('checking-for-update', () => setUpdateStatus({ state: 'checking' }));
+  autoUpdater.on('update-available', (i) => setUpdateStatus({ state: 'available', version: i.version }));
+  autoUpdater.on('update-not-available', () => setUpdateStatus({ state: 'none' }));
+  autoUpdater.on('download-progress', (p) => setUpdateStatus({ state: 'downloading', version: updateStatus.version, percent: Math.round(p.percent) }));
+  autoUpdater.on('update-downloaded', (i) => setUpdateStatus({ state: 'ready', version: i.version }));
+  autoUpdater.on('error', (e) => setUpdateStatus({ state: 'error', message: String(e?.message || e).slice(0, 200) }));
+  const check = () => { autoUpdater.checkForUpdates().catch(() => { /* reported via the error event */ }); };
+  setTimeout(check, 8000);
+  setInterval(check, 4 * 60 * 60 * 1000);
+  ipcMain.handle('weave:update-check', () => { check(); });
+  ipcMain.handle('weave:update-download', () => autoUpdater.downloadUpdate().then(() => undefined).catch(() => undefined));
+  ipcMain.handle('weave:update-install', () => { autoUpdater.quitAndInstall(); });
+}
+ipcMain.handle('weave:update-status', () => updateStatus);
+if (!updaterSupported()) {
+  for (const ch of ['weave:update-check', 'weave:update-download', 'weave:update-install']) ipcMain.handle(ch, () => undefined);
+}
+
 function createWindow() {
   const state = loadWindowState();
   mainWindow = new BrowserWindow({
@@ -143,6 +181,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     registerAppProtocol();
     createWindow();
+    setupAutoUpdate();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
