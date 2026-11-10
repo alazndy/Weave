@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, net, protocol, shell, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, net, protocol, shell, screen } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -62,6 +62,23 @@ function registerAppProtocol() {
 }
 
 let mainWindow: BrowserWindow | null = null;
+
+/**
+ * Vector PDF: Chromium's own print pipeline keeps text as real text and SVG as paths,
+ * so the result stays sharp at any zoom. The renderer prepares one sheet at a time
+ * (print overlay) and asks for it here; it merges the single-page PDFs afterwards.
+ */
+ipcMain.handle('weave:print-pdf', async (event, opts: { widthMm: number; heightMm: number }) => {
+  const w = Number(opts?.widthMm), h = Number(opts?.heightMm);
+  if (!(w > 20 && w < 2000 && h > 20 && h < 2000)) throw new Error('Invalid page size');
+  const buf = await event.sender.printToPDF({
+    pageSize: { width: w / 25.4, height: h / 25.4 },   // inches
+    margins: { marginType: 'none' },
+    printBackground: true,
+    preferCSSPageSize: true,
+  });
+  return new Uint8Array(buf);
+});
 
 function createWindow() {
   const state = loadWindowState();
