@@ -13,6 +13,9 @@ interface TitleBlockProps {
     /** When given, headings and values can be edited by clicking them and sections can be reordered. */
     onMetadataChange?: (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => void;
     onRenamePage?: (name: string) => void;
+    /** Drawing number set for this page only (overrides the protocol number). */
+    pageDrawingNo?: string;
+    onPageDrawingNoChange?: (value: string) => void;
 }
 
 export const LABEL_DEFAULTS: Record<string, string> = {
@@ -85,7 +88,7 @@ const Ed: React.FC<{
     );
 };
 
-export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageName, pageNumber, totalPages, onEdit, onMetadataChange, onRenamePage }) => {
+export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageName, pageNumber, totalPages, onEdit, onMetadataChange, onRenamePage, pageDrawingNo, onPageDrawingNoChange }) => {
     const isDark = theme === 'dark';
     const line = isDark ? 'rgba(255, 255, 255, 0.35)' : '#000000';
     const textColor = isDark ? '#e4e4e7' : '#000000';
@@ -95,7 +98,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
 
     const customFields = metadata.customFields || [];
     const hasNotes = !!metadata.technicalNotes?.trim();
-    const docNo = documentNoFor(metadata, pageNumber);
+    const computedDocNo = documentNoFor(metadata, pageNumber);
+    const docNo = pageDrawingNo?.trim() || computedDocNo;
     const revisions = [...(metadata.revisions || [])].reverse();          // newest first, like the paper form
     const blankRows = Math.max(0, 2 - revisions.length);
     const rev = metadata.revision || '';
@@ -238,7 +242,10 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 </div>
                 <div className="flex border-b" style={bd}>
                     <div className="w-[88px] shrink-0 border-r p-1.5 flex items-center" style={bd}>{L('drawingNo')}</div>
-                    <div className="flex-1 min-w-0 p-1.5 text-[11px] font-mono font-bold break-all text-center flex items-center justify-center" data-testid="legend-docno">{docNo || '-'}</div>
+                    <div className="flex-1 min-w-0 p-1.5 text-[11px] font-mono font-bold break-all text-center flex items-center justify-center" data-testid="legend-docno">
+                        <Ed label="Çizim numarası (bu sayfa)" value={docNo} display={docNo || '-'}
+                            onCommit={edit && onPageDrawingNoChange ? (v) => onPageDrawingNoChange(v.trim() === computedDocNo ? '' : v) : undefined} />
+                    </div>
                 </div>
                 <div className="flex flex-1">
                     <div className="flex-1 grid grid-cols-[auto_1fr_auto_1fr] text-[10px]">

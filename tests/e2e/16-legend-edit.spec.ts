@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { openApp, trackErrors, undoBtn } from './helpers';
+import { openApp, trackErrors, undoBtn, redoBtn } from './helpers';
 
 test.describe.configure({ timeout: 90000 });
 
@@ -104,5 +104,33 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await strip.hover();
     await page.getByTestId('resize-mainH').dispatchEvent('dblclick');
     await expect.poll(async () => Math.abs((await oh()) - eh0)).toBeLessThan(2);
+  });
+
+  test('her sayfaya ayrı Drawing No verilir; boşaltınca protokol numarasına döner; geri alınır', async ({ page }) => {
+    await openApp(page);
+    await page.getByTitle('Yeni Sayfa Ekle').click();
+    const doc = page.getByTestId('legend-docno');
+    const setNo = async (v: string) => {
+      await doc.getByTitle('Düzenlemek için tıkla').click();
+      await page.getByLabel('Çizim numarası (bu sayfa)').fill(v);
+      await page.keyboard.press('Enter');
+    };
+    await setNo('ADC-DWD-ELE-CNK-002');
+    await expect(doc).toContainText('ADC-DWD-ELE-CNK-002');
+    await page.getByTestId('page-tab').first().click();
+    const base1 = (await doc.innerText()).trim();
+    expect(base1).not.toContain('CNK-002');
+    await setNo('ADC-DWD-ELE-CNK-001');
+    await expect(doc).toContainText('CNK-001');
+    await page.getByTestId('page-tab').nth(1).click();
+    await expect(doc).toContainText('CNK-002');                   // sayfalar bağımsız
+    await page.getByTestId('page-tab').first().click();
+    await expect(doc).toContainText('CNK-001');
+    await undoBtn(page).click();                                  // son değişiklik (sayfa 1 numarası) geri alınır
+    await expect(doc).not.toContainText('CNK-001');
+    await redoBtn(page).click();
+    await expect(doc).toContainText('CNK-001');
+    await setNo(base1);                                           // hesaplananla aynı = override kalkar
+    await expect(doc).toHaveText(base1);
   });
 });

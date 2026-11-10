@@ -777,7 +777,7 @@ export default function App() {
               const now = new Date();
               const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); 
               const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); 
-              const filenameBase = `${fileSafeDocNo(projectMetadata, pages.indexOf(activePage) + 1) || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
+              const filenameBase = `${(activePage.drawingNo ? activePage.drawingNo.trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '') : fileSafeDocNo(projectMetadata, pages.indexOf(activePage) + 1)) || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
               canvas.toBlob((blob: Blob | null) => downloadBlob(blob, `${filenameBase}.png`));
           } catch (err) { console.error("Export failed", err); alert("Görüntü oluşturulurken bir hata meydana geldi."); }
       } else { alert("Dışa aktarılacak alan bulunamadı."); }
@@ -908,6 +908,7 @@ export default function App() {
           ...JSON.parse(JSON.stringify(page)), 
           id: crypto.randomUUID(),
           name: `${page.name} (Kopya)`,
+          drawingNo: undefined,
           order: pages.length + 1
       };
       setPages([...pages, newPage]);
@@ -931,6 +932,11 @@ export default function App() {
       setActivePageId(newActiveId);
   };
   
+  const handleSetPageDrawingNo = (id: string, value: string) => {
+      performCheckpoint();
+      setPages(prev => prev.map(p => p.id === id ? { ...p, drawingNo: value.trim() || undefined } : p));
+  };
+
   const handleRenamePage = (id: string, newName: string) => {
       setPages(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
   };
@@ -1039,6 +1045,8 @@ export default function App() {
                         onSaveBlock={handleSaveBlockAsTemplate}
                         
                         activePageName={activePage.name}
+                        activePageDrawingNo={activePage.drawingNo}
+                        onPageDrawingNoChange={(v) => handleSetPageDrawingNo(activePageId, v)}
                         activePageNumber={pages.findIndex(p => p.id === activePageId) + 1}
                         totalPages={pages.length}
                         activeTool={activeTool}

@@ -218,6 +218,8 @@ export interface Page {
     textNodes: TextNode[];
     comments: Comment[];
     order: number;
+    /** Per-page drawing number; when empty the number comes from the project protocol/document no. */
+    drawingNo?: string;
 }
 
 export interface HistoryState {

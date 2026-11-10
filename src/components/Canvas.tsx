@@ -61,6 +61,8 @@ interface CanvasProps {
   onUngroupSelected?: () => void;
   onSaveBlock?: () => void;
   activePageName?: string;
+  activePageDrawingNo?: string;
+  onPageDrawingNoChange?: (value: string) => void;
   activePageNumber?: number;
   totalPages?: number;
   activeTool: ActiveTool;
@@ -82,7 +84,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
-  activePageName = 'Sayfa 1', activePageNumber = 1, totalPages = 1,
+  activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
   onAddInstance
 }) => {
@@ -466,6 +468,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     metadata={projectMetadata} 
                     theme={theme}
                     pageName={activePageName}
+                    pageDrawingNo={activePageDrawingNo}
+                    onPageDrawingNoChange={onPageDrawingNoChange}
                     pageNumber={activePageNumber}
                     totalPages={totalPages}
                     onEdit={onEditMetadata}
