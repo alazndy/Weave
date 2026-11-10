@@ -11,11 +11,6 @@
 
       :root {
         /* LIGHT THEME (Default) */
-        --color-ink: 248 250 252; /* Slate-50 - Light BG */
-        --color-paprika: 207 92 54; /* #cf5c36 */
-        --color-apricot: 239 200 139; /* #efc88b */
-        --color-vanilla: 244 227 178; /* #f4e3b2 */
-        --color-alabaster: 15 23 42; /* Slate-900 - Dark Text */
 
         --glass-border: rgba(15, 23, 42, 0.08); /* Dark border for light mode */
         --glass-bg: rgba(255, 255, 255, 0.65);
@@ -62,11 +57,11 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgb(var(--color-paprika));
+        background: var(--color-paprika);
         border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: rgb(var(--color-apricot));
+        background: var(--color-apricot);
       }
 
       .custom-scrollbar::-webkit-scrollbar {
@@ -78,8 +73,8 @@
       input:-webkit-autofill:hover,
       input:-webkit-autofill:focus,
       input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px rgb(var(--color-ink)) inset !important;
-        -webkit-text-fill-color: rgb(var(--color-vanilla)) !important;
+        -webkit-box-shadow: 0 0 0 30px var(--color-ink) inset !important;
+        -webkit-text-fill-color: var(--color-vanilla) !important;
         transition: background-color 5000s ease-in-out 0s;
       }
 
