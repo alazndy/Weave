@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { instanceNumber } from '../../utils/numbering';
+import { Trash2 } from 'lucide-react';
 import { ProductInstance, ProductTemplate, ExternalPart } from '../../types';
 
 interface BOMTableProps {
@@ -8,9 +9,11 @@ interface BOMTableProps {
     templates: ProductTemplate[];
     externalParts: ExternalPart[];
     theme: 'light' | 'dark';
+    /** When given, a delete button appears on hover. */
+    onHide?: () => void;
 }
 
-export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, externalParts, theme }) => {
+export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, externalParts, theme, onHide }) => {
     // Aggregation Logic
     const bomData = useMemo(() => {
         const map = new Map<string, { name: string, model: string, count: number, refs: string[] }>();
@@ -49,7 +52,8 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
 
     return (
         <div 
-            className="relative w-full max-w-[600px] z-10 print-bom select-none pointer-events-none"
+            className={`group/bom relative w-full max-w-[600px] z-10 print-bom select-none ${onHide ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            data-testid="bom-table"
             style={{ 
                 borderColor: borderColor,
                 color: textColor,
@@ -58,6 +62,13 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
                 borderStyle: 'solid'
             }}
         >
+            {onHide && (
+                <button type="button" aria-label="Parça tablosunu sil" title="Parça tablosunu sil"
+                    onClick={(e) => { e.stopPropagation(); onHide(); }}
+                    className="absolute -top-2 -right-2 z-50 hidden group-hover/bom:flex p-1 rounded-md bg-red-600 text-white shadow-lg no-print">
+                    <Trash2 size={13} />
+                </button>
+            )}
             {/* Header */}
             <div className="flex border-b-2" style={{ borderColor: borderColor, backgroundColor: headerBg }}>
                 <div className="w-12 p-1 border-r flex items-center justify-center font-bold text-[10px]" style={{ borderColor: borderColor }}>NO</div>

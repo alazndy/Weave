@@ -290,6 +290,8 @@ export interface ProjectMetadata {
   legendHidden?: string[];
   /** Cell sizes in legend px: section/cell widths by id, plus 'mainH' / 'extraH' row heights. */
   legendSizes?: Record<string, number>;
+  /** Parts/numbers table (BOM) removed from the sheet; restorable from the legend toolbar. */
+  hideBom?: boolean;
   legendOrder?: string[];
   legendExtraOrder?: string[];
   customFields: CustomField[];

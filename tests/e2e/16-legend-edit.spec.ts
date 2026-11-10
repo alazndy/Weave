@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { openApp, trackErrors, undoBtn, redoBtn } from './helpers';
+import { openApp, trackErrors, undoBtn, redoBtn, placePair } from './helpers';
 
 test.describe.configure({ timeout: 90000 });
 
@@ -132,5 +132,23 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await expect(doc).toContainText('CNK-001');
     await setNo(base1);                                           // hesaplananla aynı = override kalkar
     await expect(doc).toHaveText(base1);
+  });
+
+  test('parça/numara tablosu silinir, geri getirilir; geri al çalışır', async ({ page }) => {
+    await openApp(page);
+    await placePair(page);
+    const bom = page.getByTestId('bom-table');
+    await expect(bom).toBeVisible();
+    await bom.hover();
+    await page.getByRole('button', { name: 'Parça tablosunu sil' }).click();
+    await expect(bom).toHaveCount(0);
+    await page.getByTestId('title-block').hover();
+    await page.getByRole('button', { name: 'Parça tablosunu geri getir' }).click();
+    await expect(bom).toBeVisible();
+    await bom.hover();
+    await page.getByRole('button', { name: 'Parça tablosunu sil' }).click();
+    await expect(bom).toHaveCount(0);
+    await undoBtn(page).click();
+    await expect(bom).toBeVisible();
   });
 });

@@ -332,12 +332,23 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 </button>
             )}
 
-            {edit && hidden.length > 0 && (
-                <button type="button" aria-label="Silinen başlıkları geri getir" title="Silinen başlıkları geri getir"
-                    onClick={(e) => { e.stopPropagation(); set({ legendHidden: [] }); }}
-                    className="absolute top-1 left-10 z-50 flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg no-print">
-                    <Undo2 size={12} /> {hidden.length} gizli başlık
-                </button>
+            {edit && (hidden.length > 0 || metadata.hideBom) && (
+                <div className="absolute top-1 left-10 z-50 flex gap-1 no-print">
+                    {hidden.length > 0 && (
+                        <button type="button" aria-label="Silinen başlıkları geri getir" title="Silinen başlıkları geri getir"
+                            onClick={(e) => { e.stopPropagation(); set({ legendHidden: [] }); }}
+                            className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg">
+                            <Undo2 size={12} /> {hidden.length} gizli başlık
+                        </button>
+                    )}
+                    {metadata.hideBom && (
+                        <button type="button" aria-label="Parça tablosunu geri getir" title="Parça tablosunu geri getir"
+                            onClick={(e) => { e.stopPropagation(); set({ hideBom: false }); }}
+                            className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg">
+                            <Undo2 size={12} /> Parça tablosu gizli
+                        </button>
+                    )}
+                </div>
             )}
 
             {/* Main strip: sections in user-chosen order */}

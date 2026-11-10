@@ -457,12 +457,15 @@ export const Canvas: React.FC<CanvasProps> = ({
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
                 
                 <LegendStack paperHeight={finalH}>
+                {!projectMetadata.hideBom && (
                 <BOMTable 
                     instances={instances}
                     templates={templates}
                     externalParts={projectMetadata.externalParts || []}
                     theme={theme}
+                    onHide={onMetadataChange ? () => onMetadataChange({ hideBom: true }) : undefined}
                 />
+                )}
 
                 <TitleBlock 
                     metadata={projectMetadata} 
