@@ -90,8 +90,8 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                     aria-label="PDF olarak dışa aktar"
                     className="text-xs font-bold gap-2"
                 >
-                    <FileText className="w-3.5 h-3.5 mr-1" />
-                    <span className="hidden sm:inline">{pdfBusy ? 'PDF…' : 'PDF'}</span>
+                    <FileText className="w-3.5 h-3.5 2xl:mr-1" />
+                    <span className="hidden 2xl:inline">{pdfBusy ? 'PDF…' : 'PDF'}</span>
                 </Button>
              </TooltipTrigger>
              <TooltipContent><p>Tüm sayfaları tek PDF olarak dışa aktar (masaüstünde vektör: yazılar seçilebilir, yakınlaşınca pikselleşmez)</p></TooltipContent>
@@ -110,6 +110,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
             <TooltipTrigger asChild>
                 <Button 
                     onClick={runAnalysis}
+                    aria-label={t('aiAnalysis')}
                     disabled={isAnalyzing}
                     variant="default" // Using default for primary action look
                     size="sm"
@@ -118,8 +119,8 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                         isAnalyzing && "animate-pulse"
                     )}
                 >
-                    {!isAnalyzing && <Sparkles className="w-3.5 h-3.5 mr-1" />}
-                    {t('aiAnalysis')}
+                    {!isAnalyzing && <Sparkles className="w-3.5 h-3.5 2xl:mr-1" />}
+                    <span className="hidden 2xl:inline">{t('aiAnalysis')}</span>
                 </Button>
             </TooltipTrigger>
             <TooltipContent><p>{t('aiAnalysis')}</p></TooltipContent>
@@ -129,12 +130,13 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
             <TooltipTrigger asChild>
                 <Button 
                     onClick={handleAutoRoute}
+                    aria-label={t('autoRoute')}
                     disabled={!hasConnections}
                     variant="secondary"
                     size="sm"
                     className="text-xs font-bold gap-2"
                 >
-                    <Route className="w-3.5 h-3.5 mr-1" /> {t('autoRoute')}
+                    <Route className="w-3.5 h-3.5 2xl:mr-1" /> <span className="hidden 2xl:inline">{t('autoRoute')}</span>
                 </Button>
             </TooltipTrigger>
              <TooltipContent><p>{t('autoRoute')}</p></TooltipContent>
@@ -177,12 +179,13 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
              <TooltipTrigger asChild>
                 <Button 
                     onClick={handleExportImage}
+                    aria-label={t('save')}
                     variant="outline"
                     size="sm"
                     className="text-xs font-bold gap-2"
                 >
-                    <Printer className="w-3.5 h-3.5 mr-1" />
-                    <span className="hidden sm:inline">{t('save')}</span>
+                    <Printer className="w-3.5 h-3.5 2xl:mr-1" />
+                    <span className="hidden 2xl:inline">{t('save')}</span>
                 </Button>
              </TooltipTrigger>
              <TooltipContent><p>{t('exportImage')}</p></TooltipContent>

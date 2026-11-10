@@ -88,7 +88,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 <Settings2 className="h-5 w-5 text-primary" />
                 Properties
              </div>
-             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
+             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8" aria-label="Sağ paneli daralt" title="Sağ paneli daralt">
                  <ChevronRight className="h-4 w-4" />
              </Button>
         </div>
