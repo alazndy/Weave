@@ -16,7 +16,7 @@ test.describe('Sürükleyerek seçme ve toplu ölçekleme', () => {
     await page.mouse.up();
     await expect(selected(page)).toBeVisible();
 
-    const fp = await freePoint(page, 0.5, 0.9);
+    const fp = await freePoint(page, 0.5, 0.75);
     await page.mouse.click(fp.x, fp.y);
     await expect(selected(page)).toHaveCount(0);
     errors.expectNone();
