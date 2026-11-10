@@ -4,7 +4,7 @@ import {
   CAMERA, canvas, tool, freePoint,
 } from './helpers';
 
-const ACTIVE = /from-paprika/;
+const ACTIVE = /bg-amber-500/;
 
 async function dragOnCanvas(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
   await page.mouse.move(from.x, from.y);

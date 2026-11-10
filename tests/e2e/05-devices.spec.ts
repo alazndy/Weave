@@ -210,7 +210,7 @@ test.describe('Cihazlar', () => {
     await openApp(page);
     const props = page.getByRole('tab', { name: 'Properties', exact: true });
     await expect(props).toBeInViewport();
-    await page.locator('button:has(svg.lucide-chevron-right)').first().click();
+    await page.getByRole('button', { name: 'Sağ paneli daralt' }).click();
     await expect(props).not.toBeInViewport();
     await page.locator('button:has(svg.lucide-settings-2)').last().click();
     await expect(props).toBeInViewport();
