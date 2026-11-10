@@ -1024,6 +1024,8 @@ export default function App() {
                         onCommentsChange={setComments}
                         onTemplateChange={handleTemplateUpdate}
                         onEditMetadata={() => setIsSettingsOpen(true)}
+                        onMetadataChange={(patch) => { performCheckpoint(); setProjectMetadata(prev => ({ ...prev, ...patch })); }}
+                        onRenameActivePage={(name) => handleRenamePage(activePageId, name)}
                         onUndoCheckpoint={performCheckpoint}
                         onSelectInstance={(id) => handleSelectIds(id ? [id] : [], false)}
                         onCopyInstance={(id) => { const inst = instances.find(i => i.id === id); if (inst) setClipboardInstance(inst); }}

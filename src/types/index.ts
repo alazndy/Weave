@@ -281,6 +281,11 @@ export interface ProjectMetadata {
   approvedDate?: string;
   revisions?: RevisionEntry[];
   docNumbering?: DocNumbering;
+  /** Title-block heading overrides, keyed by heading id (see TitleBlock LABEL_DEFAULTS). */
+  legendLabels?: Record<string, string>;
+  /** Order of the three main title-block sections / of the extra-info cells. */
+  legendOrder?: string[];
+  legendExtraOrder?: string[];
   customFields: CustomField[];
   externalParts: ExternalPart[];
 }

@@ -48,6 +48,8 @@ interface CanvasProps {
   onCommentsChange?: (comments: Comment[]) => void;
   onTemplateChange: (template: ProductTemplate) => void;
   onEditMetadata?: () => void;
+  onMetadataChange?: (patch: Partial<ProjectMetadata>) => void;
+  onRenameActivePage?: (name: string) => void;
   onUndoCheckpoint: () => void;
   onSelectInstance?: (id: string | null) => void;
   onCopyInstance?: (id: string) => void;
@@ -77,7 +79,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   selectedInstanceId, selectedIds = new Set(), onSelectIds, theme = 'dark',
   editingPortInfo, onSetEditingPortInfo,
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange,
-  onTemplateChange, onEditMetadata, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
+  onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
   activePageName = 'Sayfa 1', activePageNumber = 1, totalPages = 1,
@@ -467,6 +469,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     pageNumber={activePageNumber}
                     totalPages={totalPages}
                     onEdit={onEditMetadata}
+                    onMetadataChange={onMetadataChange}
+                    onRenamePage={onRenameActivePage}
                 />
                 </LegendStack>
             </div>
