@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ProjectMetadata } from '../../types';
 import { documentNoFor } from '../../utils/docNumbering';
-import { Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, ChevronLeft, ChevronRight, Trash2, Undo2 } from 'lucide-react';
 
 interface TitleBlockProps {
     metadata: ProjectMetadata;
@@ -11,7 +11,7 @@ interface TitleBlockProps {
     totalPages: number;
     onEdit?: () => void;
     /** When given, headings and values can be edited by clicking them and sections can be reordered. */
-    onMetadataChange?: (patch: Partial<ProjectMetadata>) => void;
+    onMetadataChange?: (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => void;
     onRenamePage?: (name: string) => void;
 }
 
@@ -42,7 +42,8 @@ export function moveInOrder(order: string[], key: string, dir: -1 | 1): string[]
 const Ed: React.FC<{
     value: string; onCommit?: (v: string) => void; className?: string; style?: React.CSSProperties;
     multiline?: boolean; placeholder?: string; testid?: string; display?: string; label: string;
-}> = ({ value, onCommit, className = '', style, multiline, placeholder, testid, display, label }) => {
+    onHide?: () => void;
+}> = ({ value, onCommit, className = '', style, multiline, placeholder, testid, display, label, onHide }) => {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(value);
     const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
@@ -63,7 +64,17 @@ const Ed: React.FC<{
             },
             className: 'bg-white text-black border border-blue-500 rounded px-1 outline-none w-full min-w-[40px] text-inherit font-[inherit] normal-case tracking-normal',
         };
-        return multiline ? <textarea {...common} rows={4} /> : <input {...common} />;
+        const field = multiline ? <textarea {...common} rows={4} /> : <input {...common} />;
+        if (!onHide) return field;
+        return (
+            <span className="inline-flex items-center gap-0.5 w-full">
+                {field}
+                <button type="button" aria-label={`${label} başlığını sil`} title="Başlığı sil"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onClick={(e) => { e.stopPropagation(); setEditing(false); onHide(); }}
+                    className="shrink-0 p-0.5 rounded bg-red-600 text-white no-print"><Trash2 size={11} /></button>
+            </span>
+        );
     }
     return (
         <span
@@ -89,14 +100,17 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const blankRows = Math.max(0, 2 - revisions.length);
     const rev = metadata.revision || '';
     const edit = !!onMetadataChange;
-    const set = (patch: Partial<ProjectMetadata>) => onMetadataChange?.(patch);
+    const set = (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => onMetadataChange?.(patch, opts);
     const bd = { borderColor: line } as React.CSSProperties;
 
     const labels = metadata.legendLabels || {};
     const lbl = (k: string) => labels[k] || LABEL_DEFAULTS[k];
     /** Editable heading. Clearing it restores the default. */
-    const H = (k: string, className = '', style?: React.CSSProperties) => (
-        <Ed key={k} label={`Başlık: ${LABEL_DEFAULTS[k]}`} value={lbl(k)} testid={`lbl-${k}`}
+    const hidden = metadata.legendHidden || [];
+    const hide = (id: string) => set({ legendHidden: [...hidden.filter(x => x !== id), id] });
+    const sizes = metadata.legendSizes || {};
+    const H = (k: string, className = '', style?: React.CSSProperties) => hidden.includes(k) ? null : (
+        <Ed key={k} onHide={edit ? () => hide(k) : undefined} label={`Başlık: ${LABEL_DEFAULTS[k]}`} value={lbl(k)} testid={`lbl-${k}`}
             onCommit={edit ? (v) => {
                 const next = { ...labels };
                 if (v.trim() && v.trim() !== LABEL_DEFAULTS[k]) next[k] = v.trim(); else delete next[k];
@@ -108,6 +122,32 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const V = (label: string, value: string, field: keyof ProjectMetadata, className = '', style?: React.CSSProperties, fallback = '-', testid?: string) => (
         <Ed label={label} value={value} display={value || fallback} className={className} style={style} testid={testid}
             onCommit={edit ? (v) => set({ [field]: v } as Partial<ProjectMetadata>) : undefined} />
+    );
+
+    /** Inline size for a section/cell (overrides its flexible default). */
+    const wStyle = (id: string): React.CSSProperties => sizes[id] ? { flex: `0 0 ${sizes[id]}px`, width: sizes[id], minWidth: 0 } : {};
+    /** Drag handle on the right edge (axis x) or bottom edge (axis y) of its parent; double-click resets. */
+    const Resizer = (id: string, axis: 'x' | 'y') => !edit ? null : (
+        <div key={`rs-${id}`} data-testid={`resize-${id}`} title={axis === 'x' ? 'Genişliği ayarla (çift tık: sıfırla)' : 'Yüksekliği ayarla (çift tık: sıfırla)'}
+            className={`absolute z-40 hidden bg-blue-500/70 hover:bg-blue-500 no-print ${axis === 'x' ? 'group-hover/sec:block top-0 bottom-0 -right-[3px] w-[6px] cursor-col-resize' : 'group-hover/strip:block left-0 right-0 -bottom-[3px] h-[6px] cursor-row-resize'}`}
+            onDoubleClick={(e) => { e.stopPropagation(); const n = { ...sizes }; delete n[id]; set({ legendSizes: n }); }}
+            onPointerDown={(e) => {
+                e.preventDefault(); e.stopPropagation();
+                const el = e.currentTarget.parentElement as HTMLElement;
+                const rect = el.getBoundingClientRect();
+                const ratio = (axis === 'x' ? rect.width / el.offsetWidth : rect.height / el.offsetHeight) || 1;
+                const start = axis === 'x' ? el.offsetWidth : el.offsetHeight;
+                const from = axis === 'x' ? e.clientX : e.clientY;
+                const base = { ...sizes };
+                set({});                                            // one undo checkpoint for the whole drag
+                const move = (ev: PointerEvent) => {
+                    const d = ((axis === 'x' ? ev.clientX : ev.clientY) - from) / ratio;
+                    set({ legendSizes: { ...base, [id]: Math.max(axis === 'x' ? 60 : 24, Math.round(start + d)) } }, { silent: true });
+                };
+                const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+                window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+            }}
+        />
     );
 
     const mainOrder = resolveOrder(metadata.legendOrder, MAIN_SECTIONS);
@@ -128,8 +168,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
 
     const sections: Record<string, React.ReactNode> = {
         revisions: (
-            <div key="revisions" className="relative group/sec flex flex-col min-w-[300px] flex-[1.1] border-r" style={bd} data-testid="legend-revisions">
-                {Mover('revisions', mainOrder, 'legendOrder')}
+            <div key="revisions" className="relative group/sec flex flex-col min-w-[300px] flex-[1.1] border-r" style={{ ...bd, ...wStyle('revisions') }} data-testid="legend-revisions">
+                {Mover('revisions', mainOrder, 'legendOrder')}{Resizer('revisions', 'x')}
                 <div className="flex-1 flex flex-col justify-end">
                     {revisions.map(r => (
                         <div key={r.id} className="flex border-b text-[10px] font-semibold" style={bd}>
@@ -153,8 +193,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
             </div>
         ),
         drawing: (
-            <div key="drawing" className="relative group/sec flex min-w-[340px] flex-[1.2] border-r" style={bd}>
-                {Mover('drawing', mainOrder, 'legendOrder')}
+            <div key="drawing" className="relative group/sec flex min-w-[340px] flex-[1.2] border-r" style={{ ...bd, ...wStyle('drawing') }}>
+                {Mover('drawing', mainOrder, 'legendOrder')}{Resizer('drawing', 'x')}
                 <div className="flex-1 min-w-0 flex flex-col border-r" style={bd}>
                     <div className="flex-1 p-1.5 border-b" style={bd} data-testid="legend-drawing-name">
                         {L('drawingName')}
@@ -190,8 +230,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
             </div>
         ),
         project: (
-            <div key="project" className="relative group/sec flex flex-col min-w-[280px] flex-1" data-testid="legend-project">
-                {Mover('project', mainOrder, 'legendOrder')}
+            <div key="project" className="relative group/sec flex flex-col min-w-[280px] flex-1" style={wStyle('project')} data-testid="legend-project">
+                {Mover('project', mainOrder, 'legendOrder')}{Resizer('project', 'x')}
                 <div className="flex border-b" style={bd}>
                     <div className="w-[88px] shrink-0 border-r p-1.5 flex items-center" style={bd}>{L('projectName')}</div>
                     <div className="flex-1 min-w-0 p-1.5 pr-8 text-sm font-bold break-words flex items-center justify-center text-center uppercase" style={{ color: accent }}>{V('Proje adı', metadata.projectName || '', 'projectName', '', undefined, 'İsimsiz Proje')}</div>
@@ -228,22 +268,22 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const cell = 'relative group/sec flex-[1_1_140px] min-w-0 p-1.5 border-r flex flex-col justify-center';
     const extras: Record<string, React.ReactNode> = {
         logo: (
-            <div key="logo" className="relative group/sec w-28 shrink-0 flex items-center justify-center p-1.5 border-r" style={bd}>
-                {Mover('logo', extraOrder, 'legendExtraOrder')}
+            <div key="logo" className="relative group/sec w-28 shrink-0 flex items-center justify-center p-1.5 border-r" style={{ ...bd, ...wStyle('logo') }}>
+                {Mover('logo', extraOrder, 'legendExtraOrder')}{Resizer('logo', 'x')}
                 {metadata.companyLogo
                     ? <img src={metadata.companyLogo} alt="Logo" className="max-w-full max-h-14 object-contain" />
                     : <div className="text-[10px] text-center text-zinc-400 font-bold uppercase p-1 border border-dashed border-zinc-500/30 rounded">Logo Yok</div>}
             </div>
         ),
         company: (
-            <div key="company" className={cell} style={bd}>
-                {Mover('company', extraOrder, 'legendExtraOrder')}
+            <div key="company" className={cell} style={{ ...bd, ...wStyle('company') }}>
+                {Mover('company', extraOrder, 'legendExtraOrder')}{Resizer('company', 'x')}
                 {L('company')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Firma', metadata.companyName || '', 'companyName')}</span>
             </div>
         ),
         customer: (
-            <div key="customer" className={cell} style={bd}>
-                {Mover('customer', extraOrder, 'legendExtraOrder')}
+            <div key="customer" className={cell} style={{ ...bd, ...wStyle('customer') }}>
+                {Mover('customer', extraOrder, 'legendExtraOrder')}{Resizer('customer', 'x')}
                 {L('customer')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Müşteri', metadata.customerName || '', 'customerName')}</span>
             </div>
         ),
@@ -251,10 +291,11 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     customFields.forEach(f => {
         const upd = (patch: Partial<typeof f>) => set({ customFields: customFields.map(x => x.id === f.id ? { ...x, ...patch } : x) });
         extras[`cf:${f.id}`] = (
-            <div key={f.id} className={cell} style={bd} data-testid="legend-custom-field">
-                {Mover(`cf:${f.id}`, extraOrder, 'legendExtraOrder')}
-                <Ed label={`Alan başlığı: ${f.label}`} value={f.label} display={f.label || 'Alan'} onCommit={edit ? (v) => upd({ label: v }) : undefined}
-                    className="text-[10px] font-bold uppercase tracking-wide leading-none" style={{ color: labelColor }} />
+            <div key={f.id} className={cell} style={{ ...bd, ...wStyle(`cf:${f.id}`) }} data-testid="legend-custom-field">
+                {Mover(`cf:${f.id}`, extraOrder, 'legendExtraOrder')}{Resizer(`cf:${f.id}`, 'x')}
+                {!hidden.includes(`cf:${f.id}`) && <Ed label={`Alan başlığı: ${f.label}`} value={f.label} display={f.label || 'Alan'} onCommit={edit ? (v) => upd({ label: v }) : undefined}
+                    onHide={edit ? () => hide(`cf:${f.id}`) : undefined}
+                    className="text-[10px] font-bold uppercase tracking-wide leading-none" style={{ color: labelColor }} />}
                 <span className="text-[11px] font-bold break-words mt-0.5">
                     <Ed label={`${f.label} değeri`} value={f.value} display={f.value || '-'} onCommit={edit ? (v) => upd({ value: v }) : undefined} />
                 </span>
@@ -279,12 +320,20 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 </button>
             )}
 
+            {edit && hidden.length > 0 && (
+                <button type="button" aria-label="Silinen başlıkları geri getir" title="Silinen başlıkları geri getir"
+                    onClick={(e) => { e.stopPropagation(); set({ legendHidden: [] }); }}
+                    className="absolute top-1 left-10 z-50 flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg no-print">
+                    <Undo2 size={12} /> {hidden.length} gizli başlık
+                </button>
+            )}
+
             {/* Main strip: sections in user-chosen order */}
-            <div className="flex flex-wrap">{mainOrder.map(k => sections[k])}</div>
+            <div className="relative group/strip flex flex-wrap" style={sizes.mainH ? { minHeight: sizes.mainH } : undefined} data-testid="legend-main-strip">{mainOrder.map(k => sections[k])}{Resizer('mainH', 'y')}</div>
 
             {/* Extra info: logo, company, customer, custom fields (all wrap, nothing is cut) */}
-            <div className="flex flex-wrap border-t" style={bd} data-testid="legend-extra">
-                {extraOrder.map(k => extras[k])}
+            <div className="relative group/strip flex flex-wrap border-t" style={{ ...bd, ...(sizes.extraH ? { minHeight: sizes.extraH } : {}) }} data-testid="legend-extra">
+                {extraOrder.map(k => extras[k])}{Resizer('extraH', 'y')}
             </div>
             {(hasNotes || edit) && (
                 <div className="p-1.5 border-t" style={bd} data-testid="legend-notes">

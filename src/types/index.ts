@@ -284,6 +284,10 @@ export interface ProjectMetadata {
   /** Title-block heading overrides, keyed by heading id (see TitleBlock LABEL_DEFAULTS). */
   legendLabels?: Record<string, string>;
   /** Order of the three main title-block sections / of the extra-info cells. */
+  /** Hidden heading ids (deleted headings; restorable from the legend toolbar). */
+  legendHidden?: string[];
+  /** Cell sizes in legend px: section/cell widths by id, plus 'mainH' / 'extraH' row heights. */
+  legendSizes?: Record<string, number>;
   legendOrder?: string[];
   legendExtraOrder?: string[];
   customFields: CustomField[];

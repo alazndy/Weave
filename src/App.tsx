@@ -1024,7 +1024,7 @@ export default function App() {
                         onCommentsChange={setComments}
                         onTemplateChange={handleTemplateUpdate}
                         onEditMetadata={() => setIsSettingsOpen(true)}
-                        onMetadataChange={(patch) => { performCheckpoint(); setProjectMetadata(prev => ({ ...prev, ...patch })); }}
+                        onMetadataChange={(patch, opts) => { if (!opts?.silent) performCheckpoint(); setProjectMetadata(prev => ({ ...prev, ...patch })); }}
                         onRenameActivePage={(name) => handleRenamePage(activePageId, name)}
                         onUndoCheckpoint={performCheckpoint}
                         onSelectInstance={(id) => handleSelectIds(id ? [id] : [], false)}

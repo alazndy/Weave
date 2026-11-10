@@ -48,7 +48,7 @@ interface CanvasProps {
   onCommentsChange?: (comments: Comment[]) => void;
   onTemplateChange: (template: ProductTemplate) => void;
   onEditMetadata?: () => void;
-  onMetadataChange?: (patch: Partial<ProjectMetadata>) => void;
+  onMetadataChange?: (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => void;
   onRenameActivePage?: (name: string) => void;
   onUndoCheckpoint: () => void;
   onSelectInstance?: (id: string | null) => void;
