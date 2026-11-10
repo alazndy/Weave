@@ -91,9 +91,10 @@ export const Canvas: React.FC<CanvasProps> = ({
   onAddInstance
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const dupNumbers = duplicateNumbers(instances);
   const canvasState = useCanvasState();
-  const { scale, pan, setPan, handleWheel, handleFitScreen, handleZoomIn, handleZoomOut } = useCanvasView(window.innerWidth, window.innerHeight);
+  const { scale, pan, setPan, handleWheel, handleFitScreen, zoomAt, panBy } = useCanvasView(window.innerWidth, window.innerHeight);
 
   const {
       handleMouseDown,
@@ -428,13 +429,20 @@ export const Canvas: React.FC<CanvasProps> = ({
   const finalW = projectMetadata?.orientation === 'portrait' ? paperH : paperW;
   const finalH = projectMetadata?.orientation === 'portrait' ? paperW : paperH;
 
+  /** Zoom around the centre of what is visible, so the sheet does not slide away. */
+  const zoomAtCenter = (target: number) => {
+      const r = viewportRef.current?.getBoundingClientRect();
+      zoomAt(target, r ? r.width / 2 : window.innerWidth / 2, r ? r.height / 2 : window.innerHeight / 2);
+  };
+
   const cursorClass = isMiddlePanning ? 'cursor-grabbing' :
-                      activeTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 
+                      activeTool === 'move' || activeTool === 'pan' ? 'cursor-grab active:cursor-grabbing' : 
                       activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route' ? 'cursor-crosshair' : 'cursor-default';
 
   return (
     <div 
       data-testid="canvas-viewport"
+      ref={viewportRef}
       className={`relative w-full h-full overflow-hidden bg-zinc-950 select-none print:overflow-visible print:bg-white ${cursorClass}`}
       onWheel={(e) => handleWheel(e, containerRef.current!.getBoundingClientRect())}
       onDragOver={(e) => e.preventDefault()}
@@ -527,6 +535,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     isSelected={selectedIds.has(inst.id)}
                     isDragged={draggedInstance === inst.id}
                     isScaleToolActive={activeTool === 'scale'}
+                    isPanTool={activeTool === 'pan'}
                     theme={theme}
                     connectingStart={connectingStart}
                     startPort={startPort}
@@ -748,10 +757,14 @@ export const Canvas: React.FC<CanvasProps> = ({
       <CanvasControls 
           isMinimapVisible={isMinimapVisible} 
           setIsMinimapVisible={setIsMinimapVisible} 
-          handleZoomOut={handleZoomOut} 
+          handleZoomOut={() => zoomAtCenter(scale / 1.2)} 
           handleFitScreen={() => handleFitScreen(finalW, finalH)} 
-          handleZoomIn={handleZoomIn} 
+          handleZoomIn={() => zoomAtCenter(scale * 1.2)} 
           scale={scale} 
+          onZoomTo={zoomAtCenter}
+          onPanBy={panBy}
+          isHandActive={activeTool === 'pan'}
+          onToggleHand={() => onSetActiveTool?.(activeTool === 'pan' ? 'cursor' : 'pan')}
       />
 
       {isMinimapVisible && (

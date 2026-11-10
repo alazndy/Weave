@@ -89,7 +89,7 @@ export function useCanvasInteraction({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     // Middle Mouse Button PAN Logic
-    if (e.button === 1) {
+    if (e.button === 1 || (e.button === 0 && activeTool === 'pan')) {
         e.preventDefault();
         setIsMiddlePanning(true);
         return;
@@ -357,6 +357,7 @@ export function useCanvasInteraction({
   const handleInstanceMouseDown = (e: React.MouseEvent, id: string) => {
       if (activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route') return;
       if (e.button === 1) return; // Ignore middle click
+      if (activeTool === 'pan') return; // hand tool: dragging over a part pans the sheet (event bubbles to the canvas)
 
       e.stopPropagation();
       const isMulti = e.ctrlKey || e.shiftKey;
