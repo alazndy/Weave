@@ -932,6 +932,11 @@ export default function App() {
       setActivePageId(newActiveId);
   };
   
+  const handleSetPageHideBom = (id: string, hide: boolean) => {
+      performCheckpoint();
+      setPages(prev => prev.map(p => p.id === id ? { ...p, hideBom: hide } : p));
+  };
+
   const handleSetPageDrawingNo = (id: string, value: string) => {
       performCheckpoint();
       setPages(prev => prev.map(p => p.id === id ? { ...p, drawingNo: value.trim() || undefined } : p));
@@ -1046,6 +1051,8 @@ export default function App() {
                         
                         activePageName={activePage.name}
                         activePageDrawingNo={activePage.drawingNo}
+                        activePageHideBom={activePage.hideBom ?? !!projectMetadata.hideBom}
+                        onPageHideBomChange={(hide) => handleSetPageHideBom(activePageId, hide)}
                         onPageDrawingNoChange={(v) => handleSetPageDrawingNo(activePageId, v)}
                         activePageNumber={pages.findIndex(p => p.id === activePageId) + 1}
                         totalPages={pages.length}

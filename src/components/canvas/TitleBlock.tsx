@@ -16,6 +16,9 @@ interface TitleBlockProps {
     /** Drawing number set for this page only (overrides the protocol number). */
     pageDrawingNo?: string;
     onPageDrawingNoChange?: (value: string) => void;
+    /** Parts table is hidden on this page; the toggle restores/hides it for this page only. */
+    bomHidden?: boolean;
+    onBomHiddenChange?: (hide: boolean) => void;
 }
 
 export const LABEL_DEFAULTS: Record<string, string> = {
@@ -88,7 +91,7 @@ const Ed: React.FC<{
     );
 };
 
-export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageName, pageNumber, totalPages, onEdit, onMetadataChange, onRenamePage, pageDrawingNo, onPageDrawingNoChange }) => {
+export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageName, pageNumber, totalPages, onEdit, onMetadataChange, onRenamePage, pageDrawingNo, onPageDrawingNoChange, bomHidden, onBomHiddenChange }) => {
     const isDark = theme === 'dark';
     const line = isDark ? 'rgba(255, 255, 255, 0.35)' : '#000000';
     const textColor = isDark ? '#e4e4e7' : '#000000';
@@ -332,7 +335,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 </button>
             )}
 
-            {edit && (hidden.length > 0 || metadata.hideBom) && (
+            {edit && (hidden.length > 0 || (bomHidden && onBomHiddenChange)) && (
                 <div className="absolute top-1 left-10 z-50 flex gap-1 no-print">
                     {hidden.length > 0 && (
                         <button type="button" aria-label="Silinen başlıkları geri getir" title="Silinen başlıkları geri getir"
@@ -341,9 +344,9 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                             <Undo2 size={12} /> {hidden.length} gizli başlık
                         </button>
                     )}
-                    {metadata.hideBom && (
+                    {bomHidden && onBomHiddenChange && (
                         <button type="button" aria-label="Parça tablosunu geri getir" title="Parça tablosunu geri getir"
-                            onClick={(e) => { e.stopPropagation(); set({ hideBom: false }); }}
+                            onClick={(e) => { e.stopPropagation(); onBomHiddenChange?.(false); }}
                             className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg">
                             <Undo2 size={12} /> Parça tablosu gizli
                         </button>

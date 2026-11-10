@@ -62,6 +62,8 @@ interface CanvasProps {
   onSaveBlock?: () => void;
   activePageName?: string;
   activePageDrawingNo?: string;
+  activePageHideBom?: boolean;
+  onPageHideBomChange?: (hide: boolean) => void;
   onPageDrawingNoChange?: (value: string) => void;
   activePageNumber?: number;
   totalPages?: number;
@@ -84,7 +86,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   onGroupSelected, onUngroupSelected, onSaveBlock,
-  activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageNumber = 1, totalPages = 1,
+  activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
   onAddInstance
 }) => {
@@ -457,13 +459,13 @@ export const Canvas: React.FC<CanvasProps> = ({
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
                 
                 <LegendStack paperHeight={finalH}>
-                {!projectMetadata.hideBom && (
+                {!activePageHideBom && (
                 <BOMTable 
                     instances={instances}
                     templates={templates}
                     externalParts={projectMetadata.externalParts || []}
                     theme={theme}
-                    onHide={onMetadataChange ? () => onMetadataChange({ hideBom: true }) : undefined}
+                    onHide={onPageHideBomChange ? () => onPageHideBomChange(true) : undefined}
                 />
                 )}
 
@@ -472,6 +474,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     theme={theme}
                     pageName={activePageName}
                     pageDrawingNo={activePageDrawingNo}
+                    bomHidden={!!activePageHideBom}
+                    onBomHiddenChange={onPageHideBomChange}
                     onPageDrawingNoChange={onPageDrawingNoChange}
                     pageNumber={activePageNumber}
                     totalPages={totalPages}

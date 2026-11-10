@@ -151,4 +151,23 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await undoBtn(page).click();
     await expect(bom).toBeVisible();
   });
+
+  test('parça tablosu her sayfada ayrı ayrı gösterilir/gizlenir', async ({ page }) => {
+    await openApp(page);
+    await placePair(page);                                        // sayfa 1: dolu
+    await page.getByTitle('Yeni Sayfa Ekle').click();
+    await placePair(page);                                        // sayfa 2: dolu
+    const bom = page.getByTestId('bom-table');
+    await expect(bom).toBeVisible();
+    await bom.hover();
+    await page.getByRole('button', { name: 'Parça tablosunu sil' }).click();
+    await expect(bom).toHaveCount(0);                             // sayfa 2'de gizli
+    await page.getByTestId('page-tab').first().click();
+    await expect(bom).toBeVisible();                              // sayfa 1'de duruyor
+    await page.getByTestId('page-tab').nth(1).click();
+    await expect(bom).toHaveCount(0);
+    await page.getByTestId('title-block').hover();
+    await page.getByRole('button', { name: 'Parça tablosunu geri getir' }).click();
+    await expect(bom).toBeVisible();
+  });
 });

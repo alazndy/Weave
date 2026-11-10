@@ -220,6 +220,8 @@ export interface Page {
     order: number;
     /** Per-page drawing number; when empty the number comes from the project protocol/document no. */
     drawingNo?: string;
+    /** Per-page parts table visibility; when unset the project-level hideBom applies. */
+    hideBom?: boolean;
 }
 
 export interface HistoryState {
