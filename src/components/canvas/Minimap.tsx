@@ -20,7 +20,7 @@ export const Minimap: React.FC<MinimapProps> = ({
     instances, templates, connections, canvasWidth, canvasHeight, pan, scale, onPanChange, theme, visible
 }) => {
     const mapRef = useRef<HTMLDivElement>(null);
-    const containerWidth = 240;
+    const containerWidth = 160;
     const mapScale = containerWidth / canvasWidth;
     const containerHeight = canvasHeight * mapScale;
 
@@ -80,7 +80,7 @@ export const Minimap: React.FC<MinimapProps> = ({
 
     return (
         <div 
-            className={`absolute bottom-20 left-6 z-40 border rounded-lg overflow-hidden shadow-2xl transition-all cursor-crosshair no-print ${theme === 'light' ? 'bg-zinc-100 border-zinc-400' : 'bg-zinc-900 border-zinc-600'}`}
+            className={`absolute bottom-32 left-[4.5rem] z-40 border rounded-lg overflow-hidden shadow-2xl transition-all cursor-crosshair no-print ${theme === 'light' ? 'bg-white/95 border-zinc-300' : 'bg-zinc-900 border-zinc-600'}`}
             style={{ width: containerWidth, height: containerHeight }}
             onClick={handleMapClick}
             ref={mapRef}
@@ -119,7 +119,7 @@ export const Minimap: React.FC<MinimapProps> = ({
             
             {/* Viewport Indicator */}
             <div 
-                className="absolute border-2 border-paprika shadow-[0_0_0_999px_rgba(0,0,0,0.4)] pointer-events-none transition-all duration-75"
+                className={`absolute border-2 border-paprika ${theme === 'light' ? 'shadow-[0_0_0_999px_rgba(0,0,0,0.10)]' : 'shadow-[0_0_0_999px_rgba(0,0,0,0.4)]'} pointer-events-none transition-all duration-75`}
                 style={{
                     left: vpX,
                     top: vpY,

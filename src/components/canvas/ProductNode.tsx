@@ -8,9 +8,13 @@ interface ProductNodeProps {
   inst: ProductInstance;
   template: ProductTemplate;
   itemIndex: number | string;
+  isDuplicateNumber?: boolean;
+  onRenumber?: (id: string, value: string) => void;
   isSelected: boolean;
   isDragged: boolean;
   isScaleToolActive: boolean;
+  /** Hand tool: the memo must re-render when this flips so the stale mouse-down closure is replaced. */
+  isPanTool?: boolean;
   theme: 'light' | 'dark';
   connectingStart: { instanceId: string; portId: string } | null;
   startPort: PortDefinition | null;
@@ -36,11 +40,18 @@ const getDirectionIcon = (dir?: string) => {
 };
 
 const ProductNodeComponent: React.FC<ProductNodeProps> = ({
-  inst, template, itemIndex, isSelected, isDragged, isScaleToolActive, theme, connectingStart, startPort,
+  inst, template, itemIndex, isDuplicateNumber, onRenumber, isSelected, isDragged, isScaleToolActive, theme, connectingStart, startPort,
   handleInstanceMouseDown, handleInstanceContextMenu, toggleMirrorInstance,
   setRotatingInstance, removeInstance, handleResizeMouseDown,
   handlePortClick, handlePortDoubleClick, onUndoCheckpoint
 }) => {
+    const [editingNumber, setEditingNumber] = React.useState(false);
+    const [numberDraft, setNumberDraft] = React.useState('');
+    const commitNumber = () => {
+        if (!editingNumber) return;
+        setEditingNumber(false);
+        if (numberDraft.trim() !== (inst.number ?? '').trim()) onRenumber?.(inst.id, numberDraft.trim());
+    };
     const currentWidth = inst.width || template.width;
     const currentHeight = inst.height || template.height;
     
@@ -73,7 +84,29 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
               onMouseDown={(e) => handleInstanceMouseDown(e, inst.id)}
               onContextMenu={(e) => handleInstanceContextMenu(e, inst.id)}
           >
-                <div className="absolute -top-3 -left-3 w-9 h-9 bg-yellow-400 text-black font-extrabold rounded-full border border-black flex items-center justify-center text-base z-50 shadow-md pointer-events-none" style={{ transform: `rotate(${-r}deg)` }}>{itemIndex}</div>
+                <div
+                    data-testid="number-badge"
+                    title={isDuplicateNumber ? 'Aynı numara başka bir bileşende de var — çift tıkla ve değiştir' : 'Numarayı değiştirmek için çift tıkla'}
+                    className={`absolute -top-3 -left-3 min-w-9 h-9 px-1.5 text-black font-extrabold rounded-full border flex items-center justify-center z-50 shadow-md pointer-events-auto cursor-text ${isDuplicateNumber ? 'bg-red-400 border-red-800 ring-2 ring-red-600' : 'bg-yellow-400 border-black'} ${String(itemIndex).length > 3 ? 'text-[11px]' : String(itemIndex).length > 2 ? 'text-sm' : 'text-base'}`}
+                    style={{ transform: `rotate(${-r}deg)` }}
+                    onMouseDown={(e) => { if (editingNumber) e.stopPropagation(); }}
+                    onDoubleClick={(e) => { e.stopPropagation(); if (!inst.locked && onRenumber) { setNumberDraft(String(inst.number ?? '')); setEditingNumber(true); } }}
+                >
+                    {editingNumber ? (
+                        <input
+                            autoFocus
+                            aria-label="Bileşen numarası"
+                            value={numberDraft}
+                            placeholder={String(itemIndex)}
+                            maxLength={12}
+                            onChange={(e) => setNumberDraft(e.target.value)}
+                            onFocus={(e) => e.currentTarget.select()}
+                            onBlur={commitNumber}
+                            onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') commitNumber(); else if (e.key === 'Escape') setEditingNumber(false); }}
+                            className="w-12 bg-transparent text-center outline-none font-extrabold text-black placeholder:text-black/40"
+                        />
+                    ) : itemIndex}
+                </div>
                 
                 {inst.locked && (
                      <div className="absolute -top-3 left-8 w-7 h-7 bg-zinc-800 text-zinc-400 rounded-full border border-zinc-600 flex items-center justify-center z-50 shadow-md pointer-events-none" style={{ transform: `rotate(${-r}deg)` }}>
@@ -229,8 +262,10 @@ export const ProductNode = React.memo(ProductNodeComponent, (prev, next) => {
         prev.isSelected === next.isSelected &&
         prev.isDragged === next.isDragged &&
         prev.isScaleToolActive === next.isScaleToolActive && 
+        prev.isPanTool === next.isPanTool &&
         prev.theme === next.theme &&
         prev.itemIndex === next.itemIndex &&
+        prev.isDuplicateNumber === next.isDuplicateNumber &&
         prev.connectingStart === next.connectingStart &&
         prev.startPort === next.startPort // Added
     );

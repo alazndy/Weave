@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Page, ProductTemplate } from '../../types';
-import { FileText, Trash2, Copy, MousePointer2 } from 'lucide-react';
+import { FileText, Trash2, Copy, MousePointer2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPortPosition } from '../../utils/canvasHelpers';
 
 interface PageGridProps {
@@ -11,6 +11,7 @@ interface PageGridProps {
     onSwitchPage: (id: string) => void;
     onRemovePage: (id: string) => void;
     onDuplicatePage: (id: string) => void;
+    onMovePage?: (id: string, toIndex: number) => void;
     theme: 'light' | 'dark';
 }
 
@@ -87,23 +88,33 @@ const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: Product
 };
 
 export const PageGrid: React.FC<PageGridProps> = ({ 
-    pages, templates, activePageId, onSwitchPage, onRemovePage, onDuplicatePage, theme 
+    pages, templates, activePageId, onSwitchPage, onRemovePage, onDuplicatePage, onMovePage, theme 
 }) => {
+    const [dragId, setDragId] = React.useState<string | null>(null);
+    const [overId, setOverId] = React.useState<string | null>(null);
     return (
         <div className="w-full h-full overflow-y-auto p-10 bg-ink">
             <h2 className="text-2xl font-bold text-alabaster mb-8 flex items-center gap-3">
                 <FileText className="text-paprika"/> Sayfa Genel Bakış
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-8">
                 {pages.map((page, index) => (
                     <div 
                         key={page.id}
-                        className={`group relative aspect-video bg-zinc-900 rounded-xl border-2 overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl ${page.id === activePageId ? 'border-paprika ring-4 ring-paprika/20' : 'border-zinc-700 hover:border-zinc-500'}`}
+                        data-testid="page-card"
+                        data-page-id={page.id}
+                        draggable={!!onMovePage}
+                        onDragStart={(e) => { setDragId(page.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', page.id); }}
+                        onDragOver={(e) => { if (dragId && dragId !== page.id) { e.preventDefault(); setOverId(page.id); } }}
+                        onDragLeave={() => setOverId(o => (o === page.id ? null : o))}
+                        onDrop={(e) => { e.preventDefault(); if (dragId && onMovePage) onMovePage(dragId, index); setDragId(null); setOverId(null); }}
+                        onDragEnd={() => { setDragId(null); setOverId(null); }}
+                        className={`${overId === page.id ? 'ring-4 ring-paprika ' : ''}${dragId === page.id ? 'opacity-40 ' : ''}group relative aspect-video bg-zinc-900 rounded-xl border-2 overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl ${page.id === activePageId ? 'border-paprika ring-4 ring-paprika/20' : 'border-zinc-700 hover:border-zinc-500'}`}
                         onClick={() => onSwitchPage(page.id)}
                     >
                         {/* Header */}
-                        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/80 to-transparent z-10 flex justify-between items-start">
+                        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/80 to-transparent z-30 pointer-events-none flex justify-between items-start">
                             <div>
                                 <h3 className="text-sm font-bold text-white shadow-sm flex items-center gap-2">
                                     <span className="bg-zinc-800 w-6 h-6 flex items-center justify-center rounded-full text-xs">{index + 1}</span>
@@ -111,6 +122,16 @@ export const PageGrid: React.FC<PageGridProps> = ({
                                 </h3>
                                 <p className="text-[10px] text-zinc-400 mt-0.5 ml-8">{page.instances.length} Cihaz • {page.connections.length} Bağlantı</p>
                             </div>
+                            {onMovePage && (
+                                <div className="flex gap-1 pointer-events-auto">
+                                    <button type="button" aria-label={`${page.name} sayfasını öne al`} title="Öne al" disabled={index === 0}
+                                        onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index - 1); }}
+                                        className="p-1 rounded bg-black/50 text-white hover:bg-paprika disabled:opacity-30"><ChevronLeft size={14} /></button>
+                                    <button type="button" aria-label={`${page.name} sayfasını arkaya al`} title="Arkaya al" disabled={index === pages.length - 1}
+                                        onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index + 1); }}
+                                        className="p-1 rounded bg-black/50 text-white hover:bg-paprika disabled:opacity-30"><ChevronRight size={14} /></button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Preview */}

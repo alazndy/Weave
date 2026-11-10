@@ -1,4 +1,9 @@
 
+import { numberBySpace } from './utils/numbering';
+import { buildPdf, type PdfPageImage } from './utils/pdfWriter';
+import { canPrintVectorPdf, printSheetToPdf, mergePdfs } from './utils/vectorPdf';
+import { documentNoFor } from './utils/docNumbering';
+const fileSafeDocNo = (m: ProjectMetadata, sheet: number) => documentNoFor(m, sheet).trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ProductInstance, 
@@ -127,6 +132,7 @@ export default function App() {
   const [activePageId, setActivePageId] = useState<string>(() => pages[0].id);
   const [projectId, setProjectId] = useState<string>(() => crypto.randomUUID());
   const [isGridView, setIsGridView] = useState(false); 
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [activeTool, setActiveTool] = useState<ActiveTool>('cursor'); 
 
   const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>(INITIAL_METADATA);
@@ -658,6 +664,77 @@ export default function App() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /** Moves a page to a new position (sheet numbers and document numbers follow the order). */
+  const handleMovePage = (id: string, toIndex: number) => {
+      const from = pages.findIndex(p => p.id === id);
+      const to = Math.max(0, Math.min(pages.length - 1, toIndex));
+      if (from < 0 || from === to) return;
+      performCheckpoint();
+      setPages(prev => {
+          const next = [...prev];
+          const [moved] = next.splice(from, 1);
+          next.splice(to, 0, moved);
+          return next.map((p, i) => ({ ...p, order: i + 1 }));
+      });
+  };
+
+  /** Exports every page, in page order, to one PDF (page size = paper size, one sheet per page). */
+  const handleExportPdf = async () => {
+      if (pdfBusy) return;
+      setPdfBusy(true);
+      const prevTheme = appSettings.theme;
+      const prevSelection = new Set(selectedIds);
+      const prevLegendCollapsed = isLegendCollapsed;
+      const prevActive = activePageId;
+      const prevGrid = isGridView;
+      try {
+          setAppSettings(prev => ({ ...prev, theme: 'light' }));
+          setSelectedIds(new Set()); setIsLegendCollapsed(false); setIsGridView(false);
+          const dims = PAPER_DIMENSIONS[projectMetadata.paperSize];
+          const portrait = projectMetadata.orientation === 'portrait';
+          const wMm = portrait ? dims.h : dims.w, hMm = portrait ? dims.w : dims.h;
+          const finalW = wMm * projectMetadata.pixelScale, finalH = hMm * projectMetadata.pixelScale;
+          const scale = Math.min(1.5, 6000 / Math.max(finalW, finalH));
+          const vector = canPrintVectorPdf();
+          const images: PdfPageImage[] = [];
+          const vectorParts: Uint8Array[] = [];
+          for (let i = 0; i < pages.length; i++) {
+              setActivePageId(pages[i].id);
+              await new Promise(r => setTimeout(r, i === 0 ? 900 : 600));
+              const element = document.getElementById('canvas-export-area');
+              if (!element) throw new Error('Canvas alanı bulunamadı.');
+              if (vector) {
+                  vectorParts.push(await printSheetToPdf(element as HTMLElement, { widthMm: wMm, heightMm: hMm, pixelScale: projectMetadata.pixelScale }));
+                  continue;
+              }
+              const canvas = await html2canvas(element as HTMLElement, {
+                  scale, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
+                  width: finalW, height: finalH, x: 0, y: 0, windowWidth: finalW, windowHeight: finalH,
+                  ignoreElements: (el: Element) => el.classList.contains('no-print'),
+                  onclone: (doc: Document) => {
+                      const c = doc.getElementById('canvas-export-area');
+                      if (c) { (c as HTMLElement).style.transform = 'none'; (c as HTMLElement).style.width = `${finalW}px`; (c as HTMLElement).style.height = `${finalH}px`; }
+                  },
+              });
+              const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+              if (!blob) throw new Error('Sayfa görüntüsü oluşturulamadı.');
+              images.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), widthPx: canvas.width, heightPx: canvas.height, widthMm: wMm, heightMm: hMm });
+          }
+          const meta = { title: projectMetadata.projectName, author: projectMetadata.preparedBy || projectMetadata.companyName };
+          const pdf = vector ? await mergePdfs(vectorParts, meta) : buildPdf(images, { ...meta, creator: 'Weave' });
+          const base = fileSafeDocNo(projectMetadata, 1).replace(/-\d\d(?=_Rev)/, '') || 'Weave';
+          downloadBlob(new Blob([pdf as BlobPart], { type: 'application/pdf' }), `${base}.pdf`);
+      } catch (err) {
+          console.error('PDF export failed', err);
+          alert('PDF oluşturulurken bir hata oluştu.');
+      } finally {
+          setActivePageId(prevActive);
+          setAppSettings(prev => ({ ...prev, theme: prevTheme }));
+          setSelectedIds(prevSelection); setIsLegendCollapsed(prevLegendCollapsed); setIsGridView(prevGrid);
+          setPdfBusy(false);
+      }
+  };
+
   const handleExportImage = async () => {
       const prevTheme = appSettings.theme;
       const prevSelection = new Set(selectedIds);
@@ -708,7 +785,7 @@ export default function App() {
               const now = new Date();
               const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); 
               const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); 
-              const filenameBase = `${projectMetadata.documentNo || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
+              const filenameBase = `${(activePage.drawingNo ? activePage.drawingNo.trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '') : fileSafeDocNo(projectMetadata, pages.indexOf(activePage) + 1)) || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
               canvas.toBlob((blob: Blob | null) => downloadBlob(blob, `${filenameBase}.png`));
           } catch (err) { console.error("Export failed", err); alert("Görüntü oluşturulurken bir hata meydana geldi."); }
       } else { alert("Dışa aktarılacak alan bulunamadı."); }
@@ -721,7 +798,7 @@ export default function App() {
       const projectData = { version: '2.0', timestamp: new Date().toISOString(), metadata: projectMetadata, templates, pages, activePageId };
       // Blob instead of a data: URI — embedded product images easily exceed URL length limits.
       const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
-      downloadBlob(blob, `${projectMetadata.documentNo || 'Project'}.weave`);
+      downloadBlob(blob, `${fileSafeDocNo(projectMetadata, 1) || 'Project'}.weave`);
   };
 
   useAppShortcuts({
@@ -839,6 +916,7 @@ export default function App() {
           ...JSON.parse(JSON.stringify(page)), 
           id: crypto.randomUUID(),
           name: `${page.name} (Kopya)`,
+          drawingNo: undefined,
           order: pages.length + 1
       };
       setPages([...pages, newPage]);
@@ -862,6 +940,16 @@ export default function App() {
       setActivePageId(newActiveId);
   };
   
+  const handleSetPageHideBom = (id: string, hide: boolean) => {
+      performCheckpoint();
+      setPages(prev => prev.map(p => p.id === id ? { ...p, hideBom: hide } : p));
+  };
+
+  const handleSetPageDrawingNo = (id: string, value: string) => {
+      performCheckpoint();
+      setPages(prev => prev.map(p => p.id === id ? { ...p, drawingNo: value.trim() || undefined } : p));
+  };
+
   const handleRenamePage = (id: string, newName: string) => {
       setPages(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
   };
@@ -910,6 +998,8 @@ export default function App() {
                 onDeleteLibrary={handleDeleteLibrary}
                 onRenameLibrary={handleRenameLibrary}
                 onOpenSettings={() => setIsAppSettingsOpen(true)}
+                onNumberBySpace={() => { performCheckpoint(); const m = numberBySpace(instances); setInstances(prev => prev.map(i => m.has(i.id) ? { ...i, number: m.get(i.id) } : i)); }}
+                onResetNumbers={() => { performCheckpoint(); setInstances(prev => prev.map(i => i.number ? { ...i, number: undefined } : i)); }}
                 onExportBOM={() => exportBOM(activePage.instances, templates, projectMetadata.projectName, projectMetadata.externalParts)}
                 onSingleExport={(template) => {
                     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
@@ -928,6 +1018,7 @@ export default function App() {
                         onSwitchPage={(id) => { setActivePageId(id); setIsGridView(false); }}
                         onRemovePage={handleRemovePage}
                         onDuplicatePage={handleDuplicatePage}
+                        onMovePage={handleMovePage}
                         theme={appSettings.theme}
                    />
                ) : (
@@ -952,6 +1043,8 @@ export default function App() {
                         onCommentsChange={setComments}
                         onTemplateChange={handleTemplateUpdate}
                         onEditMetadata={() => setIsSettingsOpen(true)}
+                        onMetadataChange={(patch, opts) => { if (!opts?.silent) performCheckpoint(); setProjectMetadata(prev => ({ ...prev, ...patch })); }}
+                        onRenameActivePage={(name) => handleRenamePage(activePageId, name)}
                         onUndoCheckpoint={performCheckpoint}
                         onSelectInstance={(id) => handleSelectIds(id ? [id] : [], false)}
                         onCopyInstance={(id) => { const inst = instances.find(i => i.id === id); if (inst) setClipboardInstance(inst); }}
@@ -965,6 +1058,10 @@ export default function App() {
                         onSaveBlock={handleSaveBlockAsTemplate}
                         
                         activePageName={activePage.name}
+                        activePageDrawingNo={activePage.drawingNo}
+                        activePageHideBom={activePage.hideBom ?? !!projectMetadata.hideBom}
+                        onPageHideBomChange={(hide) => handleSetPageHideBom(activePageId, hide)}
+                        onPageDrawingNoChange={(v) => handleSetPageDrawingNo(activePageId, v)}
                         activePageNumber={pages.findIndex(p => p.id === activePageId) + 1}
                         totalPages={pages.length}
                         activeTool={activeTool}
@@ -981,7 +1078,7 @@ export default function App() {
                     canUndo={canUndo} canRedo={canRedo}
                     isAnalyzing={isAnalyzing} runAnalysis={runAnalysis}
                     handleAutoRoute={handleAutoRoute} hasConnections={connections.length > 0}
-                    requestClear={requestClear} handleExportImage={handleExportImage}
+                    requestClear={requestClear} handleExportImage={handleExportImage} handleExportPdf={handleExportPdf} pdfBusy={pdfBusy}
                     theme={appSettings.theme} setTheme={(t) => setAppSettings({...appSettings, theme: t})}
                     openShortcuts={() => setIsShortcutsOpen(true)}
                     openPinout={() => setIsPinoutOpen(true)}
@@ -1003,6 +1100,7 @@ export default function App() {
               onDuplicatePage={handleDuplicatePage}
               onRemovePage={handleRemovePage}
               onRenamePage={handleRenamePage}
+              onMovePage={handleMovePage}
               onToggleGridView={() => setIsGridView(!isGridView)}
               isGridView={isGridView}
               theme={appSettings.theme}

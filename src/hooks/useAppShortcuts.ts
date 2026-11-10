@@ -28,6 +28,7 @@ interface UseAppShortcutsProps {
 
 const TOOL_KEYS: Record<string, ActiveTool> = {
     v: 'cursor',
+    h: 'pan',
     m: 'move',
     s: 'scale',
     b: 'select-box',

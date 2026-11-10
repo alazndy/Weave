@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { 
   ProjectMetadata, ProductInstance, Connection, ProductTemplate, Zone, TextNode, Comment 
@@ -57,6 +57,14 @@ export function useCanvasInteraction({
       setContextMenu
   } = canvasState;
 
+  // A drag only starts after the pointer moved a few pixels, so a plain click never nudges
+  // (or grid-snaps) an item.
+  const dragGateRef = useRef<{ x: number; y: number; open: boolean } | null>(null);
+  const DRAG_THRESHOLD_PX = 4;
+  const additiveBoxRef = useRef(false);
+  // Pointer position of the latest mouse-down (children stop propagation, so it is captured separately).
+  const lastDownRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   // Coordinate Helpers
   const getMouseCoords = useCallback((e: React.MouseEvent) => {
     if (!containerRef.current) return { x: 0, y: 0 };
@@ -67,9 +75,21 @@ export function useCanvasInteraction({
     };
   }, [scale]);
 
+  /** Call from the container's onMouseDownCapture. */
+  const trackPointerDown = (e: React.MouseEvent) => { lastDownRef.current = getMouseCoords(e); };
+
+  /** Starts dragging a zone / text / comment so it keeps its grab point under the cursor. */
+  const startItemDrag = (id: string) => {
+      const item = zones.find(z => z.id === id) || textNodes.find(t => t.id === id) || comments.find(c => c.id === id);
+      const p = lastDownRef.current;
+      setDragOffset(item ? { x: p.x - item.x, y: p.y - item.y } : { x: 0, y: 0 });
+      dragGateRef.current = { x: p.x, y: p.y, open: false };
+      setDraggedInstance(id);
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     // Middle Mouse Button PAN Logic
-    if (e.button === 1) {
+    if (e.button === 1 || (e.button === 0 && activeTool === 'pan')) {
         e.preventDefault();
         setIsMiddlePanning(true);
         return;
@@ -141,8 +161,13 @@ export function useCanvasInteraction({
         case 'move':
             // The paper frame sits between the container and the click target, so
             // "empty canvas" means: not on any selectable item.
-            if (onSelectIds && !(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id]')) {
-                onSelectIds([], false);
+            if (!(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id],[data-group-scale]')) {
+                additiveBoxRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
+                if (onSelectIds && !additiveBoxRef.current) onSelectIds([], false);
+                // Rubber-band selection straight from empty paper with the cursor tool.
+                if (activeTool === 'cursor' && e.button === 0 && (e.target as HTMLElement).closest('#canvas-export-area')) {
+                    setSelectionBox({ startX: x, startY: y, currentX: x, currentY: y });
+                }
             }
             break;
     }
@@ -154,6 +179,13 @@ export function useCanvasInteraction({
              x: prev.x + e.movementX,
              y: prev.y + e.movementY
          }));
+         return;
+     }
+
+     // The button was released outside the canvas (sidebar, another window …): finish the
+     // interaction instead of letting the item follow the cursor when it comes back.
+     if (e.buttons === 0 && (draggedInstance || resizingTarget || rotatingInstance || selectionBox || drawingZone)) {
+         handleMouseUp();
          return;
      }
 
@@ -202,6 +234,11 @@ export function useCanvasInteraction({
 
      // --- DRAGGING LOGIC ---
      if (draggedInstance) {
+         const gate = dragGateRef.current;
+         if (gate && !gate.open) {
+             if (Math.hypot(x - gate.x, y - gate.y) * scale < DRAG_THRESHOLD_PX) return;
+             gate.open = true;
+         }
          let newX = x - dragOffset.x;
          let newY = y - dragOffset.y;
 
@@ -214,7 +251,10 @@ export function useCanvasInteraction({
                 const t = templates.find(temp => temp.id === inst.templateId);
                 const w = inst.width || t?.width || 100;
                 const h = inst.height || t?.height || 100;
-                const snapResult = calculateSnapGuides(draggedInstance, newX, newY, w, h, instances, templates);
+                // items that travel with the dragged one must not act as snap targets
+                const movingWith = selectedIds.has(draggedInstance) ? selectedIds : null;
+                const targets = movingWith ? instances.filter(i => i.id === draggedInstance || !movingWith.has(i.id)) : instances;
+                const snapResult = calculateSnapGuides(draggedInstance, newX, newY, w, h, targets, templates);
                 newX = snapResult.x;
                 newY = snapResult.y;
                 setAlignmentGuides(snapResult.guides);
@@ -258,6 +298,7 @@ export function useCanvasInteraction({
   };
 
   const handleMouseUp = () => {
+      dragGateRef.current = null;
       setIsMiddlePanning(false);
       setDraggedInstance(null);
       setRotatingInstance(null);
@@ -269,25 +310,28 @@ export function useCanvasInteraction({
           const y1 = Math.min(selectionBox.startY, selectionBox.currentY);
           const x2 = Math.max(selectionBox.startX, selectionBox.currentX);
           const y2 = Math.max(selectionBox.startY, selectionBox.currentY);
-          
-          const newSelectedIds: string[] = [];
-          instances.forEach(i => {
-              const t = templates.find(temp => temp.id === i.templateId);
-              const w = i.width || t?.width || 0;
-              const h = i.height || t?.height || 0;
-              if (i.x >= x1 && i.x + w <= x2 && i.y >= y1 && i.y + h <= y2) {
-                  newSelectedIds.push(i.id);
-              }
-          });
-          zones.forEach(z => {
-              if (z.x >= x1 && z.x + z.width <= x2 && z.y >= y1 && z.y + z.height <= y2) {
-                  newSelectedIds.push(z.id);
-              }
-          });
-          
-          onSelectIds(newSelectedIds, false);
+          const tiny = Math.hypot(x2 - x1, y2 - y1) * scale < 4;
+          // left→right = window (fully inside), right→left = crossing (any overlap)
+          const crossing = selectionBox.currentX < selectionBox.startX;
+          const hit = (x: number, y: number, w: number, h: number) => crossing
+              ? x < x2 && x + w > x1 && y < y2 && y + h > y1
+              : x >= x1 && x + w <= x2 && y >= y1 && y + h <= y2;
+
+          if (!tiny) {
+              const newSelectedIds: string[] = [];
+              instances.forEach(i => {
+                  if (i.hidden) return;
+                  const t = templates.find(temp => temp.id === i.templateId);
+                  if (hit(i.x, i.y, i.width || t?.width || 0, i.height || t?.height || 0)) newSelectedIds.push(i.id);
+              });
+              zones.forEach(z => { if (!z.hidden && hit(z.x, z.y, z.width, z.height)) newSelectedIds.push(z.id); });
+              textNodes.forEach(tn => {
+                  if (!tn.hidden && hit(tn.x, tn.y, Math.max(20, tn.content.length * tn.fontSize * 0.6), tn.fontSize * 1.4)) newSelectedIds.push(tn.id);
+              });
+              onSelectIds(newSelectedIds, additiveBoxRef.current);
+          }
           setSelectionBox(null);
-          onSetActiveTool('cursor');
+          if (activeTool === 'select-box') onSetActiveTool('cursor');
       }
 
       if (drawingZone && onZonesChange) {
@@ -313,6 +357,7 @@ export function useCanvasInteraction({
   const handleInstanceMouseDown = (e: React.MouseEvent, id: string) => {
       if (activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route') return;
       if (e.button === 1) return; // Ignore middle click
+      if (activeTool === 'pan') return; // hand tool: dragging over a part pans the sheet (event bubbles to the canvas)
 
       e.stopPropagation();
       const isMulti = e.ctrlKey || e.shiftKey;
@@ -332,6 +377,7 @@ export function useCanvasInteraction({
           const inst = instances.find(i => i.id === id);
           if (inst && !inst.locked) {
               setDragOffset({ x: x - inst.x, y: y - inst.y });
+              dragGateRef.current = { x, y, open: false };
               setDraggedInstance(id);
               onUndoCheckpoint();
           }
@@ -370,8 +416,23 @@ export function useCanvasInteraction({
       setContextMenu({ x: e.clientX, y: e.clientY, instanceId: id });
   };
 
+  // Releasing the button anywhere (even outside the canvas) ends the interaction.
+  const mouseUpRef = useRef(handleMouseUp);
+  mouseUpRef.current = handleMouseUp;
+  useEffect(() => {
+      const up = (ev: MouseEvent) => {
+          // inside the canvas the regular React onMouseUp already handles it
+          if (ev.target instanceof Node && containerRef.current?.contains(ev.target)) return;
+          mouseUpRef.current();
+      };
+      window.addEventListener('mouseup', up);
+      return () => window.removeEventListener('mouseup', up);
+  }, []);
+
   return {
     handleMouseDown,
+    trackPointerDown,
+    startItemDrag,
     handleMouseMove,
     handleMouseUp,
     handleInstanceMouseDown,

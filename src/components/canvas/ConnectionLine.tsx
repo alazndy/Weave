@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, Point } from '../../types';
 import { getPortPosition, getPortNormal, getRoutePath, validateConnection, getOrthogonalSegments, findIntersection } from '../../utils/canvasHelpers';
+import { getRouteEnds, normalizeInner, getHandles, curvedPathThrough, type Handle } from '../../utils/connectionRoute';
 import { Activity, ArrowDownToLine, Zap, Network, Video, ArrowRight, Cable, Edit2, Trash2, AlertTriangle, Lock } from 'lucide-react';
 
 interface ConnectionLineProps {
@@ -18,6 +19,10 @@ interface ConnectionLineProps {
   handleControlPointMouseDown: (e: React.MouseEvent, id: string, idx: number) => void;
   handleControlPointDoubleClick: (e: React.MouseEvent, id: string, idx: number) => void;
   removeConnection: (id: string) => void;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
+  onHandleDown?: (e: React.MouseEvent, id: string, handle: Handle) => void;
+  onHandleDoubleClick?: (e: React.MouseEvent, id: string, handle: Handle) => void;
 }
 
 const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
@@ -25,7 +30,8 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
   hoveredConnectionId, setHoveredConnectionId,
   editingConnectionId, setEditingConnectionId,
   handleConnectionDoubleClick, handleControlPointMouseDown,
-  handleControlPointDoubleClick, removeConnection
+  handleControlPointDoubleClick, removeConnection,
+  selected = false, onSelect, onHandleDown, onHandleDoubleClick
 }) => {
     const fromInst = instances.find(i => i.id === conn.fromInstanceId);
     const toInst = instances.find(i => i.id === conn.toInstanceId);
@@ -34,6 +40,10 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
     
     const fromPort = fromTemp?.ports.find(p => p.id === conn.fromPortId);
     const toPort = toTemp?.ports.find(p => p.id === conn.toPortId);
+
+    const shape = conn.shape || 'curved';
+    const ends = useMemo(() => getRouteEnds(conn, instances, templates), [conn, instances, templates]);
+    const inner = useMemo(() => (ends ? normalizeInner(shape, ends, conn.controlPoints) : []), [ends, shape, conn.controlPoints]);
 
     // Calculate Jumps with Bounding Box Optimization
     const jumps = useMemo(() => {
@@ -45,12 +55,12 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
         if (!myStart || !myEnd) return [];
 
         // Calculate Bounding Box of current line
-        const myMinX = Math.min(myStart.x, myEnd.x, ...conn.controlPoints?.map(p => p.x) || []);
-        const myMaxX = Math.max(myStart.x, myEnd.x, ...conn.controlPoints?.map(p => p.x) || []);
-        const myMinY = Math.min(myStart.y, myEnd.y, ...conn.controlPoints?.map(p => p.y) || []);
-        const myMaxY = Math.max(myStart.y, myEnd.y, ...conn.controlPoints?.map(p => p.y) || []);
+        const myMinX = Math.min(myStart.x, myEnd.x, ...inner.map(p => p.x));
+        const myMaxX = Math.max(myStart.x, myEnd.x, ...inner.map(p => p.x));
+        const myMinY = Math.min(myStart.y, myEnd.y, ...inner.map(p => p.y));
+        const myMaxY = Math.max(myStart.y, myEnd.y, ...inner.map(p => p.y));
 
-        const mySegments = getOrthogonalSegments(myStart, myEnd, conn.controlPoints);
+        const mySegments = getOrthogonalSegments(myStart, myEnd, inner);
         const detectedJumps: Point[] = [];
 
         const getConnPoints = (c: Connection) => {
@@ -59,10 +69,11 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
             const ft = templates.find(t => t.id === fi?.templateId);
             const tt = templates.find(t => t.id === ti?.templateId);
             if (!fi || !ti || !ft || !tt) return null;
+            const oe = getRouteEnds(c, instances, templates);
             return {
                 start: getPortPosition(fi, ft, c.fromPortId),
                 end: getPortPosition(ti, tt, c.toPortId),
-                controlPoints: c.controlPoints
+                controlPoints: oe ? normalizeInner(c.shape || 'curved', oe, c.controlPoints) : c.controlPoints
             };
         };
 
@@ -108,7 +119,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
         });
         
         return detectedJumps;
-    }, [conn, connections, instances, templates]);
+    }, [conn, connections, instances, templates, inner]);
 
 
     if (!fromInst || !toInst || !fromTemp || !toTemp || !fromPort || !toPort) return null;
@@ -119,7 +130,10 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
     const startNormal = getPortNormal(fromInst, fromTemp, conn.fromPortId);
     const endNormal = getPortNormal(toInst, toTemp, conn.toPortId);
     
-    const path = getRoutePath(start, end, conn.shape || 'curved', conn.controlPoints, startNormal, endNormal, conn.cornerRadius || 0, jumps);
+    const path = shape === 'curved'
+      ? curvedPathThrough([start, ...inner, end])
+      : getRoutePath(start, end, shape, inner, startNormal, endNormal, conn.cornerRadius || 0, jumps);
+    const handles = ends && !conn.locked && (selected || editingConnectionId === conn.id) ? getHandles(shape, ends, inner) : [];
     const midX = (start.x + end.x) / 2;
     const midY = (start.y + end.y) / 2;
     
@@ -168,7 +182,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
         <g 
           data-connection-id={conn.id}
           className={`group pointer-events-auto ${conn.locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(conn.id); }}
           onDoubleClick={(e) => !conn.locked && handleConnectionDoubleClick(e, conn.id)}
           onMouseEnter={() => setHoveredConnectionId(conn.id)}
           onMouseLeave={() => setHoveredConnectionId(null)}
@@ -201,20 +215,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
               </foreignObject>
           )}
 
-          {!conn.locked && (editingConnectionId === conn.id || hoveredConnectionId === conn.id) && conn.controlPoints?.map((p, idx) => (
-               <circle 
-                   key={idx} 
-                   cx={p.x} 
-                   cy={p.y} 
-                   r="6" 
-                   fill={strokeColor} 
-                   stroke={haloColor}
-                   strokeWidth="2"
-                   className="cursor-move hover:scale-150 transition-transform"
-                   onMouseDown={(e) => handleControlPointMouseDown(e, conn.id, idx)}
-                   onDoubleClick={(e) => handleControlPointDoubleClick(e, conn.id, idx)}
-               />
-          ))}
+          {selected && <path d={path} stroke="#38bdf8" strokeWidth={thickness + 8} strokeOpacity={0.25} fill="none" className="pointer-events-none" />}
           {conn.label && (
               <foreignObject x={midX - 60} y={midY - 30} width="120" height="24" className="pointer-events-none overflow-visible">
                   <div className="flex justify-center">
@@ -279,6 +280,22 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
                   </div>
               </foreignObject>
           )}
+          {handles.map(h => {
+              const key = `${h.kind}-${h.index}`;
+              const common = { 'data-handle': h.kind, 'data-handle-index': h.index } as Record<string, unknown>;
+              if (h.kind === 'point') return (
+                  <circle key={key} {...common} cx={h.at.x} cy={h.at.y} r={h.stub ? 6 : 7} fill={h.stub ? '#f59e0b' : '#38bdf8'} stroke="#fff" strokeWidth="2"
+                      className="cursor-move" onMouseDown={(e) => onHandleDown?.(e, conn.id, h)} onDoubleClick={(e) => onHandleDoubleClick?.(e, conn.id, h)} />
+              );
+              if (h.kind === 'segment') return (
+                  <rect key={key} {...common} x={h.at.x - (h.axis === 'h' ? 9 : 4)} y={h.at.y - (h.axis === 'h' ? 4 : 9)} width={h.axis === 'h' ? 18 : 8} height={h.axis === 'h' ? 8 : 18} rx="3"
+                      fill="#38bdf8" stroke="#fff" strokeWidth="1.5" className={h.axis === 'h' ? 'cursor-ns-resize' : 'cursor-ew-resize'} onMouseDown={(e) => onHandleDown?.(e, conn.id, h)} />
+              );
+              return (
+                  <circle key={key} {...common} cx={h.at.x} cy={h.at.y} r="5" fill="#fff" stroke="#38bdf8" strokeWidth="2" fillOpacity="0.9"
+                      className="cursor-copy" onMouseDown={(e) => onHandleDown?.(e, conn.id, h)} />
+              );
+          })}
         </g>
     );
 };

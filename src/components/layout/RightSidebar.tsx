@@ -88,7 +88,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 <Settings2 className="h-5 w-5 text-primary" />
                 Properties
              </div>
-             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
+             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8" aria-label="Sağ paneli daralt" title="Sağ paneli daralt">
                  <ChevronRight className="h-4 w-4" />
              </Button>
         </div>
@@ -154,6 +154,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                          </div>
                                     </CardContent>
                                 </Card>
+
+                                <Separator />
+
+                                {/* COMPONENT NUMBER */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="component-number" className="text-xs uppercase text-muted-foreground font-bold">Bileşen Numarası</Label>
+                                    <input
+                                        id="component-number"
+                                        key={selectedInstance.id}
+                                        defaultValue={selectedInstance.number ?? ''}
+                                        placeholder={`Otomatik (${instances.findIndex(i => i.id === selectedInstance.id) + 1})`}
+                                        maxLength={12}
+                                        onBlur={(e) => { const v = e.target.value.trim(); if (v !== (selectedInstance.number ?? '')) handleUpdateItem?.('instance', selectedInstance.id, { number: v || undefined }); }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                        className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-primary"
+                                    />
+                                    <p className="text-[10px] text-muted-foreground">Boş bırakırsan otomatik numara kullanılır. Rozete çift tıklayarak da değiştirebilirsin.</p>
+                                </div>
 
                                 <Separator />
 
