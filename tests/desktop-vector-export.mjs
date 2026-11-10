@@ -1,7 +1,7 @@
 // Exports a 2-page PDF from the real Electron app and checks it is vector (real fonts/text, no raster images).
 // Usage: OUT=/tmp/x.pdf WEAVE_BIN=path/to/weave node tests/desktop-pdf.mjs   (needs poppler: pdfinfo/pdffonts/pdfimages)
 import { _electron as electron } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, existsSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 const userData = mkdtempSync(path.join(tmpdir(), 'weave-vec-'));
@@ -13,10 +13,9 @@ await page.getByRole('button', { name: 'Yeni Proje' }).click();
 await page.getByRole('button', { name: 'Yeni bileşen' }).waitFor();
 await page.getByTitle('Yeni Sayfa Ekle').click();
 console.log('hasBridge', await page.evaluate(() => typeof window.electron?.printToPDF));
-const dl = page.waitForEvent('download', { timeout: 90000 });
 await page.getByRole('button', { name: 'PDF olarak dışa aktar' }).click();
-const d = await dl; console.log('file', d.suggestedFilename());
-await d.path().catch(() => {}); await page.waitForTimeout(1500);
+for (let i = 0; i < 180 && !(existsSync(process.env.OUT) && statSync(process.env.OUT).size > 1000); i++) await page.waitForTimeout(500);
+await page.waitForTimeout(1500);
 await app.close();
 import { execFileSync } from 'node:child_process';
 const run = (c, ...a) => execFileSync(c, [...a, process.env.OUT]).toString();
