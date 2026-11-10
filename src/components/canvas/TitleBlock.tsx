@@ -174,24 +174,29 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
         revisions: (
             <div key="revisions" className="relative group/sec flex flex-col min-w-[300px] flex-[1.1] border-r" style={{ ...bd, ...wStyle('revisions') }} data-testid="legend-revisions">
                 {Mover('revisions', mainOrder, 'legendOrder')}{Resizer('revisions', 'x')}
-                <div className="flex-1 flex flex-col justify-end">
-                    {revisions.map(r => (
-                        <div key={r.id} className="flex border-b text-[10px] font-semibold" style={bd}>
-                            <div className="w-16 shrink-0 p-1 text-center break-words" style={{ color: accent }}>{r.rev}</div>
-                            <div className="w-20 shrink-0 p-1 text-center font-mono">{r.date}</div>
-                            <div className="flex-1 min-w-0 p-1 break-words">{r.description}</div>
-                            <div className="w-10 shrink-0 p-1 text-center">{r.by}</div>
-                            <div className="w-12 shrink-0 p-1 text-center">{r.chkd}</div>
-                        </div>
-                    ))}
-                    {Array.from({ length: blankRows }).map((_, i) => <div key={i} className="h-5 border-b" style={bd} />)}
-                </div>
+                {/* Full table: header on top, entries right under it, empty ruled rows fill the rest */}
                 <div className="flex border-b text-[10px] font-bold" style={bd}>
                     <div className="w-16 shrink-0 p-1 text-center border-r" style={bd}>{H('revCol')}</div>
                     <div className="w-20 shrink-0 p-1 text-center border-r" style={bd}>{H('dateCol')}</div>
                     <div className="flex-1 p-1 text-center border-r" style={bd}>{H('descCol')}</div>
                     <div className="w-10 shrink-0 p-1 text-center border-r" style={bd}>{H('byCol')}</div>
                     <div className="w-12 shrink-0 p-1 text-center">{H('chkdCol')}</div>
+                </div>
+                {revisions.map(r => (
+                    <div key={r.id} className="flex border-b text-[10px] font-semibold" style={bd}>
+                        <div className="w-16 shrink-0 p-1 text-center break-words border-r" style={{ ...bd, color: accent }}>{r.rev}</div>
+                        <div className="w-20 shrink-0 p-1 text-center font-mono border-r" style={bd}>{r.date}</div>
+                        <div className="flex-1 min-w-0 p-1 break-words border-r" style={bd}>{r.description}</div>
+                        <div className="w-10 shrink-0 p-1 text-center border-r" style={bd}>{r.by}</div>
+                        <div className="w-12 shrink-0 p-1 text-center">{r.chkd}</div>
+                    </div>
+                ))}
+                <div className="flex flex-1 border-b" style={{ ...bd, minHeight: `${blankRows * 20}px`, backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent 19px, ${line} 19px, ${line} 20px)` }} data-testid="legend-rev-filler">
+                    <div className="w-16 shrink-0 border-r" style={bd} />
+                    <div className="w-20 shrink-0 border-r" style={bd} />
+                    <div className="flex-1 border-r" style={bd} />
+                    <div className="w-10 shrink-0 border-r" style={bd} />
+                    <div className="w-12 shrink-0" />
                 </div>
                 <div className="p-1 text-center text-[10px] font-bold tracking-[0.5em]">{H('revisions')}</div>
             </div>
