@@ -268,6 +268,7 @@ export interface ProjectMetadata {
   companyName: string;
   companyLogo: string | null;
   customerName?: string; // New: Customer Name
+  customerNo?: string;   // customer number / code shown next to the customer in the legend
   preparedBy: string;
   approvedBy: string;
   documentNo: string;

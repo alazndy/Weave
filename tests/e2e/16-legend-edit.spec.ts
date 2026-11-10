@@ -193,4 +193,24 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await page.getByTestId('legend-scale-handle').dispatchEvent('dblclick');
     await expect.poll(sc).toBeCloseTo(s0, 2);
   });
+
+  test('Müşteri No alanı müşterinin yanında; lejanttan ve ayarlardan düzenlenir', async ({ page }) => {
+    await openApp(page);
+    const extra = page.getByTestId('legend-extra');
+    const cells = extra.locator('> div');
+    await expect(cells.nth(2)).toContainText('Müşteri');          // logo, firma, müşteri
+    await expect(cells.nth(3)).toContainText('Müşteri No');       // hemen yanında
+    await page.getByTestId('legend-customer-no').getByTitle('Düzenlemek için tıkla').nth(1).dispatchEvent('click');
+    await page.getByLabel('Müşteri No', { exact: true }).fill('VCA-0042');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('legend-customer-no')).toContainText('VCA-0042');
+    // ayarlar penceresinde de görünür ve oradan değişir
+    await page.locator('#legend-export-area').hover();
+    await page.getByTitle('Anteti Düzenle').click();
+    const modal = page.locator('div.fixed', { hasText: 'Proje Detayları' });
+    await expect(modal.getByLabel('Müşteri No')).toHaveValue('VCA-0042');
+    await modal.getByLabel('Müşteri No').fill('VCA-0099');
+    await modal.getByRole('button', { name: 'Kaydet' }).click();
+    await expect(page.getByTestId('legend-customer-no')).toContainText('VCA-0099');
+  });
 });

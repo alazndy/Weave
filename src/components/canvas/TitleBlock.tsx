@@ -27,7 +27,7 @@ export const LABEL_DEFAULTS: Record<string, string> = {
     nameCol: 'NAME', signDateCol: 'DATE', signCol: 'SIGN', approved: 'APPROVED', checked: 'CHECKED', drawn: 'DRAWN',
     projectName: 'Project Name:', drawingNo: 'Drawing No:',
     scale: 'Scale', sheet: 'Sheet', norm: 'Norm', totalSheet: 'T. Sheet', revision: 'Revision',
-    company: 'Firma', customer: 'Müşteri', notes: 'Teknik Notlar',
+    company: 'Firma', customer: 'Müşteri', customerNo: 'Müşteri No', notes: 'Teknik Notlar',
 };
 export const MAIN_SECTIONS = ['revisions', 'drawing', 'project'];
 
@@ -158,7 +158,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     );
 
     const mainOrder = resolveOrder(metadata.legendOrder, MAIN_SECTIONS);
-    const extraIds = ['logo', 'company', 'customer', ...customFields.map(f => `cf:${f.id}`)];
+    const extraIds = ['logo', 'company', 'customer', 'customerNo', ...customFields.map(f => `cf:${f.id}`)];
     const extraOrder = resolveOrder(metadata.legendExtraOrder, extraIds);
 
     /** Hover arrows that move a section left/right (not exported). */
@@ -303,6 +303,12 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
             </div>
         ),
     };
+    extras.customerNo = (
+        <div key="customerNo" className={cell} style={{ ...bd, ...wStyle('customerNo') }} data-testid="legend-customer-no">
+            {Mover('customerNo', extraOrder, 'legendExtraOrder')}{Resizer('customerNo', 'x')}
+            {L('customerNo')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Müşteri No', metadata.customerNo || '', 'customerNo')}</span>
+        </div>
+    );
     customFields.forEach(f => {
         const upd = (patch: Partial<typeof f>) => set({ customFields: customFields.map(x => x.id === f.id ? { ...x, ...patch } : x) });
         extras[`cf:${f.id}`] = (

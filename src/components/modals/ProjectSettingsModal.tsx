@@ -184,6 +184,20 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
 
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                  <User size={12}/> Müşteri No
+              </label>
+              <input
+                type="text"
+                aria-label="Müşteri No"
+                value={formData.customerNo || ''}
+                onChange={e => setFormData({...formData, customerNo: e.target.value})}
+                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-base font-bold text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
+                placeholder="Müşteri numarası / kodu"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
                   <FileText size={12}/> Proje Başlığı
               </label>
               <input 
