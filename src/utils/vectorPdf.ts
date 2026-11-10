@@ -52,6 +52,7 @@ export async function printSheetToPdf(source: HTMLElement, sheet: SheetSpec): Pr
     }`;
   document.head.appendChild(style);
   document.body.appendChild(root);
+  document.documentElement.classList.add('pdf-printing');   // disables the legacy window.print() rules
   try {
     await document.fonts?.ready;
     await Promise.all([...root.querySelectorAll('img')].map(img => (img.complete ? Promise.resolve() : img.decode().catch(() => undefined))));
@@ -60,6 +61,7 @@ export async function printSheetToPdf(source: HTMLElement, sheet: SheetSpec): Pr
   } finally {
     root.remove();
     style.remove();
+    document.documentElement.classList.remove('pdf-printing');
   }
 }
 
