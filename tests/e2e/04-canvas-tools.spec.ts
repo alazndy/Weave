@@ -20,7 +20,7 @@ const scaleOf = async (page: Page) =>
 test.describe('Tuval araçları', () => {
   test('araç düğmeleri aktif aracı değiştirir', async ({ page }) => {
     await openApp(page);
-    const titles = [/Taşı \(M\)/, /Ölçekle/, /Kutu Seçimi/, /Manuel Rota/, /Bölge Ekle/, /Metin Ekle/, /Not \/ Yorum/, /Seçim \(V\)/];
+    const titles = [/Kaydır \/ Gezin \(H\)/, /Taşı \(M\)/, /Ölçekle/, /Kutu Seçimi/, /Manuel Rota/, /Bölge Ekle/, /Metin Ekle/, /Not \/ Yorum/, /Seçim \(V\)/];
     for (const t of titles) {
       await tool(page, t).click();
       await expect(tool(page, t)).toHaveClass(ACTIVE);
@@ -30,7 +30,7 @@ test.describe('Tuval araçları', () => {
   test('klavye kısayolları araç çubuğundaki ipuçlarıyla aynı aracı seçer', async ({ page }) => {
     await openApp(page);
     const map: Record<string, RegExp> = {
-      m: /Taşı \(M\)/, s: /Ölçekle/, b: /Kutu Seçimi/, r: /Manuel Rota/, z: /Bölge Ekle/, t: /Metin Ekle/, c: /Not \/ Yorum/, v: /Seçim \(V\)/,
+      h: /Kaydır \/ Gezin \(H\)/, m: /Taşı \(M\)/, s: /Ölçekle/, b: /Kutu Seçimi/, r: /Manuel Rota/, z: /Bölge Ekle/, t: /Metin Ekle/, c: /Not \/ Yorum/, v: /Seçim \(V\)/,
     };
     for (const [key, title] of Object.entries(map)) {
       await page.keyboard.press(key);

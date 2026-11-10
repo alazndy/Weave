@@ -154,11 +154,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       </div>
 
       <div className="aspect-square w-full bg-muted/20 rounded-lg mb-3 p-2 flex items-center justify-center overflow-hidden border border-dashed border-border/50 group-hover:border-primary/20 transition-colors">
-        <img
-          src={template.imageUrl}
-          alt={template.name}
-          className="w-full h-full object-contain filter drop-shadow-sm"
-        />
+        {template.imageUrl ? (
+          <img
+            src={template.imageUrl}
+            alt={template.name}
+            className="w-full h-full object-contain filter drop-shadow-sm"
+          />
+        ) : (
+          <Cpu aria-hidden className="h-10 w-10 text-muted-foreground/40" data-testid="template-placeholder" />
+        )}
       </div>
       <p className="text-xs text-center truncate font-semibold text-foreground/80 group-hover:text-foreground transition-colors px-1">
         {template.name}

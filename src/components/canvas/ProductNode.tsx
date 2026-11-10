@@ -13,6 +13,8 @@ interface ProductNodeProps {
   isSelected: boolean;
   isDragged: boolean;
   isScaleToolActive: boolean;
+  /** Hand tool: the memo must re-render when this flips so the stale mouse-down closure is replaced. */
+  isPanTool?: boolean;
   theme: 'light' | 'dark';
   connectingStart: { instanceId: string; portId: string } | null;
   startPort: PortDefinition | null;
@@ -260,6 +262,7 @@ export const ProductNode = React.memo(ProductNodeComponent, (prev, next) => {
         prev.isSelected === next.isSelected &&
         prev.isDragged === next.isDragged &&
         prev.isScaleToolActive === next.isScaleToolActive && 
+        prev.isPanTool === next.isPanTool &&
         prev.theme === next.theme &&
         prev.itemIndex === next.itemIndex &&
         prev.isDuplicateNumber === next.isDuplicateNumber &&

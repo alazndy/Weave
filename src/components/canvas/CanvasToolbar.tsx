@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { MousePointer2, Move, BoxSelect, Square, Type, Magnet, MessageSquare, Scaling, Cable } from 'lucide-react';
+import { MousePointer2, Hand, Move, BoxSelect, Square, Type, Magnet, MessageSquare, Scaling, Cable } from 'lucide-react';
 
-export type ActiveTool = 'cursor' | 'move' | 'scale' | 'zone' | 'text' | 'select-box' | 'comment' | 'manual-route';
+export type ActiveTool = 'cursor' | 'pan' | 'move' | 'scale' | 'zone' | 'text' | 'select-box' | 'comment' | 'manual-route';
 
 interface CanvasToolbarProps {
     activeTool: ActiveTool;
@@ -20,6 +20,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     return (
         <div className={`absolute top-20 left-4 z-40 flex flex-col gap-1.5 border p-1 rounded-lg shadow-xl backdrop-blur-md no-print ${theme === 'light' ? 'bg-white/90 border-zinc-300' : 'bg-ink/90 border-white/5'}`}>
             <button onClick={() => setActiveTool('cursor')} className={btnClass(activeTool === 'cursor')} title="Seçim (V)"><MousePointer2 size={20} /></button>
+            <button onClick={() => setActiveTool('pan')} className={btnClass(activeTool === 'pan')} title="Kaydır / Gezin (H)" aria-label="Kaydır"><Hand size={20} /></button>
             <button onClick={() => setActiveTool('move')} className={btnClass(activeTool === 'move')} title="Taşı (M)"><Move size={20} /></button>
             <button onClick={() => setActiveTool('scale')} className={btnClass(activeTool === 'scale')} title="Ölçekle / Boyutlandır (S)"><Scaling size={20} /></button>
             <button onClick={() => setActiveTool('select-box')} className={btnClass(activeTool === 'select-box')} title="Kutu Seçimi (B)"><BoxSelect size={20} /></button>

@@ -42,6 +42,14 @@ export const useCanvasView = (canvasWidth: number, canvasHeight: number) => {
         setPan({ x: newPanX, y: newPanY });
     }, [canvasWidth, canvasHeight]);
 
+    /** Zooms to `target` keeping the viewport point (cx, cy) fixed (default: use the given viewport centre). */
+    const zoomAt = useCallback((target: number, cx: number, cy: number) => {
+        const next = Math.min(Math.max(0.1, target), 5);
+        setPan(p => ({ x: cx - (cx - p.x) * (next / scale), y: cy - (cy - p.y) * (next / scale) }));
+        setScale(next);
+    }, [scale]);
+    const panBy = useCallback((dx: number, dy: number) => setPan(p => ({ x: p.x + dx, y: p.y + dy })), []);
+
     const handleZoomIn = useCallback(() => setScale(s => Math.min(s + 0.1, 5)), []);
     const handleZoomOut = useCallback(() => setScale(s => Math.max(s - 0.1, 0.1)), []);
 
@@ -52,6 +60,8 @@ export const useCanvasView = (canvasWidth: number, canvasHeight: number) => {
         handleWheel,
         handleFitScreen,
         handleZoomIn,
-        handleZoomOut
+        handleZoomOut,
+        zoomAt,
+        panBy
     };
 };

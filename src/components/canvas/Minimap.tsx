@@ -119,7 +119,7 @@ export const Minimap: React.FC<MinimapProps> = ({
             
             {/* Viewport Indicator */}
             <div 
-                className="absolute border-2 border-paprika shadow-[0_0_0_999px_rgba(0,0,0,0.4)] pointer-events-none transition-all duration-75"
+                className={`absolute border-2 border-paprika ${theme === 'light' ? 'shadow-[0_0_0_999px_rgba(0,0,0,0.10)]' : 'shadow-[0_0_0_999px_rgba(0,0,0,0.4)]'} pointer-events-none transition-all duration-75`}
                 style={{
                     left: vpX,
                     top: vpY,
