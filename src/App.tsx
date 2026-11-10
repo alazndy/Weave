@@ -1,6 +1,7 @@
 
 import { numberBySpace } from './utils/numbering';
 import { buildPdf, type PdfPageImage } from './utils/pdfWriter';
+import { canPrintVectorPdf, printSheetToPdf, mergePdfs } from './utils/vectorPdf';
 import { documentNoFor } from './utils/docNumbering';
 const fileSafeDocNo = (m: ProjectMetadata, sheet: number) => documentNoFor(m, sheet).trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -694,12 +695,18 @@ export default function App() {
           const wMm = portrait ? dims.h : dims.w, hMm = portrait ? dims.w : dims.h;
           const finalW = wMm * projectMetadata.pixelScale, finalH = hMm * projectMetadata.pixelScale;
           const scale = Math.min(1.5, 6000 / Math.max(finalW, finalH));
+          const vector = canPrintVectorPdf();
           const images: PdfPageImage[] = [];
+          const vectorParts: Uint8Array[] = [];
           for (let i = 0; i < pages.length; i++) {
               setActivePageId(pages[i].id);
               await new Promise(r => setTimeout(r, i === 0 ? 900 : 600));
               const element = document.getElementById('canvas-export-area');
               if (!element) throw new Error('Canvas alanı bulunamadı.');
+              if (vector) {
+                  vectorParts.push(await printSheetToPdf(element as HTMLElement, { widthMm: wMm, heightMm: hMm, pixelScale: projectMetadata.pixelScale }));
+                  continue;
+              }
               const canvas = await html2canvas(element as HTMLElement, {
                   scale, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
                   width: finalW, height: finalH, x: 0, y: 0, windowWidth: finalW, windowHeight: finalH,
@@ -713,7 +720,8 @@ export default function App() {
               if (!blob) throw new Error('Sayfa görüntüsü oluşturulamadı.');
               images.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), widthPx: canvas.width, heightPx: canvas.height, widthMm: wMm, heightMm: hMm });
           }
-          const pdf = buildPdf(images, { title: projectMetadata.projectName, author: projectMetadata.preparedBy || projectMetadata.companyName, creator: 'Weave' });
+          const meta = { title: projectMetadata.projectName, author: projectMetadata.preparedBy || projectMetadata.companyName };
+          const pdf = vector ? await mergePdfs(vectorParts, meta) : buildPdf(images, { ...meta, creator: 'Weave' });
           const base = fileSafeDocNo(projectMetadata, 1).replace(/-\d\d(?=_Rev)/, '') || 'Weave';
           downloadBlob(new Blob([pdf as BlobPart], { type: 'application/pdf' }), `${base}.pdf`);
       } catch (err) {

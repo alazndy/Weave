@@ -94,7 +94,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                     <span className="hidden sm:inline">{pdfBusy ? 'PDF…' : 'PDF'}</span>
                 </Button>
              </TooltipTrigger>
-             <TooltipContent><p>Tüm sayfaları tek PDF olarak dışa aktar</p></TooltipContent>
+             <TooltipContent><p>Tüm sayfaları tek PDF olarak dışa aktar (masaüstünde vektör: yazılar seçilebilir, yakınlaşınca pikselleşmez)</p></TooltipContent>
           </Tooltip>
         )}
 
