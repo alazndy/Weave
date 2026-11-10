@@ -213,4 +213,17 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await modal.getByRole('button', { name: 'Kaydet' }).click();
     await expect(page.getByTestId('legend-customer-no')).toContainText('VCA-0099');
   });
+
+  test('lejant hücre değerleri hücrenin her yerinden gerçek fare tıklamasıyla açılır', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page);
+    const cell = page.getByTestId('legend-customer-no');
+    await cell.scrollIntoViewIfNeeded();
+    const sp = (await cell.getByTitle('Düzenlemek için tıkla').nth(1).boundingBox())!;
+    expect(sp.width).toBeGreaterThan(150);                         // tüm satır tıklanabilir, sadece "-" işareti değil
+    await page.mouse.click(sp.x + sp.width * 0.8, sp.y + sp.height / 2);
+    await page.keyboard.type('VCA-7');
+    await page.keyboard.press('Enter');
+    await expect(cell).toContainText('VCA-7');
+  });
 });

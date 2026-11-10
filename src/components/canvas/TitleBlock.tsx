@@ -84,7 +84,7 @@ const Ed: React.FC<{
     }
     return (
         <span
-            className={`${className} cursor-text hover:bg-blue-500/15 rounded-sm`} style={style} data-testid={testid}
+            className={`${className} ${/\bblock\b/.test(className) ? '' : 'inline-block'} min-w-[2rem] min-h-[1em] cursor-text hover:bg-blue-500/15 rounded-sm`} style={style} data-testid={testid}
             title="Düzenlemek için tıkla"
             onClick={(e) => { e.stopPropagation(); setDraft(value); setEditing(true); }}
         >{shown || <span className="opacity-40">{placeholder || '—'}</span>}</span>
@@ -293,20 +293,20 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
         company: (
             <div key="company" className={cell} style={{ ...bd, ...wStyle('company') }}>
                 {Mover('company', extraOrder, 'legendExtraOrder')}{Resizer('company', 'x')}
-                {L('company')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Firma', metadata.companyName || '', 'companyName')}</span>
+                {L('company')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Firma', metadata.companyName || '', 'companyName', 'block w-full min-h-[1.25rem]')}</div>
             </div>
         ),
         customer: (
             <div key="customer" className={cell} style={{ ...bd, ...wStyle('customer') }}>
                 {Mover('customer', extraOrder, 'legendExtraOrder')}{Resizer('customer', 'x')}
-                {L('customer')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Müşteri', metadata.customerName || '', 'customerName')}</span>
+                {L('customer')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Müşteri', metadata.customerName || '', 'customerName', 'block w-full min-h-[1.25rem]')}</div>
             </div>
         ),
     };
     extras.customerNo = (
         <div key="customerNo" className={cell} style={{ ...bd, ...wStyle('customerNo') }} data-testid="legend-customer-no">
             {Mover('customerNo', extraOrder, 'legendExtraOrder')}{Resizer('customerNo', 'x')}
-            {L('customerNo')}<span className="text-[11px] font-bold break-words mt-0.5">{V('Müşteri No', metadata.customerNo || '', 'customerNo')}</span>
+            {L('customerNo')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Müşteri No', metadata.customerNo || '', 'customerNo', 'block w-full min-h-[1.25rem]')}</div>
         </div>
     );
     customFields.forEach(f => {
@@ -317,9 +317,9 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {!hidden.includes(`cf:${f.id}`) && <Ed label={`Alan başlığı: ${f.label}`} value={f.label} display={f.label || 'Alan'} onCommit={edit ? (v) => upd({ label: v }) : undefined}
                     onHide={edit ? () => hide(`cf:${f.id}`) : undefined}
                     className="text-[10px] font-bold uppercase tracking-wide leading-none" style={{ color: labelColor }} />}
-                <span className="text-[11px] font-bold break-words mt-0.5">
-                    <Ed label={`${f.label} değeri`} value={f.value} display={f.value || '-'} onCommit={edit ? (v) => upd({ value: v }) : undefined} />
-                </span>
+                <div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">
+                    <Ed label={`${f.label} değeri`} value={f.value} display={f.value || '-'} className="block w-full min-h-[1.25rem]" onCommit={edit ? (v) => upd({ value: v }) : undefined} />
+                </div>
             </div>
         );
     });
