@@ -34,3 +34,4 @@
 - [2026-11-26] [Claude Kaira]: Installed the build of commit 876774f on this machine. The app took more than 30 s to quit.
   Data backup: `~/.local/share/weave-backups/config-20261126-180655`.
 - [2026-11-26] [Claude Kaira]: Fixed title-block headings that did not follow the document language. Not installed yet.
+- [2026-11-26] [Claude Kaira]: Set version 0.2.0 for the GitHub release (user request).
