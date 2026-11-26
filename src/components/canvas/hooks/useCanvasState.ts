@@ -47,8 +47,8 @@ export interface CanvasState {
   // Interaction: Edit Modals & Menus
   editingConnectionId: string | null;
   setEditingConnectionId: React.Dispatch<React.SetStateAction<string | null>>;
-  editingPortData: { port: PortDefinition; templateId: string } | null;
-  setEditingPortData: React.Dispatch<React.SetStateAction<{ port: PortDefinition; templateId: string } | null>>;
+  editingPortData: { port: PortDefinition; templateId: string; instanceId: string } | null;
+  setEditingPortData: React.Dispatch<React.SetStateAction<{ port: PortDefinition; templateId: string; instanceId: string } | null>>;
   editingZoneId: string | null;
   setEditingZoneId: React.Dispatch<React.SetStateAction<string | null>>;
   editingTextId: string | null;
@@ -94,7 +94,7 @@ export function useCanvasState(): CanvasState {
   const [resizingTarget, setResizingTarget] = useState<{ id: string; type: 'instance' | 'zone'; startW: number; startH: number; startX: number; startY: number } | null>(null);
 
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
-  const [editingPortData, setEditingPortData] = useState<{ port: PortDefinition; templateId: string } | null>(null);
+  const [editingPortData, setEditingPortData] = useState<{ port: PortDefinition; templateId: string; instanceId: string } | null>(null);
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   

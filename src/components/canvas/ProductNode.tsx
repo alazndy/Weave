@@ -25,7 +25,7 @@ interface ProductNodeProps {
   removeInstance: (id: string) => void;
   handleResizeMouseDown: (e: React.MouseEvent, id: string) => void;
   handlePortClick: (e: React.MouseEvent, instId: string, portId: string) => void;
-  handlePortDoubleClick: (e: React.MouseEvent, tempId: string, portId: string) => void;
+  handlePortDoubleClick: (e: React.MouseEvent, tempId: string, portId: string, instId: string) => void;
   onUndoCheckpoint: () => void;
 }
 
@@ -198,7 +198,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                             backgroundColor: startPort && isCompatible && inst.id !== connectingStart?.instanceId ? undefined : (port.customColor ? port.customColor : (port.isGround ? '#52525b' : (port.type === 'input' ? '#3b82f6' : port.type === 'output' ? '#ef4444' : '#14b8a6')))
                         }}
                         onClick={(e) => handlePortClick(e, inst.id, port.id)}
-                        onDoubleClick={(e) => handlePortDoubleClick(e, inst.templateId, port.id)}
+                        onDoubleClick={(e) => handlePortDoubleClick(e, inst.templateId, port.id, inst.id)}
                         onMouseDown={e => e.stopPropagation()} 
                     >
                         <div className="w-1.5 h-1.5 bg-black/50 rounded-full"></div>

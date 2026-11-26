@@ -251,3 +251,21 @@ test.describe('Silgi imleci', () => {
     await expect.poll(ringPixels).toBeGreaterThan(50);       // bıraktıktan sonra kaybolmaz
   });
 });
+
+test('editörde porta pin bilgisi girilir ve ürünle birlikte saklanır', async ({ page }) => {
+  await openApp(page);
+  await upload(page);
+  await toPorts(page);
+  const img = page.getByAltText('Work area');
+  await img.click({ position: { x: 40, y: 40 } });
+  await page.getByTitle('Port 1').click();
+  await page.getByRole('button', { name: /Port detayı/ }).click();
+  const dlg = page.getByTestId('port-detail-dialog');
+  await dlg.getByRole('button', { name: 'Satır ekle' }).click();
+  await dlg.getByLabel('Görevi 1').fill('CAN-H');
+  await dlg.getByRole('button', { name: 'Tamam' }).click();
+  await page.getByTestId('port-popover').getByRole('button', { name: 'Kaydet' }).click();
+  await page.getByTitle('Port 1').click();
+  await page.getByRole('button', { name: /Port detayı/ }).click();
+  await expect(dlg.getByLabel('Görevi 1')).toHaveValue('CAN-H');
+});

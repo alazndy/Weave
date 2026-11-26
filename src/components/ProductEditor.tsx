@@ -1,5 +1,6 @@
 import React, { useState, useRef, MouseEvent, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { PortDetailDialog } from './modals/PortDetailDialog';
 import { PortDefinition, ProductTemplate, ConnectorType, PortFlowType, ExternalPart } from '../types';
 import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -694,6 +695,9 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
     setTempCustomColor(port.customColor || '');
   };
 
+  const [detailOpen, setDetailOpen] = useState(false);
+  const editingPort = ports.find(p => p.id === editingPortId);
+
   const updatePort = () => {
     if (!editingPortId) return;
 
@@ -1027,6 +1031,15 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                                     className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500"
                                 />
                             </div>
+                        )}
+
+                        <button type="button" onClick={() => setDetailOpen(true)} className="w-full rounded-lg border border-white/10 bg-black/30 py-2 text-xs font-bold text-zinc-300 hover:text-white">
+                            Port detayı (görsel + pinler){editingPort?.detail ? ' ✓' : ''}
+                        </button>
+                        {detailOpen && editingPort && (
+                            <PortDetailDialog title={tempPortLabel} connectorType={tempConnectorType} detail={editingPort.detail}
+                                onSave={detail => { setPorts(list => list.map(p => p.id === editingPort.id ? { ...p, detail } : p)); setDetailOpen(false); }}
+                                onCancel={() => setDetailOpen(false)} />
                         )}
 
                         <div className="flex gap-2 mt-4 pt-2 border-t border-white/10">

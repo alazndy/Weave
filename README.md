@@ -18,6 +18,9 @@ Everything runs locally. There is no account, no backend and no telemetry.
 - **Libraries**: multiple local product libraries, with JSON import/export of a whole library or a single product.
 - **Canvas**: grid snapping, curved, straight and orthogonal wires, auto-routing around devices, zones,
   text, comments, grouping, saved blocks and a minimap.
+- **Port details**: add a connector picture and a pin table (pin, wire colour, function) to any port.
+  Double-click a port on the sheet and choose *Detayı sayfada göster* to place a movable, resizable card
+  that appears in exports.
 - **Pages**: multiple sheets per project, A3/A4/A6 in portrait or landscape, with a title block and technical notes.
 - **Undo/redo and snapshots**: checkpoint history of up to 50 steps, plus named snapshots.
 - **Saving**: projects autosave to IndexedDB and appear on the welcome screen. A `.weave` file

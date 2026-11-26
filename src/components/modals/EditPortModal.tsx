@@ -1,13 +1,20 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PortDetailDialog } from './PortDetailDialog';
+import { cleanDetail } from '../../utils/portDetail';
 import { PortDefinition, PortFlowType, ConnectorType, CONNECTOR_LABELS } from '../../types';
 import { Zap, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
+export const EditPortModal = ({ port, onSave, onCancel, onDelete, onShowCard }: {
   port: PortDefinition;
   onSave: (p: PortDefinition) => void;
   onCancel: () => void;
   onDelete?: (id: string) => void;
+  /** Saves the port and puts its detail card on the sheet. */
+  onShowCard?: (p: PortDefinition) => void;
 }) => {
+  const [detail, setDetail] = useState(port.detail);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [label, setLabel] = useState(port.label);
   const [type, setType] = useState<PortFlowType>(port.type);
   const [connectorType, setConnectorType] = useState<ConnectorType>(port.connectorType);
@@ -19,9 +26,26 @@ export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
   const [amperage, setAmperage] = useState(port.amperage || '');
   const [customColor, setCustomColor] = useState(port.customColor || '');
 
-  return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm no-print" onClick={onCancel}>
-          <div className="bg-zinc-900 border border-zinc-700 p-6 rounded-xl w-96 shadow-2xl transform transition-all" onClick={e => e.stopPropagation()}>
+  const edited = (): PortDefinition => ({
+      ...port,
+      label,
+      type,
+      connectorType,
+      direction,
+      isPower,
+      isGround,
+      powerType: isPower ? powerType : undefined,
+      voltage: isPower ? voltage : undefined,
+      amperage: isPower ? amperage : undefined,
+      customColor: customColor || undefined,
+      detail,
+  });
+
+  // portal: keeps the dialog above the toolbar and page bar, which live in other stacking contexts
+  return createPortal(
+      <>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm no-print" onClick={onCancel} onWheel={e => e.stopPropagation()}>
+          <div className="bg-zinc-900 border border-zinc-700 p-6 rounded-xl w-96 max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl transform transition-all" onClick={e => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-teal-400 mb-5">Port Düzenle</h3>
               
               <div className="space-y-5">
@@ -152,6 +176,18 @@ export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
                       )}
                   </div>
 
+                  <div className="flex gap-2">
+                      <button type="button" onClick={() => setDetailOpen(true)} className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm font-bold text-zinc-200 hover:bg-zinc-700">
+                          Port detayı (görsel + pinler)
+                      </button>
+                      {onShowCard && (
+                          <button type="button" disabled={!(detail && cleanDetail(detail))} onClick={() => onShowCard(edited())}
+                              className="flex-1 rounded-md bg-teal-700 px-3 py-2 text-sm font-bold text-white hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-40">
+                              Detayı sayfada göster
+                          </button>
+                      )}
+                  </div>
+
                   <div className="flex justify-between pt-4 mt-2 border-t border-zinc-800 items-center">
                       {onDelete && (
                         <button 
@@ -164,19 +200,7 @@ export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
                       <div className="flex gap-3 ml-auto">
                         <button onClick={onCancel} className="px-4 py-2.5 text-sm font-bold text-zinc-400 hover:text-white transition-colors">İptal</button>
                         <button 
-                            onClick={() => onSave({ 
-                                ...port, 
-                                label, 
-                                type, 
-                                connectorType, 
-                                direction,
-                                isPower,
-                                isGround,
-                                powerType: isPower ? powerType : undefined,
-                                voltage: isPower ? voltage : undefined,
-                                amperage: isPower ? amperage : undefined,
-                                customColor: customColor || undefined
-                            })} 
+                            onClick={() => onSave(edited())} 
                             className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-md text-sm font-bold shadow-lg shadow-teal-900/20 transition-all active:scale-95"
                         >
                             Kaydet
@@ -186,5 +210,11 @@ export const EditPortModal = ({ port, onSave, onCancel, onDelete }: {
               </div>
           </div>
       </div>
-  )
+      {detailOpen && (
+          <div onWheel={e => e.stopPropagation()}><PortDetailDialog title={label} connectorType={connectorType} detail={detail}
+              onSave={d => { setDetail(d); setDetailOpen(false); }} onCancel={() => setDetailOpen(false)} /></div>
+      )}
+      </>,
+      document.body
+  );
 };

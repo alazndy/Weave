@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment } from '../types';
+import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment, PortCard } from '../types';
 import { getPortPosition } from '../utils/canvasHelpers';
 import { EditPortModal } from './modals/EditPortModal';
 import { EditConnectionModal } from './modals/EditConnectionModal';
@@ -26,9 +26,15 @@ import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
 import { useCanvasInteraction } from './canvas/hooks/useCanvasInteraction';
 import { snapToGrid, validatePortCompatibility } from '../utils/canvasHelpers';
+import { PortCardNode } from './canvas/PortCardNode';
+import { usePortCards } from './canvas/hooks/usePortCards';
 import { useStableHandlers } from '../hooks/useStableHandlers';
 
+const NO_CARDS: PortCard[] = [];
+
 interface CanvasProps {
+  portCards?: PortCard[];
+  onPortCardsChange?: (cards: PortCard[]) => void;
   instances: ProductInstance[];
   connections: Connection[];
   templates: ProductTemplate[];
@@ -86,6 +92,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange,
   onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
+  portCards = NO_CARDS, onPortCardsChange,
   onGroupSelected, onUngroupSelected, onSaveBlock,
   activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
@@ -263,6 +270,10 @@ export const Canvas: React.FC<CanvasProps> = ({
       window.addEventListener('keydown', onKey, true);
       return () => window.removeEventListener('keydown', onKey, true);
   }, [selectedConnectionId]);
+
+  const { visibleCards, showCard, startCardMove, startCardResize, removeCard } = usePortCards({
+      cards: portCards, onChange: onPortCardsChange, instances, templates, scale, getMouseCoords, onUndoCheckpoint,
+  });
 
   // ---- Group (bulk) scaling of the selection ----
   const instancesRef = useRef(instances); instancesRef.current = instances;
@@ -445,7 +456,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       removeInstance: (id: string) => { onUndoCheckpoint(); onInstancesChange(instances.filter(i => i.id !== id)); onConnectionsChange(connections.filter(c => c.fromInstanceId !== id && c.toInstanceId !== id)); },
       handleResizeMouseDown: (e: React.MouseEvent, id: string) => handleResizeStart(e, id, 'instance'),
       handlePortClick,
-      handlePortDoubleClick: (e: React.MouseEvent, tId: string, pId: string) => { e.stopPropagation(); setEditingPortData({ port: templates.find(t => t.id === tId)!.ports.find(p => p.id === pId)!, templateId: tId }); },
+      handlePortDoubleClick: (e: React.MouseEvent, tId: string, pId: string, instId: string) => { e.stopPropagation(); setEditingPortData({ port: templates.find(t => t.id === tId)!.ports.find(p => p.id === pId)!, templateId: tId, instanceId: instId }); },
       onUndoCheckpoint,
   });
 
@@ -697,6 +708,21 @@ export const Canvas: React.FC<CanvasProps> = ({
             />
         ))}
         
+        {/* Port detail cards */}
+        {visibleCards.map(({ card, instance, template, port }) => (
+            <PortCardNode
+                key={card.id}
+                card={card}
+                port={port}
+                heading={`${template.name} #${instanceNumber(instance, instances.indexOf(instance))} · ${port.label}`}
+                anchor={getPortPosition(instance, template, port.id)}
+                theme={theme}
+                onMoveStart={startCardMove}
+                onResizeStart={startCardResize}
+                onRemove={removeCard}
+            />
+        ))}
+
         {/* Alignment Guides */}
         {alignmentGuides.map((g, i) => (
             <div 
@@ -836,6 +862,13 @@ export const Canvas: React.FC<CanvasProps> = ({
               }}
               onCancel={() => setEditingPortData(null)}
               onDelete={(id) => onRemovePort && onRemovePort(editingPortData.templateId, id)}
+              onShowCard={onPortCardsChange ? (updated) => {
+                  onUndoCheckpoint();
+                  const template = templates.find(t => t.id === editingPortData.templateId)!;
+                  onTemplateChange({ ...template, ports: template.ports.map(p => p.id === updated.id ? updated : p) });
+                  showCard(editingPortData.instanceId, updated, { w: finalW, h: finalH });
+                  setEditingPortData(null);
+              } : undefined}
           />
       )}
       

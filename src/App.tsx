@@ -15,6 +15,7 @@ import {
   TextNode, 
   ProductTemplate, 
   Comment,
+  PortCard,
   PaperSize,
   HistoryState, 
   Page, 
@@ -250,6 +251,7 @@ export default function App() {
       const newTextNodes = typeof val === 'function' ? val(textNodes) : val;
       updateActivePage({ textNodes: newTextNodes });
   };
+  const setPortCards = (portCards: PortCard[]) => updateActivePage({ portCards });
   const setComments = (val: Comment[] | ((prev: Comment[]) => Comment[])) => {
       const newComments = typeof val === 'function' ? val(comments) : val;
       updateActivePage({ comments: newComments });
@@ -1052,6 +1054,8 @@ export default function App() {
                         onZonesChange={setZones}
                         onTextNodesChange={setTextNodes}
                         onCommentsChange={setComments}
+                        portCards={activePage.portCards}
+                        onPortCardsChange={setPortCards}
                         onTemplateChange={handleTemplateUpdate}
                         onEditMetadata={() => setIsSettingsOpen(true)}
                         onMetadataChange={(patch, opts) => { if (!opts?.silent) performCheckpoint(); setProjectMetadata(prev => ({ ...prev, ...patch })); }}
