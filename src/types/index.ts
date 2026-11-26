@@ -73,6 +73,29 @@ export type ConnectorType =
   | 'relay-socket-5pin'        // Tip Y: Röle Soketi
   | 'ring-terminal';           // Tip Z: Şase Pabucu
 
+export interface PortPin {
+  id: string;
+  pin: string;
+  color: string;       // wire colour, free text
+  description: string; // what the pin does
+}
+
+/** Connector face picture and pinout of a port; shown on sheets as a port detail card. */
+export interface PortDetail {
+  image?: string; // data URL, long side <= 800 px
+  pins: PortPin[];
+}
+
+/** A detail card placed on a sheet. Content comes from the template port. */
+export interface PortCard {
+  id: string;
+  instanceId: string;
+  portId: string;
+  x: number;
+  y: number;
+  scale: number; // 0.5 .. 3
+}
+
 export interface PortDefinition {
   id: string;
   label: string;
@@ -87,6 +110,7 @@ export interface PortDefinition {
   voltage?: string;        
   amperage?: string;
   customColor?: string; // New: Custom color override
+  detail?: PortDetail;
 }
 
 export interface ProductTemplate {
@@ -218,6 +242,7 @@ export interface Page {
     textNodes: TextNode[];
     comments: Comment[];
     order: number;
+    portCards?: PortCard[];
     /** Per-page drawing number; when empty the number comes from the project protocol/document no. */
     drawingNo?: string;
     /** Per-page parts table visibility; when unset the project-level hideBom applies. */
