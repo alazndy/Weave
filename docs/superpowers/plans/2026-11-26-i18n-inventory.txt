@@ -1,0 +1,627 @@
+src/App.tsx:57: Yeni Sistem Şeması
+src/App.tsx:58: Şirket Adı
+src/App.tsx:63: Yeni Sistem Şeması
+src/App.tsx:70: 1. Tüm bağlantılar belirtilen tork değerinde sıkılmalıdır. 2. Kablolama sırasında renk kodlarına dikkat ediniz. 3. Montaj işlemi kalifiye personel tarafından yapılmalıdır.
+src/App.tsx:436: Canvas alanı bulunamadı.
+src/App.tsx:453: Yeni Blok Şablonu Adı:
+src/App.tsx:453: Yeni Blok
+src/App.tsx:468: Blok kütüphaneye eklendi.
+src/App.tsx:472: Hata oluştu.
+src/App.tsx:579: Mevcut kütüphane ile birleştirilsin mi?
+src/App.tsx:586: Kütüphane başarıyla yüklendi.
+src/App.tsx:587: Geçersiz dosya formatı.
+src/App.tsx:588: Dosya okunamadı.
+src/App.tsx:733: Canvas alanı bulunamadı.
+src/App.tsx:748: Sayfa görüntüsü oluşturulamadı.
+src/App.tsx:757: PDF oluşturulurken bir hata oluştu.
+src/App.tsx:818: Görüntü oluşturulurken bir hata meydana geldi.
+src/App.tsx:819: Dışa aktarılacak alan bulunamadı.
+src/App.tsx:897: Geçersiz proje dosyası.
+src/App.tsx:899: Dosya okunamadı.
+src/App.tsx:901: Dosya okunamadı.
+src/App.tsx:909: Mevcut proje kapatılacak (otomatik kaydedildi). Devam etmek istiyor musunuz?
+src/App.tsx:922: Proje yerel kayıtlarda bulunamadı.
+src/App.tsx:928: Proje açılamadı.
+src/App.tsx:1000: Otomatik kayıt başarısız — projeyi dosyaya kaydedin (Ctrl+S).
+src/App.tsx:1005: Kütüphane kaydedilemedi — tarayıcı depolaması dolu veya kapalı olabilir. Kütüphaneyi dışa aktarın.
+src/components/Canvas.tsx:368: Bağlantı kurulamadı:
+src/components/Canvas.tsx:854: Seçilenleri birlikte ölçekle
+src/components/Canvas.tsx:952: Birleşme noktası ekle
+src/components/LanguageSwitcher.tsx:17: Switch Language
+src/components/ProductEditor.tsx:259: PDF işlenirken hata oluştu.
+src/components/ProductEditor.tsx:541: Kalibrasyon tamamlandı. Ürün genişliği:
+src/components/ProductEditor.tsx:541: mm olarak ayarlandı.
+src/components/ProductEditor.tsx:596: Tarama başarısız oldu.
+src/components/ProductEditor.tsx:607: parça proje listesine eklendi.
+src/components/ProductEditor.tsx:620: PDF işlenirken hata oluştu.
+src/components/ProductEditor.tsx:813: Görsel Yükleme
+src/components/ProductEditor.tsx:813: Ön İşleme & Kalibrasyon
+src/components/ProductEditor.tsx:813: Ürün Düzenle
+src/components/ProductEditor.tsx:813: Port Tanımlama
+src/components/ProductEditor.tsx:822: Kaydet
+src/components/ProductEditor.tsx:825: Kapat
+src/components/ProductEditor.tsx:825: Kapat
+src/components/ProductEditor.tsx:873: Başlamak için Bir Resim Yükleyin
+src/components/ProductEditor.tsx:874: Sol menüyü kullanarak cihazınızdan bir resim veya PDF dosyası seçin.
+src/components/ProductEditor.tsx:902: Work area
+src/components/ProductEditor.tsx:962: Port Düzenle
+src/components/ProductEditor.tsx:968: Etiket
+src/components/ProductEditor.tsx:980: Tip
+src/components/ProductEditor.tsx:986: Giriş
+src/components/ProductEditor.tsx:987: Çıkış
+src/components/ProductEditor.tsx:988: Çift Yönlü
+src/components/ProductEditor.tsx:992: Yön
+src/components/ProductEditor.tsx:998: Aşağı
+src/components/ProductEditor.tsx:999: Yukarı
+src/components/ProductEditor.tsx:1000: Sola
+src/components/ProductEditor.tsx:1001: Sağa
+src/components/ProductEditor.tsx:1009: Güç
+src/components/ProductEditor.tsx:1013: Toprak
+src/components/ProductEditor.tsx:1021: Voltaj (5V)
+src/components/ProductEditor.tsx:1028: Akım (2A)
+src/components/ProductEditor.tsx:1037: Port detayı (görsel + pinler)
+src/components/ProductEditor.tsx:1047: Kaydet
+src/components/UpdateBanner.tsx:15: Yeni sürüm hazır
+src/components/UpdateBanner.tsx:16: İndir
+src/components/UpdateBanner.tsx:20: Güncelleme indiriliyor… %
+src/components/UpdateBanner.tsx:25: Güncelleme indirildi
+src/components/UpdateBanner.tsx:26: Yeniden başlat ve güncelle
+src/components/UpdateBanner.tsx:39: Weave güncel.
+src/components/UpdateBanner.tsx:40: Yeni sürüm var: v
+src/components/UpdateBanner.tsx:41: İndiriliyor… %
+src/components/UpdateBanner.tsx:42: Güncelleme indirildi; yeniden başlatınca kurulur.
+src/components/UpdateBanner.tsx:43: bağlantıyı kontrol et
+src/components/UpdateBanner.tsx:46: Güncellemeler
+src/components/UpdateBanner.tsx:49: Güncellemeleri denetle
+src/components/WelcomeScreen.tsx:34: " yerel kayıtlardan silinsin mi?
+src/components/WelcomeScreen.tsx:46: Kapat
+src/components/WelcomeScreen.tsx:62: Sistem Kablolama Şemaları
+src/components/WelcomeScreen.tsx:72: Yeni Proje
+src/components/WelcomeScreen.tsx:82: Dosyadan Aç (.weave)
+src/components/WelcomeScreen.tsx:98: Ayarlar
+src/components/WelcomeScreen.tsx:109: Son Projeler
+src/components/WelcomeScreen.tsx:111: Projeler bu cihazda otomatik kaydedilir.
+src/components/WelcomeScreen.tsx:131: Son düzenleme:
+src/components/WelcomeScreen.tsx:137: Sil
+src/components/WelcomeScreen.tsx:151: Yerel kayıtlara erişilemedi
+src/components/WelcomeScreen.tsx:151: Henüz kayıtlı proje yok
+src/components/canvas/BOMTable.tsx:66: Parça tablosunu sil
+src/components/canvas/BOMTable.tsx:66: Parça tablosunu sil
+src/components/canvas/BOMTable.tsx:75: PARÇA ADI / AÇIKLAMA
+src/components/canvas/BOMTable.tsx:77: REF. NO
+src/components/canvas/BOMTable.tsx:78: ADET
+src/components/canvas/CanvasControls.tsx:53: Mini Harita
+src/components/canvas/CanvasControls.tsx:55: Kaydırma modu
+src/components/canvas/CanvasControls.tsx:55: Kaydırma modu: sürükleyerek gez (H)
+src/components/canvas/CanvasControls.tsx:60: Sola kaydır
+src/components/canvas/CanvasControls.tsx:61: Yukarı kaydır
+src/components/canvas/CanvasControls.tsx:62: Aşağı kaydır
+src/components/canvas/CanvasControls.tsx:63: Sağa kaydır
+src/components/canvas/CanvasControls.tsx:66: Uzaklaş
+src/components/canvas/CanvasControls.tsx:69: Zoom düzeyi
+src/components/canvas/CanvasControls.tsx:69: Zoom düzeyi
+src/components/canvas/CanvasControls.tsx:73: Yakınlaş
+src/components/canvas/CanvasControls.tsx:73: Yakınlaş
+src/components/canvas/CanvasControls.tsx:74: Ekrana Sığdır
+src/components/canvas/CanvasControls.tsx:76: %100'e dön
+src/components/canvas/CanvasControls.tsx:76: Yakınlaştırmayı %100 yap
+src/components/canvas/CanvasToolbar.tsx:22: Seçim (V)
+src/components/canvas/CanvasToolbar.tsx:23: Kaydır / Gezin (H)
+src/components/canvas/CanvasToolbar.tsx:23: Kaydır
+src/components/canvas/CanvasToolbar.tsx:24: Taşı (M)
+src/components/canvas/CanvasToolbar.tsx:25: Ölçekle / Boyutlandır (S)
+src/components/canvas/CanvasToolbar.tsx:26: Kutu Seçimi (B)
+src/components/canvas/CanvasToolbar.tsx:28: Manuel Rota Çizimi (R)
+src/components/canvas/CanvasToolbar.tsx:29: Bölge Ekle (Z)
+src/components/canvas/CanvasToolbar.tsx:30: Metin Ekle (T)
+src/components/canvas/CanvasToolbar.tsx:31: Not / Yorum Ekle (C)
+src/components/canvas/CanvasToolbar.tsx:33: Izgaraya Yapış
+src/components/canvas/CommentMarker.tsx:80: Notunuzu buraya yazın...
+src/components/canvas/CommentMarker.tsx:102: Tamam
+src/components/canvas/CommentMarker.tsx:116: Çözüldü olarak işaretle
+src/components/canvas/ConnectionLine.tsx:256: Bağlantı
+src/components/canvas/ConnectionLine.tsx:265: ÇIKIŞ / KAYNAK
+src/components/canvas/ConnectionLine.tsx:272: GİRİŞ / HEDEF
+src/components/canvas/ConnectionToolbar.tsx:16: Dik açılı
+src/components/canvas/ConnectionToolbar.tsx:17: Düz
+src/components/canvas/ConnectionToolbar.tsx:18: Eğri
+src/components/canvas/ConnectionToolbar.tsx:20: Düz çizgi
+src/components/canvas/ConnectionToolbar.tsx:20: Noktalı
+src/components/canvas/ConnectionToolbar.tsx:21: İnce
+src/components/canvas/ConnectionToolbar.tsx:21: Kalın
+src/components/canvas/ConnectionToolbar.tsx:24: Başa ok
+src/components/canvas/ConnectionToolbar.tsx:24: İki uca ok
+src/components/canvas/ConnectionToolbar.tsx:36: Bağlantı araçları
+src/components/canvas/ConnectionToolbar.tsx:52: kalınlık
+src/components/canvas/ConnectionToolbar.tsx:52: kalınlık
+src/components/canvas/ConnectionToolbar.tsx:63: Renk (güç/toprak portlarında otomatik)
+src/components/canvas/ConnectionToolbar.tsx:64: Kablo rengi
+src/components/canvas/ConnectionToolbar.tsx:67: Köşe yuvarlama
+src/components/canvas/ConnectionToolbar.tsx:69: Köşe yuvarlama
+src/components/canvas/ConnectionToolbar.tsx:73: Rotayı sıfırla (otomatik yol)
+src/components/canvas/ConnectionToolbar.tsx:73: Rotayı sıfırla
+src/components/canvas/ConnectionToolbar.tsx:74: Ayrıntılar (etiket, kablo)
+src/components/canvas/ConnectionToolbar.tsx:74: Ayrıntıları düzenle
+src/components/canvas/ConnectionToolbar.tsx:75: Kilidi aç
+src/components/canvas/ConnectionToolbar.tsx:75: Kilidi aç
+src/components/canvas/ConnectionToolbar.tsx:76: Bağlantıyı sil
+src/components/canvas/ConnectionToolbar.tsx:76: Bağlantıyı sil
+src/components/canvas/ConnectionToolbar.tsx:77: Kapat
+src/components/canvas/ConnectionToolbar.tsx:77: Araç çubuğunu kapat
+src/components/canvas/ContextMenu.tsx:30: Ürünü Düzenle
+src/components/canvas/ContextMenu.tsx:33: Kopyala
+src/components/canvas/ContextMenu.tsx:36: Döndür (+90°)
+src/components/canvas/ContextMenu.tsx:39: Aynala
+src/components/canvas/ContextMenu.tsx:46: Grupla
+src/components/canvas/ContextMenu.tsx:52: Grubu Boz
+src/components/canvas/ContextMenu.tsx:58: Bloğu Kaydet
+src/components/canvas/ContextMenu.tsx:65: Sil
+src/components/canvas/ISOFrame.tsx:64: TS 88-20 EN ISO 128-20 • TS EN ISO 5457 UYUMLUDUR
+src/components/canvas/JunctionNode.tsx:17: Birleşme noktası: tıkla ve kol çek, sürükle ve taşı
+src/components/canvas/LegendStack.tsx:68: Lejant boyutunu ayarla
+src/components/canvas/LegendStack.tsx:68: Sürükleyerek lejantın boyunu ayarla (çift tık: sıfırla)
+src/components/canvas/PageGrid.tsx:24: Boş Sayfa
+src/components/canvas/PageGrid.tsx:101: Sayfa Genel Bakış
+src/components/canvas/PageGrid.tsx:126: Cihaz •
+src/components/canvas/PageGrid.tsx:126: Bağlantı
+src/components/canvas/PageGrid.tsx:130: sayfasını öne al
+src/components/canvas/PageGrid.tsx:130: Öne al
+src/components/canvas/PageGrid.tsx:133: sayfasını arkaya al
+src/components/canvas/PageGrid.tsx:133: Arkaya al
+src/components/canvas/PageGrid.tsx:154: Düzenle
+src/components/canvas/PageGrid.tsx:164: Çoğalt
+src/components/canvas/PageGrid.tsx:169: Bu sayfayı silmek istediğinize emin misiniz?
+src/components/canvas/PageGrid.tsx:175: Sil
+src/components/canvas/PortCardNode.tsx:54: Konnektör görseli
+src/components/canvas/PortCardNode.tsx:58: Pin
+src/components/canvas/PortCardNode.tsx:59: Kablo rengi
+src/components/canvas/PortCardNode.tsx:60: Görevi
+src/components/canvas/PortCardNode.tsx:67: Kartı kaldır
+src/components/canvas/PortCardNode.tsx:67: Kartı kaldır
+src/components/canvas/PortCardNode.tsx:69: Sürükleyerek boyutlandır
+src/components/canvas/ProductNode.tsx:89: Aynı numara başka bir bileşende de var — çift tıkla ve değiştir
+src/components/canvas/ProductNode.tsx:89: Numarayı değiştirmek için çift tıkla
+src/components/canvas/ProductNode.tsx:98: Bileşen numarası
+src/components/canvas/ProductNode.tsx:123: Aynala / Çevir
+src/components/canvas/ProductNode.tsx:130: Döndür (Sürükle)
+src/components/canvas/ProductNode.tsx:138: Sil
+src/components/canvas/ProductNode.tsx:217: Bağlantı Uyumsuz
+src/components/canvas/TitleBlock.tsx:30: Müşteri
+src/components/canvas/TitleBlock.tsx:30: Müşteri No
+src/components/canvas/TitleBlock.tsx:78: başlığını sil
+src/components/canvas/TitleBlock.tsx:78: Başlığı sil
+src/components/canvas/TitleBlock.tsx:88: Düzenlemek için tıkla
+src/components/canvas/TitleBlock.tsx:120: Başlık:
+src/components/canvas/TitleBlock.tsx:138: Genişliği ayarla (çift tık: sıfırla)
+src/components/canvas/TitleBlock.tsx:138: Yüksekliği ayarla (çift tık: sıfırla)
+src/components/canvas/TitleBlock.tsx:167: bölümünü sola taşı
+src/components/canvas/TitleBlock.tsx:170: bölümünü sağa taşı
+src/components/canvas/TitleBlock.tsx:218: Sayfa adı
+src/components/canvas/TitleBlock.tsx:249: Proje adı
+src/components/canvas/TitleBlock.tsx:249: İsimsiz Proje
+src/components/canvas/TitleBlock.tsx:254: Çizim numarası (bu sayfa)
+src/components/canvas/TitleBlock.tsx:261: Ölçek
+src/components/canvas/TitleBlock.tsx:289: Logo
+src/components/canvas/TitleBlock.tsx:290: Logo Yok
+src/components/canvas/TitleBlock.tsx:302: Müşteri
+src/components/canvas/TitleBlock.tsx:309: Müşteri No
+src/components/canvas/TitleBlock.tsx:317: Alan başlığı:
+src/components/canvas/TitleBlock.tsx:321: değeri
+src/components/canvas/TitleBlock.tsx:338: Anteti Düzenle
+src/components/canvas/TitleBlock.tsx:347: Silinen başlıkları geri getir
+src/components/canvas/TitleBlock.tsx:347: Silinen başlıkları geri getir
+src/components/canvas/TitleBlock.tsx:350: gizli başlık
+src/components/canvas/TitleBlock.tsx:354: Parça tablosunu geri getir
+src/components/canvas/TitleBlock.tsx:354: Parça tablosunu geri getir
+src/components/canvas/TitleBlock.tsx:357: Parça tablosu gizli
+src/components/canvas/TitleBlock.tsx:374: Teknik notlar
+src/components/canvas/TitleBlock.tsx:374: Not eklemek için tıkla
+src/components/canvas/ToolSettingsBar.tsx:51: Kablo Ayarları
+src/components/canvas/ToolSettingsBar.tsx:52: Metin Ayarları
+src/components/canvas/ToolSettingsBar.tsx:53: Bölge Ayarları
+src/components/canvas/ToolSettingsBar.tsx:53: Ölçekleme
+src/components/canvas/ToolSettingsBar.tsx:61: Renk
+src/components/canvas/ToolSettingsBar.tsx:73: Çizgi Stili
+src/components/canvas/ToolSettingsBar.tsx:75: Düz
+src/components/canvas/ToolSettingsBar.tsx:76: Kesikli
+src/components/canvas/ToolSettingsBar.tsx:77: Noktalı
+src/components/canvas/ToolSettingsBar.tsx:82: Kalınlık
+src/components/canvas/ToolSettingsBar.tsx:88: İnce
+src/components/canvas/ToolSettingsBar.tsx:89: Normal
+src/components/canvas/ToolSettingsBar.tsx:90: Kalın
+src/components/canvas/ToolSettingsBar.tsx:94: Radius
+src/components/canvas/ToolSettingsBar.tsx:111: Yazı Boyutu (px)
+src/components/canvas/ToolSettingsBar.tsx:121: Renk
+src/components/canvas/ToolSettingsBar.tsx:139: Varsayılan Etiket
+src/components/canvas/ToolSettingsBar.tsx:148: Kenarlık Rengi
+src/components/canvas/ToolSettingsBar.tsx:172: En/Boy Oranını Koru
+src/components/canvas/hooks/useCanvasState.ts:67: BÖLGE
+src/components/editor/EditorSidebar.tsx:49: Ürün Adı
+src/components/editor/EditorSidebar.tsx:55: Örn: Motor Sürücü
+src/components/editor/EditorSidebar.tsx:60: Açıklama
+src/components/editor/EditorSidebar.tsx:65: Kısa ürün tanımı...
+src/components/editor/EditorSidebar.tsx:70: Model Numarası
+src/components/editor/EditorSidebar.tsx:77: Örn: MTR-001
+src/components/editor/EditorSidebar.tsx:81: Otomatik Oluştur
+src/components/editor/EditorSidebar.tsx:93: Fiziksel Boyutlar
+src/components/editor/EditorSidebar.tsx:97: Gerçek (mm)
+src/components/editor/EditorSidebar.tsx:106: Ekran (px)
+src/components/editor/EditorSidebar.tsx:116: Ölçek: 1mm =
+src/components/editor/EditorSidebar.tsx:123: Dosya Yükle (Resim veya PDF)
+src/components/editor/EditorSidebar.tsx:130: Yüklemek için tıklayın
+src/components/editor/EditorSidebar.tsx:131: veya sürükleyip bırakın (PDF, PNG, JPG)
+src/components/editor/EditorSidebar.tsx:144: Düzenleme Araçları
+src/components/editor/EditorSidebar.tsx:146: Geri Al (Ctrl+Z)
+src/components/editor/EditorSidebar.tsx:147: İleri Al (Ctrl+Y)
+src/components/editor/EditorSidebar.tsx:152: Sola Çevir
+src/components/editor/EditorSidebar.tsx:155: Sağa Çevir
+src/components/editor/EditorSidebar.tsx:163: Seç
+src/components/editor/EditorSidebar.tsx:165: Öl
+src/components/editor/EditorSidebar.tsx:183: Silgi Boyutu:
+src/components/editor/EditorSidebar.tsx:197: Mesafe Ölçümü
+src/components/editor/EditorSidebar.tsx:198: Resim üzerinde referans bir uzunluk (örn. ürün eni) boyunca çizgi çekin.
+src/components/editor/EditorSidebar.tsx:204: Çizilen Uzunluk (mm)
+src/components/editor/EditorSidebar.tsx:214: OK
+src/components/editor/EditorSidebar.tsx:221: Seçili Alanı Kırp
+src/components/editor/EditorSidebar.tsx:229: Taranıyor...
+src/components/editor/EditorSidebar.tsx:229: Alanı Tara (AI)
+src/components/editor/EditorSidebar.tsx:233: Parça Bulundu:
+src/components/editor/EditorSidebar.tsx:242: Listeye Ekle
+src/components/editor/EditorSidebar.tsx:250: Tamamla ve İlerle
+src/components/editor/EditorSidebar.tsx:254: Dosya Değiştir
+src/components/layout/LeftSidebar.tsx:140: Tekli Export
+src/components/layout/LeftSidebar.tsx:147: Silmek istediğinize emin misiniz?
+src/components/layout/LeftSidebar.tsx:227: Library
+src/components/layout/LeftSidebar.tsx:228: Project
+src/components/layout/LeftSidebar.tsx:239: Current Library
+src/components/layout/LeftSidebar.tsx:244: Kütüphaneyi yeniden adlandır
+src/components/layout/LeftSidebar.tsx:248: Rename Library
+src/components/layout/LeftSidebar.tsx:252: Yeni kütüphane
+src/components/layout/LeftSidebar.tsx:256: New Library
+src/components/layout/LeftSidebar.tsx:266: Kütüphaneyi sil
+src/components/layout/LeftSidebar.tsx:271: Delete Library
+src/components/layout/LeftSidebar.tsx:284: Save
+src/components/layout/LeftSidebar.tsx:292: Select library
+src/components/layout/LeftSidebar.tsx:322: No components found
+src/components/layout/LeftSidebar.tsx:345: No saved blocks
+src/components/layout/LeftSidebar.tsx:362: Kütüphaneyi indir
+src/components/layout/LeftSidebar.tsx:366: Download Library
+src/components/layout/LeftSidebar.tsx:371: Kütüphane içe aktar
+src/components/layout/LeftSidebar.tsx:375: Import Library
+src/components/layout/LeftSidebar.tsx:380: Yeni bileşen
+src/components/layout/LeftSidebar.tsx:384: New Component
+src/components/layout/LeftSidebar.tsx:398: Project File
+src/components/layout/LeftSidebar.tsx:401: Save
+src/components/layout/LeftSidebar.tsx:404: Open
+src/components/layout/LeftSidebar.tsx:414: Canvas Settings
+src/components/layout/LeftSidebar.tsx:417: Paper Size
+src/components/layout/LeftSidebar.tsx:434: Orientation
+src/components/layout/LeftSidebar.tsx:442: Landscape
+src/components/layout/LeftSidebar.tsx:450: Portrait
+src/components/layout/LeftSidebar.tsx:461: Numaralandırma
+src/components/layout/LeftSidebar.tsx:462: Rozete çift tıklayarak tek tek değiştirebilirsin.
+src/components/layout/LeftSidebar.tsx:464: Sayfadaki bileşenleri yukarıdan aşağı, soldan sağa 1, 2, 3… numarala
+src/components/layout/LeftSidebar.tsx:465: Konuma göre numarala
+src/components/layout/LeftSidebar.tsx:469: Elle verilen numaraları sil, otomatik sıraya dön
+src/components/layout/LeftSidebar.tsx:470: Otomatiğe sıfırla
+src/components/layout/LeftSidebar.tsx:480: Exports
+src/components/layout/LeftSidebar.tsx:483: Export BOM
+src/components/layout/LeftSidebar.tsx:496: App Settings
+src/components/layout/PageBar.tsx:52: Sayfalar (
+src/components/layout/PageBar.tsx:63: Sayfa çubuğunu daralt
+src/components/layout/PageBar.tsx:64: Sayfa çubuğunu daralt
+src/components/layout/PageBar.tsx:74: Sayfa Izgarası
+src/components/layout/PageBar.tsx:112: Sayfa adı
+src/components/layout/PageBar.tsx:113: Sayfa adı
+src/components/layout/PageBar.tsx:122: sayfasını sola taşı
+src/components/layout/PageBar.tsx:122: Sola taşı
+src/components/layout/PageBar.tsx:125: sayfasını sağa taşı
+src/components/layout/PageBar.tsx:125: Sağa taşı
+src/components/layout/PageBar.tsx:133: Sayfayı Çoğalt
+src/components/layout/PageBar.tsx:141: " sayfasını silmek istediğinize emin misiniz?
+src/components/layout/PageBar.tsx:144: Sayfayı Sil
+src/components/layout/PageBar.tsx:161: Yeni Sayfa Ekle
+src/components/layout/RightSidebar.tsx:89: Properties
+src/components/layout/RightSidebar.tsx:91: Sağ paneli daralt
+src/components/layout/RightSidebar.tsx:91: Sağ paneli daralt
+src/components/layout/RightSidebar.tsx:99: Properties
+src/components/layout/RightSidebar.tsx:100: Layers
+src/components/layout/RightSidebar.tsx:115: Items Selected
+src/components/layout/RightSidebar.tsx:116: Use actions below
+src/components/layout/RightSidebar.tsx:118: Seçimi temizle
+src/components/layout/RightSidebar.tsx:128: Delete Selected
+src/components/layout/RightSidebar.tsx:138: Seçimi temizle
+src/components/layout/RightSidebar.tsx:149: Copy
+src/components/layout/RightSidebar.tsx:152: Duplicate
+src/components/layout/RightSidebar.tsx:162: Bileşen Numarası
+src/components/layout/RightSidebar.tsx:173: Boş bırakırsan otomatik numara kullanılır. Rozete çift tıklayarak da değiştirebilirsin.
+src/components/layout/RightSidebar.tsx:182: Label Settings
+src/components/layout/RightSidebar.tsx:199: Position
+src/components/layout/RightSidebar.tsx:206: Top
+src/components/layout/RightSidebar.tsx:207: Center
+src/components/layout/RightSidebar.tsx:208: Bottom
+src/components/layout/RightSidebar.tsx:215: Font Size
+src/components/layout/RightSidebar.tsx:227: Text Color
+src/components/layout/RightSidebar.tsx:239: Background
+src/components/layout/RightSidebar.tsx:259: Ports
+src/components/layout/RightSidebar.tsx:302: No Selection
+src/components/layout/RightSidebar.tsx:303: Select an item from the canvas to edit its properties.
+src/components/layout/RightSidebar.tsx:320: Devices (
+src/components/layout/RightSidebar.tsx:324: No devices
+src/components/layout/RightSidebar.tsx:367: Connections (
+src/components/layout/RightSidebar.tsx:371: No connections
+src/components/layout/RightSidebar.tsx:404: Annotations (
+src/components/layout/RightSidebar.tsx:408: No annotations
+src/components/layout/RightSidebar.tsx:413: ZONE
+src/components/layout/RightSidebar.tsx:425: TXT
+src/components/layout/Toolbar.tsx:90: PDF olarak dışa aktar
+src/components/layout/Toolbar.tsx:97: Tüm sayfaları tek PDF olarak dışa aktar (masaüstünde vektör: yazılar seçilebilir, yakınlaşınca pikselleşmez)
+src/components/layout/Toolbar.tsx:212: Aydınlık Mod
+src/components/layout/Toolbar.tsx:212: Karanlık Mod
+src/components/managers/ModalManager.tsx:133: Yükleniyor...
+src/components/managers/ModalManager.tsx:170: Sayfayı Temizle
+src/components/managers/ModalManager.tsx:171: Bu sayfadaki tüm cihazlar ve bağlantılar silinecek. Diğer sayfalar etkilenmez.
+src/components/managers/ModalManager.tsx:202: AI Analiz Raporu (
+src/components/managers/ModalManager.tsx:206: Sistem Özeti
+src/components/managers/ModalManager.tsx:210: Tespitler & Uyarılar
+src/components/managers/ModalManager.tsx:223: Harika! Herhangi bir bağlantı sorunu tespit edilmedi.
+src/components/managers/ModalManager.tsx:229: Kapat
+src/components/modals/AppSettingsModal.tsx:62: Application Settings
+src/components/modals/AppSettingsModal.tsx:65: Customize your workspace appearance and AI features.
+src/components/modals/AppSettingsModal.tsx:71: Appearance
+src/components/modals/AppSettingsModal.tsx:72: AI
+src/components/modals/AppSettingsModal.tsx:78: Theme Mode
+src/components/modals/AppSettingsModal.tsx:89: Dark Mode
+src/components/modals/AppSettingsModal.tsx:90: Eye-friendly dark interface
+src/components/modals/AppSettingsModal.tsx:104: Light Mode
+src/components/modals/AppSettingsModal.tsx:105: High contrast light interface
+src/components/modals/AppSettingsModal.tsx:113: Language
+src/components/modals/AppSettingsModal.tsx:119: Select Language
+src/components/modals/AppSettingsModal.tsx:122: 🇹🇷 Türkçe (Turkish)
+src/components/modals/AppSettingsModal.tsx:123: 🇺🇸 English
+src/components/modals/AppSettingsModal.tsx:126: * Changes will apply to some parts of the interface.
+src/components/modals/AppSettingsModal.tsx:130: Color Palette
+src/components/modals/AppSettingsModal.tsx:158: Gemini API Key
+src/components/modals/AppSettingsModal.tsx:165: AIza...
+src/components/modals/AppSettingsModal.tsx:170: Göster
+src/components/modals/AppSettingsModal.tsx:175: Şema analizi ve görselden parça listesi çıkarma için kullanılır. Anahtar yalnızca bu cihazda saklanır ve doğrudan Google'a gönderilir. Anahtar almak için: aistudio.google.com/apikey
+src/components/modals/AppSettingsModal.tsx:183: Close
+src/components/modals/ConfirmationModal.tsx:27: İptal
+src/components/modals/ConfirmationModal.tsx:34: Evet, Temizle
+src/components/modals/EditConnectionModal.tsx:21: Kırmızı (Güç)
+src/components/modals/EditConnectionModal.tsx:23: Sarı (Can-H)
+src/components/modals/EditConnectionModal.tsx:24: Yeşil (Can-L)
+src/components/modals/EditConnectionModal.tsx:29: Varsayılan
+src/components/modals/EditConnectionModal.tsx:35: Bağlantı Düzenle
+src/components/modals/EditConnectionModal.tsx:39: Kablo Etiketi / Kod
+src/components/modals/EditConnectionModal.tsx:43: Örn: W-101, Güç Kablosu
+src/components/modals/EditConnectionModal.tsx:49: Hat Stili
+src/components/modals/EditConnectionModal.tsx:51: Eğrisel
+src/components/modals/EditConnectionModal.tsx:52: Düz
+src/components/modals/EditConnectionModal.tsx:53: Köşeli
+src/components/modals/EditConnectionModal.tsx:59: Köşe Yuvarlama (Radius)
+src/components/modals/EditConnectionModal.tsx:72: Çizgi Tipi
+src/components/modals/EditConnectionModal.tsx:74: Düz
+src/components/modals/EditConnectionModal.tsx:75: Kesikli
+src/components/modals/EditConnectionModal.tsx:76: Noktalı
+src/components/modals/EditConnectionModal.tsx:81: Kalınlık
+src/components/modals/EditConnectionModal.tsx:83: İnce
+src/components/modals/EditConnectionModal.tsx:84: Normal
+src/components/modals/EditConnectionModal.tsx:85: Kalın
+src/components/modals/EditConnectionModal.tsx:89: Ok Yönü
+src/components/modals/EditConnectionModal.tsx:91: Yok
+src/components/modals/EditConnectionModal.tsx:92: Başlangıç
+src/components/modals/EditConnectionModal.tsx:93: Bitiş
+src/components/modals/EditConnectionModal.tsx:94: Çift Yön
+src/components/modals/EditConnectionModal.tsx:101: Kablo Rengi
+src/components/modals/EditConnectionModal.tsx:122: İptal
+src/components/modals/EditConnectionModal.tsx:127: Kaydet
+src/components/modals/EditPortModal.tsx:49: Port Düzenle
+src/components/modals/EditPortModal.tsx:53: Etiket
+src/components/modals/EditPortModal.tsx:62: Akış Yönü
+src/components/modals/EditPortModal.tsx:68: Giriş (Input)
+src/components/modals/EditPortModal.tsx:69: Çıkış (Output)
+src/components/modals/EditPortModal.tsx:70: Çift Yönlü
+src/components/modals/EditPortModal.tsx:75: Konnektör Tipi
+src/components/modals/EditPortModal.tsx:88: Çıkış Yönü (Kablo)
+src/components/modals/EditPortModal.tsx:95: Üst
+src/components/modals/EditPortModal.tsx:95: Sağ
+src/components/modals/EditPortModal.tsx:104: Özel Renk
+src/components/modals/EditPortModal.tsx:112: Varsayılan
+src/components/modals/EditPortModal.tsx:127: Güç
+src/components/modals/EditPortModal.tsx:139: GND (Toprak)
+src/components/modals/EditPortModal.tsx:147: Tip
+src/components/modals/EditPortModal.tsx:158: Volt
+src/components/modals/EditPortModal.tsx:167: Amper
+src/components/modals/EditPortModal.tsx:181: Port detayı (görsel + pinler)
+src/components/modals/EditPortModal.tsx:186: Detayı sayfada göster
+src/components/modals/EditPortModal.tsx:197: Portu Sil
+src/components/modals/EditPortModal.tsx:201: İptal
+src/components/modals/EditPortModal.tsx:206: Kaydet
+src/components/modals/EditTextModal.tsx:12: Metin Düzenle
+src/components/modals/EditTextModal.tsx:15: İçerik
+src/components/modals/EditTextModal.tsx:20: Boyut
+src/components/modals/EditTextModal.tsx:24: Renk
+src/components/modals/EditTextModal.tsx:29: İptal
+src/components/modals/EditTextModal.tsx:30: Kaydet
+src/components/modals/EditZoneModal.tsx:11: Bölge Düzenle
+src/components/modals/EditZoneModal.tsx:14: Bölge Adı
+src/components/modals/EditZoneModal.tsx:18: Renk (Şeffaf)
+src/components/modals/EditZoneModal.tsx:22: İptal
+src/components/modals/EditZoneModal.tsx:23: Kaydet
+src/components/modals/HistoryModal.tsx:39: Versiyon Geçmişi (Time Travel)
+src/components/modals/HistoryModal.tsx:52: Kayıtlı Versiyonlar (
+src/components/modals/HistoryModal.tsx:58: İşlem Geçmişi (
+src/components/modals/HistoryModal.tsx:67: Mevcut Durumu Kaydet
+src/components/modals/HistoryModal.tsx:73: Versiyon Adı (Örn: Müşteri Onayı Öncesi)
+src/components/modals/HistoryModal.tsx:81: Oluştur
+src/components/modals/HistoryModal.tsx:88: Henüz kayıtlı versiyon yok.
+src/components/modals/HistoryModal.tsx:100: " versiyonuna geri dönmek istediğinize emin misiniz? Mevcut, kaydedilmemiş değişiklikler kaybolabilir.
+src/components/modals/HistoryModal.tsx:107: Geri Yükle
+src/components/modals/HistoryModal.tsx:131: Geçmiş Durum
+src/components/modals/HistoryModal.tsx:132: Cihaz,
+src/components/modals/HistoryModal.tsx:132: Bağlantı (
+src/components/modals/HistoryModal.tsx:132: Sayfa)
+src/components/modals/HistoryModal.tsx:140: Bu duruma dön
+src/components/modals/HistoryModal.tsx:147: İşlem geçmişi boş.
+src/components/modals/PinoutModal.tsx:29: Pin Haritası (Pinout Matrix)
+src/components/modals/PinoutModal.tsx:31: Kapat
+src/components/modals/PinoutModal.tsx:40: Kablo ID
+src/components/modals/PinoutModal.tsx:41: Kaynak Cihaz
+src/components/modals/PinoutModal.tsx:42: Kaynak Port
+src/components/modals/PinoutModal.tsx:43: Yön
+src/components/modals/PinoutModal.tsx:44: Hedef Cihaz
+src/components/modals/PinoutModal.tsx:45: Hedef Port
+src/components/modals/PinoutModal.tsx:46: Konnektör Tipi
+src/components/modals/PinoutModal.tsx:47: Sinyal/Güç
+src/components/modals/PinoutModal.tsx:53: Henüz bağlantı yapılmamış.
+src/components/modals/PinoutModal.tsx:68: birleşme noktası üzerinden
+src/components/modals/PinoutModal.tsx:81: Sinyal
+src/components/modals/PortDetailDialog.tsx:18: Pin numarası
+src/components/modals/PortDetailDialog.tsx:20: Görevi
+src/components/modals/PortDetailDialog.tsx:20: Görevi
+src/components/modals/PortDetailDialog.tsx:36: Görsel okunamadı. PNG, JPG veya WebP seçin.
+src/components/modals/PortDetailDialog.tsx:43: Port detayı:
+src/components/modals/PortDetailDialog.tsx:48: Konnektör görseli
+src/components/modals/PortDetailDialog.tsx:51: Görseli değiştir
+src/components/modals/PortDetailDialog.tsx:51: Görsel yükle
+src/components/modals/PortDetailDialog.tsx:54: Görseli kaldır
+src/components/modals/PortDetailDialog.tsx:70: Satır sil
+src/components/modals/PortDetailDialog.tsx:74: Satır ekle
+src/components/modals/PortDetailDialog.tsx:78: Vazgeç
+src/components/modals/PortDetailDialog.tsx:79: Tamam
+src/components/modals/ProjectSettingsModal.tsx:73: Listede yok — özel kod olarak kullanılır
+src/components/modals/ProjectSettingsModal.tsx:110: Proje Detayları
+src/components/modals/ProjectSettingsModal.tsx:116: İptal
+src/components/modals/ProjectSettingsModal.tsx:122: Kaydet
+src/components/modals/ProjectSettingsModal.tsx:137: Logo
+src/components/modals/ProjectSettingsModal.tsx:142: Değiştir
+src/components/modals/ProjectSettingsModal.tsx:146: Şirket Logosu
+src/components/modals/ProjectSettingsModal.tsx:147: Teknik çizim antetinde yer alacak resmi marka logosu. PNG, JPG veya SVG formatları desteklenir.
+src/components/modals/ProjectSettingsModal.tsx:161: Şirket Adı
+src/components/modals/ProjectSettingsModal.tsx:168: Firma Adı
+src/components/modals/ProjectSettingsModal.tsx:174: Müşteri
+src/components/modals/ProjectSettingsModal.tsx:181: Müşteri Adı / Firma
+src/components/modals/ProjectSettingsModal.tsx:187: Müşteri No
+src/components/modals/ProjectSettingsModal.tsx:191: Müşteri No
+src/components/modals/ProjectSettingsModal.tsx:195: Müşteri numarası / kodu
+src/components/modals/ProjectSettingsModal.tsx:201: Proje Başlığı
+src/components/modals/ProjectSettingsModal.tsx:208: Proje Adı
+src/components/modals/ProjectSettingsModal.tsx:213: Hazırlayan
+src/components/modals/ProjectSettingsModal.tsx:223: Onaylayan
+src/components/modals/ProjectSettingsModal.tsx:233: Revizyon
+src/components/modals/ProjectSettingsModal.tsx:243: Döküman No
+src/components/modals/ProjectSettingsModal.tsx:254: Oto. Oluştur
+src/components/modals/ProjectSettingsModal.tsx:263: Tarih
+src/components/modals/ProjectSettingsModal.tsx:274: Görünür Ölçek
+src/components/modals/ProjectSettingsModal.tsx:280: Örn: 1:10
+src/components/modals/ProjectSettingsModal.tsx:287: Sayfa Yapısı & Ölçek
+src/components/modals/ProjectSettingsModal.tsx:292: Kağıt Boyutu
+src/components/modals/ProjectSettingsModal.tsx:298: A3 (420 x 297 mm)
+src/components/modals/ProjectSettingsModal.tsx:299: A4 (297 x 210 mm)
+src/components/modals/ProjectSettingsModal.tsx:300: A6 (148 x 105 mm)
+src/components/modals/ProjectSettingsModal.tsx:304: Yönlendirme
+src/components/modals/ProjectSettingsModal.tsx:310: Yatay (Landscape)
+src/components/modals/ProjectSettingsModal.tsx:311: Dikey (Portrait)
+src/components/modals/ProjectSettingsModal.tsx:318: Piksel Ölçeği (px/mm)
+src/components/modals/ProjectSettingsModal.tsx:328: 1 mm =
+src/components/modals/ProjectSettingsModal.tsx:335: Tümünü Yeniden Boyutlandır
+src/components/modals/ProjectSettingsModal.tsx:343: Çizim / İmza Bilgileri (Antet)
+src/components/modals/ProjectSettingsModal.tsx:346: Çizim Adı (Drawing Name)
+src/components/modals/ProjectSettingsModal.tsx:347: Örn: CAS General Configuration
+src/components/modals/ProjectSettingsModal.tsx:350: Kontrol Eden (Checked)
+src/components/modals/ProjectSettingsModal.tsx:354: Çizim Tarihi (Drawn)
+src/components/modals/ProjectSettingsModal.tsx:358: Kontrol Tarihi
+src/components/modals/ProjectSettingsModal.tsx:362: Onay Tarihi
+src/components/modals/ProjectSettingsModal.tsx:366: Hazırlayan = DRAWN, Onaylayan = APPROVED. Sayfa adı antette PAGE NAME olarak görünür.
+src/components/modals/ProjectSettingsModal.tsx:372: Revizyon Geçmişi
+src/components/modals/ProjectSettingsModal.tsx:374: Revizyon Ekle
+src/components/modals/ProjectSettingsModal.tsx:378: Henüz revizyon yok.
+src/components/modals/ProjectSettingsModal.tsx:381: Rev
+src/components/modals/ProjectSettingsModal.tsx:381: Tarih
+src/components/modals/ProjectSettingsModal.tsx:381: Açıklama
+src/components/modals/ProjectSettingsModal.tsx:381: By
+src/components/modals/ProjectSettingsModal.tsx:381: Chkd.
+src/components/modals/ProjectSettingsModal.tsx:386: açıklama
+src/components/modals/ProjectSettingsModal.tsx:399: Döküman Numaralandırma (Protokol)
+src/components/modals/ProjectSettingsModal.tsx:401: Protokolü kullan
+src/components/modals/ProjectSettingsModal.tsx:404: AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R · originator · tip · disiplin · lokasyon · sıra no · sheet · revizyon-faz-no
+src/components/modals/ProjectSettingsModal.tsx:407: Originator (AAA)
+src/components/modals/ProjectSettingsModal.tsx:408: Örn: ANC
+src/components/modals/ProjectSettingsModal.tsx:409: Dökümanı hazırlayan kuruluş kodu (3 harf)
+src/components/modals/ProjectSettingsModal.tsx:411: Döküman Tipi (BBB)
+src/components/modals/ProjectSettingsModal.tsx:412: Disiplin (CCC)
+src/components/modals/ProjectSettingsModal.tsx:413: Lokasyon / Alan (DDD)
+src/components/modals/ProjectSettingsModal.tsx:415: Sıra No (XXX)
+src/components/modals/ProjectSettingsModal.tsx:419: Proje Fazı (PP)
+src/components/modals/ProjectSettingsModal.tsx:425: Revizyon No (R)
+src/components/modals/ProjectSettingsModal.tsx:430: Sayfa numarasını Sheet (YY) olarak ekle — her sayfa kendi numarasını alır
+src/components/modals/ProjectSettingsModal.tsx:434: Önizleme (Sayfa 1)
+src/components/modals/ProjectSettingsModal.tsx:436: Eksik:
+src/components/modals/ProjectSettingsModal.tsx:437: Kapalı: antette yukarıdaki "Döküman No" alanı kullanılır.
+src/components/modals/ProjectSettingsModal.tsx:444: Özel Alanlar
+src/components/modals/ProjectSettingsModal.tsx:449: Alan Ekle
+src/components/modals/ProjectSettingsModal.tsx:455: Ekstra bilgi alanı eklenmedi.
+src/components/modals/ProjectSettingsModal.tsx:463: Başlık (Örn: Kontrol Eden)
+src/components/modals/ProjectSettingsModal.tsx:470: Değer
+src/components/modals/ProjectSettingsModal.tsx:490: Harici Parçalar (PDF/AI Taraması)
+src/components/modals/ProjectSettingsModal.tsx:495: Parça
+src/components/modals/ProjectSettingsModal.tsx:496: Adet
+src/components/modals/ProjectSettingsModal.tsx:519: Teknik Notlar
+src/components/modals/ProjectSettingsModal.tsx:525: Örn: 1. Tüm ölçüler mm'dir...
+src/components/modals/ShortcutsModal.tsx:13: İleri Al
+src/components/modals/ShortcutsModal.tsx:15: Yapıştır
+src/components/modals/ShortcutsModal.tsx:16: Seçileni Sil
+src/components/modals/ShortcutsModal.tsx:17: Yön Tuşları
+src/components/modals/ShortcutsModal.tsx:17: Hassas Taşıma
+src/components/modals/ShortcutsModal.tsx:18: Yön
+src/components/modals/ShortcutsModal.tsx:18: Hızlı Taşıma
+src/components/modals/ShortcutsModal.tsx:19: Sürükle
+src/components/modals/ShortcutsModal.tsx:19: Çoklu Seçim
+src/components/modals/ShortcutsModal.tsx:20: Seçim Aracı
+src/components/modals/ShortcutsModal.tsx:21: Taşı Aracı
+src/components/modals/ShortcutsModal.tsx:22: Ölçekle Aracı
+src/components/modals/ShortcutsModal.tsx:23: Kutu Seçimi
+src/components/modals/ShortcutsModal.tsx:25: Bölge Ekle
+src/components/modals/ShortcutsModal.tsx:32: Teker Tıkla
+src/components/modals/ShortcutsModal.tsx:32: Kaydır (Pan)
+src/components/modals/ShortcutsModal.tsx:43: Klavye Kısayolları
+src/components/modals/ShortcutsModal.tsx:45: Kapat
+src/components/modals/ShortcutsModal.tsx:66: İpucu: Nesneleri sağ tıklayarak bağlam menüsüne erişebilirsiniz.
+src/components/ui/dialog.tsx:47: Close
+src/hooks/useLibraryManager.ts:63: Yeni Kütüphane
+src/hooks/useLibraryManager.ts:72: En az bir kütüphane kalmalıdır.
+src/hooks/useLibraryManager.ts:75: Bu kütüphaneyi ve içindeki tüm ürünleri silmek istediğinize emin misiniz?
+src/services/geminiService.ts:10: Gemini API anahtarı girilmemiş. Ayarlar > AI bölümünden ekleyin.
+src/services/geminiService.ts:32: AI analizi devre dışı.
+src/services/geminiService.ts:83: Sen uzman bir teknik çizim, otomasyon ve elektrik mühendisisin. Aşağıda JSON formatında bir sistemin cihazları ve kablo bağlantıları verilmiştir. Özellikle şunlara dikkat et: 1. Fiziksel Konnektör Uyumluluğu: Örneğin 4 pinli kablo 2 pinli sokete takılamaz. 2. Elektriksel Güç Uyumluluğu (Çok Önemli): - Voltaj uyumsuzlukları: Örn. 24V kaynağa 12V cihaz bağlanmış mı? - Güç Tipi uyumsuzlukları: Örn. AC kaynağa DC cihaz bağlanmış mı? 3. Kablo Etiketleri: Etiket, bağlandığı portun amacına uygun mu? Veri:
+src/services/geminiService.ts:94: Lütfen bu sistemi analiz et ve aşağıdaki JSON şemasında bir çıktı üret: 1. Sistemin ne yaptığına dair kısa bir teknik özet (summary). 2. Olası bağlantı hataları (giriş-giriş çakışması, voltaj hatası vb.) listesi (warnings). Yanıtın dili Türkçe olmalıdır.
+src/services/geminiService.ts:123: Boş yanıt alındı.
+src/services/geminiService.ts:127: Gemini analiz hatası:
+src/services/geminiService.ts:129: Analiz sırasında bir hata oluştu.
+src/services/geminiService.ts:130: Lütfen bağlantılarınızı kontrol edip tekrar deneyin.
+src/services/geminiService.ts:141: Görüntüdeki teknik resim parça listesini (Bill of Materials / BOM) analiz et. Tablo yapısını tanı ve satırları çıkar. Genellikle şu sütunlar olur: "No", "Parça Adı/Description", "Adet/Qty". Çıktı olarak bir JSON nesnesi döndür: { "parts": [ { "name": "Parça ismi", "count": 1 } ] } Eğer miktar (count) belirtilmemişse varsayılan olarak 1 kabul et. Sadece tablo içindeki verileri al. Başlıkları alma.
+src/services/libraryStore.ts:75: Varsayılan Kütüphane
+src/services/projectStore.ts:55: Adsız Proje
+src/types/index.ts:380: FAKRA E (Yeşil - Video)
+src/types/index.ts:391: Açık Uç (Power +/-)
+src/types/index.ts:392: Açık Uç (Trigger/Sinyal)
+src/types/index.ts:393: Terminal/Klemens Bağlantısı
+src/types/index.ts:399: Ultrasonik Sensör (2-Pin Waterproof)
+src/types/index.ts:400: Ultrasonik Sensör (3-Pin Waterproof)
+src/types/index.ts:425: Sigorta Yuvası (Blade)
+src/types/index.ts:426: Röle Soketi (Automotive)
+src/types/index.ts:427: Şase Pabucu (Ring Terminal)
+src/utils/bom-exporter.ts:32: Harici parça
+src/utils/bom-exporter.ts:39: Ürün
+src/utils/bom-exporter.ts:39: Açıklama
+src/utils/bom-exporter.ts:53: Bu sayfada malzeme listesine girecek ürün yok.
+src/utils/canvasHelpers.ts:319: Giriş portuna giriş bağlanamaz
+src/utils/canvasHelpers.ts:322: Çıkış portuna çıkış bağlanamaz
+src/utils/canvasHelpers.ts:328: Konnektör uyumsuz (
+src/utils/canvasHelpers.ts:336: Güç ve Toprak (GND) karıştırılamaz
+src/utils/canvasHelpers.ts:341: Güç Tipi Uyumsuz (
+src/utils/docNumbering.ts:50: Döküman tipi
+src/utils/docNumbering.ts:53: Sıra no (3 hane)
+src/utils/docNumbering.ts:54: Proje fazı (P0–P9)
+src/utils/junctions.ts:16: Birleşme noktası
