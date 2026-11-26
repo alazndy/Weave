@@ -6,7 +6,8 @@
 - **Last milestone:** Turkish/English coverage with a separate document language.
 
 ## Active Objectives
-- [ ] Install the new build on this machine (ask the user first: the running app must close).
+- [ ] Collect user feedback on the installed build.
+- [ ] Review `pnpm audit --prod` results (70 findings on 2026-11-26, not caused by this work).
 
 ## Technical Decisions
 - Memoized canvas children get stable handlers (`useStableHandlers`); stale closures caused jumps and bad undo.
@@ -24,7 +25,9 @@
 
 ## Change Log & Agent Trail
 - [2026-11-26] [Claude Kaira]: Fixed drag jumps, undo, wheel zoom, panning. Added port detail cards and wire junctions
-  (196 browser tests, 64 unit tests passed). Bundled translations. Installed build has fixes and port cards, not junctions.
+  (196 browser tests, 64 unit tests passed). Bundled translations. At that time the installed build had no junctions.
 - [2026-11-26] [Claude Kaira]: Translated the interface and sheet text. Added the document language setting.
   Fixed `html lang`: English uppercase text showed dotted İ. Unit tests: 71 passed. Browser tests: 195 of 200 passed
   in the full run; the other 5 passed when run alone (machine load about 15).
+- [2026-11-26] [Claude Kaira]: Installed the build of commit 876774f on this machine. The app took more than 30 s to quit.
+  Data backup: `~/.local/share/weave-backups/config-20261126-180655`.
