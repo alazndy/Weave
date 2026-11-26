@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useRef } from 'react';
 import { Map as MapIcon, ZoomOut, Maximize, ZoomIn, Hand, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -28,6 +29,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
     isMinimapVisible, setIsMinimapVisible, handleZoomOut, handleFitScreen, handleZoomIn, scale,
     onZoomTo, onPanBy, isHandActive, onToggleHand,
 }) => {
+    const { t } = useTranslation();
     const timer = useRef<{ t?: ReturnType<typeof setTimeout>; i?: ReturnType<typeof setInterval> }>({});
     const stop = () => { clearTimeout(timer.current.t); clearInterval(timer.current.i); };
     useEffect(() => stop, []);
@@ -50,30 +52,30 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
 
     return (
         <div data-testid="navigation-bar" className="absolute bottom-16 left-6 z-40 flex items-center gap-0.5 bg-ink/90 backdrop-blur-md border border-white/10 rounded-full px-1.5 py-1 shadow-xl no-print">
-            <button onClick={() => setIsMinimapVisible(!isMinimapVisible)} className={`p-1.5 rounded-full transition-colors ${isMinimapVisible ? 'text-paprika bg-white/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`} title="Mini Harita"><MapIcon size={18} /></button>
+            <button onClick={() => setIsMinimapVisible(!isMinimapVisible)} className={`p-1.5 rounded-full transition-colors ${isMinimapVisible ? 'text-paprika bg-white/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`} title={t('nav.minimap')}><MapIcon size={18} /></button>
             {onToggleHand && (
-                <button type="button" onClick={onToggleHand} aria-pressed={!!isHandActive} aria-label="Kaydırma modu" title="Kaydırma modu: sürükleyerek gez (H)"
+                <button type="button" onClick={onToggleHand} aria-pressed={!!isHandActive} aria-label={t('nav.handMode')} title={t('nav.handHint')}
                     className={`p-1.5 rounded-full transition-colors ${isHandActive ? 'bg-amber-500 text-zinc-900' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}><Hand size={18} /></button>
             )}
             {onPanBy && (<>
                 {sep}
-                {pad('Sola kaydır', ChevronLeft, 10, 0)}
-                {pad('Yukarı kaydır', ChevronUp, 0, 10)}
-                {pad('Aşağı kaydır', ChevronDown, 0, -10)}
-                {pad('Sağa kaydır', ChevronRight, -10, 0)}
+                {pad(t('nav.panLeft'), ChevronLeft, 10, 0)}
+                {pad(t('nav.panUp'), ChevronUp, 0, 10)}
+                {pad(t('nav.panDown'), ChevronDown, 0, -10)}
+                {pad(t('nav.panRight'), ChevronRight, -10, 0)}
             </>)}
             {sep}
-            <button onClick={handleZoomOut} className={btn} title="Uzaklaş"><ZoomOut size={18} /></button>
+            <button onClick={handleZoomOut} className={btn} title={t('nav.zoomOut')}><ZoomOut size={18} /></button>
             {onZoomTo && (
                 <input type="range" min={0} max={100} step={1} value={Math.min(100, Math.max(0, toSlider(scale)))}
-                    aria-label="Zoom düzeyi" title="Zoom düzeyi" data-testid="zoom-slider"
+                    aria-label={t('nav.zoomLevel')} title={t('nav.zoomLevel')} data-testid="zoom-slider"
                     onChange={(e) => onZoomTo(fromSlider(Number(e.target.value)))}
                     className="w-24 h-1 accent-amber-500 cursor-pointer" />
             )}
-            <button onClick={handleZoomIn} className={btn} title="Yakınlaş" aria-label="Yakınlaş"><ZoomIn size={18} /></button>
-            <button onClick={handleFitScreen} className={btn} title="Ekrana Sığdır"><Maximize size={18} /></button>
+            <button onClick={handleZoomIn} className={btn} title={t('nav.zoomIn')} aria-label={t('nav.zoomIn')}><ZoomIn size={18} /></button>
+            <button onClick={handleFitScreen} className={btn} title={t('nav.fit')}><Maximize size={18} /></button>
             {sep}
-            <button type="button" onClick={() => onZoomTo?.(1)} title="%100'e dön" aria-label="Yakınlaştırmayı %100 yap"
+            <button type="button" onClick={() => onZoomTo?.(1)} title={t('nav.reset100')} aria-label={t('nav.setZoom100')}
                 className="px-2 min-w-[3.25rem] text-xs font-mono font-bold text-zinc-400 hover:text-white select-none" data-testid="zoom-percent">
                 {Math.round(scale * 100)}%
             </button>

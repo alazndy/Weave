@@ -297,6 +297,8 @@ export interface DocNumbering {
 }
 
 export interface ProjectMetadata {
+  /** Language of everything printed on the sheets. Missing in older projects: 'tr'. */
+  docLanguage?: 'tr' | 'en';
   projectName: string;
   companyName: string;
   companyLogo: string | null;
@@ -362,8 +364,28 @@ export interface AlignmentGuide {
   end: number;   // End of the line
 }
 
+const LOCALIZED_CONNECTORS = new Set<ConnectorType>([
+  'generic',
+  'fakra-c-blue',
+  'fakra-d-purple',
+  'fakra-e-green',
+  'flying-lead-power',
+  'flying-lead-trigger',
+  'terminal-block',
+  'ultrasonic-sensor-2pin',
+  'ultrasonic-sensor-3pin',
+  'fuse-holder-blade',
+  'relay-socket-5pin',
+  'ring-terminal',
+]);
+
+/** Connector name in the language of `t`; trade names are the same in every language. */
+export const connectorLabel = (type: ConnectorType, t: (key: string) => string): string =>
+  LOCALIZED_CONNECTORS.has(type) ? t(`connector.${type.replace(/\./g, '_')}`) : CONNECTOR_LABELS[type];
+
+/** English names; show them through `connectorLabel`. */
 export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
-  'generic': 'Genel / Belirsiz',
+  'generic': 'Generic / Unspecified',
 
   // 1. Ana Analog (Proprietary)
   'brigade-vbv-4pin': 'VBV 4-Pin (Select Series)',
@@ -375,9 +397,9 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   'm12-d-coded-4pin': 'M12 Ethernet (D-Coded 4-Pin)',
   'm12-a-coded-5pin': 'M12 Power/Analog (A-Coded 5-Pin)',
   'm12-a-coded-8pin': 'M12 Power/Analog (A-Coded 8-Pin)',
-  'fakra-c-blue': 'FAKRA C (Mavi - GPS)',
-  'fakra-d-purple': 'FAKRA D (Mor - GSM)',
-  'fakra-e-green': 'FAKRA E (Yeşil - Video)',
+  'fakra-c-blue': 'FAKRA C (Blue - GPS)',
+  'fakra-d-purple': 'FAKRA D (Purple - GSM)',
+  'fakra-e-green': 'FAKRA E (Green - Video)',
 
   // 3. Ağır Hizmet
   'sp7-heavy-duty': 'SP-7 Heavy Duty (7-Pin)',
@@ -388,16 +410,16 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   'bnc-connector': 'BNC (Bayonet)',
 
   // 5. Dahili / Güç (Flying Leads)
-  'flying-lead-power': 'Açık Uç (Power +/-)',
-  'flying-lead-trigger': 'Açık Uç (Trigger/Sinyal)',
-  'terminal-block': 'Terminal/Klemens Bağlantısı',
+  'flying-lead-power': 'Flying Lead (Power +/-)',
+  'flying-lead-trigger': 'Flying Lead (Trigger/Signal)',
+  'terminal-block': 'Terminal Block',
   'd-sub-db9': 'D-Sub DB9 (Serial/MDR)',
   'd-sub-db15': 'D-Sub DB15 (VGA/MDR)',
   'd-sub-db25': 'D-Sub DB25 (Parallel/Expansion)',
 
   // 6. Sensör (Detection)
-  'ultrasonic-sensor-2pin': 'Ultrasonik Sensör (2-Pin Waterproof)',
-  'ultrasonic-sensor-3pin': 'Ultrasonik Sensör (3-Pin Waterproof)',
+  'ultrasonic-sensor-2pin': 'Ultrasonic Sensor (2-Pin Waterproof)',
+  'ultrasonic-sensor-3pin': 'Ultrasonic Sensor (3-Pin Waterproof)',
   'deutsch-dt04-2pin': 'Deutsch DT04 (2-Pin)',
   'deutsch-dt04-3pin': 'Deutsch DT04 (3-Pin)',
   'deutsch-dt04-4pin': 'Deutsch DT04 (4-Pin)',
@@ -422,7 +444,7 @@ export const CONNECTOR_LABELS: Record<ConnectorType, string> = {
   'jst-ph': 'JST PH Series',
 
   // 10. Aksesuar
-  'fuse-holder-blade': 'Sigorta Yuvası (Blade)',
-  'relay-socket-5pin': 'Röle Soketi (Automotive)',
-  'ring-terminal': 'Şase Pabucu (Ring Terminal)'
+  'fuse-holder-blade': 'Fuse Holder (Blade)',
+  'relay-socket-5pin': 'Relay Socket (Automotive)',
+  'ring-terminal': 'Ground Ring Terminal'
 };

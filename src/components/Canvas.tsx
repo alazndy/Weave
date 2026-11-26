@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment, PortCard, Junction } from '../types';
 import { getPortPosition } from '../utils/canvasHelpers';
 import { EditPortModal } from './modals/EditPortModal';
@@ -8,6 +9,7 @@ import { EditTextModal } from './modals/EditTextModal';
 import { ContextMenu } from './canvas/ContextMenu';
 import { ISOFrame } from './canvas/ISOFrame';
 import { TitleBlock } from './canvas/TitleBlock';
+import { docLanguageOf } from '../utils/documentDefaults';
 import { BOMTable } from './canvas/BOMTable';
 import { instanceNumber, duplicateNumbers } from '../utils/numbering';
 import { LegendStack } from './canvas/LegendStack';
@@ -103,7 +105,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   portCards = NO_CARDS, onPortCardsChange,
   junctions = NO_JUNCTIONS, onJunctionsChange, onWiringChange,
   onGroupSelected, onUngroupSelected, onSaveBlock,
-  activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
+  activePageName = '', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
   onAddInstance
 }) => {
@@ -365,7 +367,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       if (!from || !to) return false;
       const problems = validatePortCompatibility(from, to);
       if (problems.length === 0) return false;
-      setConnectionWarning(`Bağlantı kurulamadı: ${problems.join(' • ')}`);
+      setConnectionWarning(t('cable.refused', { problems: problems.join(' • ') }));
       return true;
   };
 
@@ -543,6 +545,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   };
 
   // ProductNode is memoized, so everything it calls from DOM events must go through stable wrappers.
+  const { t } = useTranslation();
   const nodeHandlers = useStableHandlers({
       onRenumber: (id: string, value: string) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, number: value || undefined } : i)); },
       handleInstanceMouseDown,
@@ -588,6 +591,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
         onMouseDownCapture={trackPointerDown}
         id="canvas-export-area"
+            lang={docLanguageOf(projectMetadata ?? {})}
       >
         {/* Paper Frame */}
         {projectMetadata && (
@@ -851,7 +855,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         {groupBounds && (
             <div data-testid="group-bounds" className="absolute z-[60] pointer-events-none border border-dashed border-sky-400"
                 style={{ left: groupBounds.x - 4, top: groupBounds.y - 4, width: groupBounds.w + 8, height: groupBounds.h + 8 }}>
-                <div data-group-scale data-testid="group-scale-handle" title="Seçilenleri birlikte ölçekle"
+                <div data-group-scale data-testid="group-scale-handle" title={t('canvas.scaleGroup')}
                     onMouseDown={startGroupScale}
                     className="pointer-events-auto absolute -right-6 -bottom-6 h-4 w-4 cursor-nwse-resize rounded-sm border-2 border-white bg-sky-500 shadow" />
             </div>
@@ -949,7 +953,7 @@ export const Canvas: React.FC<CanvasProps> = ({
               style={{ left: cableMenu.x, top: cableMenu.y }} onContextMenu={e => e.preventDefault()}>
               <button type="button" className="rounded px-3 py-2 text-sm font-bold text-zinc-200 hover:bg-white/10"
                   onClick={() => { addJunctionOnCable(cableMenu.id, cableMenu.point); setCableMenu(null); }}>
-                  Birleşme noktası ekle
+                  {t('junction.add')}
               </button>
           </div>
       )}

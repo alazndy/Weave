@@ -1,4 +1,5 @@
 import { cablePairs } from '../utils/junctions';
+import i18n, { appLanguage } from '../i18n';
 
 
 import { GoogleGenAI, Type } from "@google/genai";
@@ -7,7 +8,7 @@ import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, Externa
 // The key is supplied by the user at runtime (App Settings) and never bundled
 // into the build, where it would be readable by anyone with the app.
 const MODEL = "gemini-2.5-flash";
-export const MISSING_KEY_MESSAGE = "Gemini API anahtarı girilmemiş. Ayarlar > AI bölümünden ekleyin.";
+export const missingKeyMessage = () => i18n.t('ai.missingKey');
 
 const clientCache = new Map<string, GoogleGenAI>();
 const getClient = (apiKey: string) => {
@@ -28,8 +29,8 @@ export const analyzeSchematic = async (
 ) => {
   if (!apiKey) {
     return {
-      summary: MISSING_KEY_MESSAGE,
-      warnings: ["AI analizi devre dışı."]
+      summary: missingKeyMessage(),
+      warnings: [i18n.t('ai.disabled')]
     };
   }
 
@@ -81,23 +82,23 @@ export const analyzeSchematic = async (
   };
 
   const prompt = `
-    Sen uzman bir teknik çizim, otomasyon ve elektrik mühendisisin. 
-    Aşağıda JSON formatında bir sistemin cihazları ve kablo bağlantıları verilmiştir.
-    
-    Özellikle şunlara dikkat et:
-    1. Fiziksel Konnektör Uyumluluğu: Örneğin 4 pinli kablo 2 pinli sokete takılamaz.
-    2. Elektriksel Güç Uyumluluğu (Çok Önemli):
-       - Voltaj uyumsuzlukları: Örn. 24V kaynağa 12V cihaz bağlanmış mı?
-       - Güç Tipi uyumsuzlukları: Örn. AC kaynağa DC cihaz bağlanmış mı?
-    3. Kablo Etiketleri: Etiket, bağlandığı portun amacına uygun mu?
-    
-    Veri: ${JSON.stringify(systemData, null, 2)}
+    You are an expert technical drawing, automation and electrical engineer.
+    Below are the devices and cable connections of a system, as JSON.
 
-    Lütfen bu sistemi analiz et ve aşağıdaki JSON şemasında bir çıktı üret:
-    1. Sistemin ne yaptığına dair kısa bir teknik özet (summary).
-    2. Olası bağlantı hataları (giriş-giriş çakışması, voltaj hatası vb.) listesi (warnings).
-    
-    Yanıtın dili Türkçe olmalıdır.
+    Pay special attention to:
+    1. Physical connector compatibility: for example, a 4-pin cable does not fit a 2-pin socket.
+    2. Electrical power compatibility (very important):
+       - Voltage mismatches: for example, a 12V device on a 24V source.
+       - Power type mismatches: for example, a DC device on an AC source.
+    3. Cable labels: does each label match the purpose of the port it connects to?
+
+    Data: ${JSON.stringify(systemData, null, 2)}
+
+    Analyse this system and answer with the given JSON schema:
+    1. A short technical summary of what the system does (summary).
+    2. A list of possible connection errors, such as input-to-input or wrong voltage (warnings).
+
+    Write the answer in ${appLanguage() === 'en' ? 'English' : 'Turkish'}.
   `;
 
   try {
@@ -120,38 +121,38 @@ export const analyzeSchematic = async (
     });
 
     const text = response.text;
-    if (!text) throw new Error("Boş yanıt alındı.");
+    if (!text) throw new Error("Empty response");
     return JSON.parse(text);
 
   } catch (error) {
-    console.error("Gemini analiz hatası:", error);
+    console.error("Gemini analysis failed:", error);
     return {
-      summary: "Analiz sırasında bir hata oluştu.",
-      warnings: ["Lütfen bağlantılarınızı kontrol edip tekrar deneyin."]
+      summary: i18n.t('ai.failed'),
+      warnings: [i18n.t('ai.retry')]
     };
   }
 };
 
 export const extractPartListFromImage = async (apiKey: string | undefined, imageData: string): Promise<ExternalPart[]> => {
-    if (!apiKey) throw new Error(MISSING_KEY_MESSAGE);
+    if (!apiKey) throw new Error(missingKeyMessage());
 
     // Remove header if present (data:image/png;base64,...)
     const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
 
     const prompt = `
-      Görüntüdeki teknik resim parça listesini (Bill of Materials / BOM) analiz et.
-      Tablo yapısını tanı ve satırları çıkar.
-      Genellikle şu sütunlar olur: "No", "Parça Adı/Description", "Adet/Qty".
-      
-      Çıktı olarak bir JSON nesnesi döndür:
+      Analyse the parts list (Bill of Materials / BOM) of the technical drawing in the picture.
+      Recognise the table structure and read its rows.
+      Typical columns are "No", "Description" and "Qty"; they can be in any language.
+
+      Return a JSON object:
       {
         "parts": [
-          { "name": "Parça ismi", "count": 1 }
+          { "name": "Part name", "count": 1 }
         ]
       }
-      
-      Eğer miktar (count) belirtilmemişse varsayılan olarak 1 kabul et.
-      Sadece tablo içindeki verileri al. Başlıkları alma.
+
+      Keep part names exactly as written. If a quantity is missing, use 1.
+      Read only the rows of the table, not its headings.
     `;
 
     try {

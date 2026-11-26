@@ -1,5 +1,6 @@
 import { UpdateSettings } from '../UpdateBanner';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppSettings, ColorPalette } from '../../types';
 import { Settings, Moon, Sun, Monitor, Check, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,32 +22,33 @@ interface AppSettingsModalProps {
 export const PALETTES: { id: ColorPalette; name: string; colors: Record<'ink' | 'paprika' | 'apricot' | 'vanilla' | 'alabaster', string> }[] = [
   {
     id: 'weave',
-    name: 'Weave (Default)',
+    name: 'palette.weave',
     colors: { ink: '5 5 23', paprika: '207 92 54', apricot: '239 200 139', vanilla: '244 227 178', alabaster: '211 213 215' }
   },
   {
     id: 'ocean',
-    name: 'Ocean Deep',
+    name: 'palette.ocean',
     colors: { ink: '15 23 42', paprika: '14 165 233', apricot: '56 189 248', vanilla: '186 230 253', alabaster: '203 213 225' }
   },
   {
     id: 'forest',
-    name: 'Forest',
+    name: 'palette.forest',
     colors: { ink: '2 44 34', paprika: '16 185 129', apricot: '132 204 22', vanilla: '236 252 203', alabaster: '209 213 219' }
   },
   {
     id: 'royal',
-    name: 'Cyber Purple',
+    name: 'palette.royal',
     colors: { ink: '19 7 34', paprika: '168 85 247', apricot: '232 121 249', vanilla: '250 232 255', alabaster: '229 231 235' }
   },
   {
     id: 'monochrome',
-    name: 'Monochrome',
+    name: 'palette.monochrome',
     colors: { ink: '0 0 0', paprika: '113 113 122', apricot: '212 212 216', vanilla: '250 250 250', alabaster: '212 212 216' }
   }
 ];
 
 export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings }) => {
+  const { t } = useTranslation();
   const [showKey, setShowKey] = useState(false);
 
   const handlePaletteChange = (paletteId: ColorPalette) => {
@@ -59,23 +61,23 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl">
                     <Settings className="w-5 h-5 text-primary" /> 
-                    Application Settings
+                    {t('appSettings.title')}
                 </DialogTitle>
                 <DialogDescription>
-                    Customize your workspace appearance and AI features.
+                    {t('appSettings.subtitle')}
                 </DialogDescription>
             </DialogHeader>
 
             <Tabs defaultValue="appearance" className="w-full mt-4">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="appearance"><Monitor className="w-4 h-4 mr-2"/> Appearance</TabsTrigger>
+                    <TabsTrigger value="appearance"><Monitor className="w-4 h-4 mr-2"/> {t('appSettings.appearance')}</TabsTrigger>
                     <TabsTrigger value="ai"><Sparkles className="w-4 h-4 mr-2"/> AI</TabsTrigger>
                 </TabsList>
 
                 {/* --- APPEARANCE TAB --- */}
                 <TabsContent value="appearance" className="space-y-6 mt-4">
                     <div className="space-y-4">
-                        <Label className="text-base font-semibold">Theme Mode</Label>
+                        <Label className="text-base font-semibold">{t('appSettings.themeMode')}</Label>
                         <div className="grid grid-cols-2 gap-4">
                             <Card 
                                 className={cn("cursor-pointer hover:bg-muted/50 transition-all border-2", settings.theme === 'dark' ? "border-primary bg-primary/5" : "border-border")}
@@ -86,8 +88,8 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                                         <Moon size={20} />
                                     </div>
                                     <div>
-                                        <div className="font-semibold">Dark Mode</div>
-                                        <div className="text-xs text-muted-foreground">Eye-friendly dark interface</div>
+                                        <div className="font-semibold">{t('appSettings.darkMode')}</div>
+                                        <div className="text-xs text-muted-foreground">{t('appSettings.darkHint')}</div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -101,8 +103,8 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                                         <Sun size={20} />
                                     </div>
                                     <div>
-                                        <div className="font-semibold">Light Mode</div>
-                                        <div className="text-xs text-muted-foreground">High contrast light interface</div>
+                                        <div className="font-semibold">{t('appSettings.lightMode')}</div>
+                                        <div className="text-xs text-muted-foreground">{t('appSettings.lightHint')}</div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -110,24 +112,24 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                     </div>
 
                     <div className="space-y-4">
-                         <Label className="text-base font-semibold">Language</Label>
+                         <Label className="text-base font-semibold">{t('appSettings.language')}</Label>
                          <Select 
                             value={settings.language} 
                             onValueChange={(val: 'tr' | 'en') => onUpdateSettings({ ...settings, language: val })}
                          >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Language" />
+                                <SelectValue placeholder={t('appSettings.selectLanguage')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="tr">🇹🇷 Türkçe (Turkish)</SelectItem>
+                                <SelectItem value="tr">🇹🇷 Türkçe</SelectItem>
                                 <SelectItem value="en">🇺🇸 English</SelectItem>
                             </SelectContent>
                          </Select>
-                         <p className="text-[10px] text-muted-foreground">* Changes will apply to some parts of the interface.</p>
+                         <p className="text-[10px] text-muted-foreground">{t('appSettings.languageHint')}</p>
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-base font-semibold">Color Palette</Label>
+                        <Label className="text-base font-semibold">{t('appSettings.palette')}</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {PALETTES.map(p => (
                                 <button
@@ -143,7 +145,7 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                                         <div className="w-3 h-6" style={{ backgroundColor: `rgb(${p.colors.paprika})` }}></div>
                                         <div className="w-3 h-6" style={{ backgroundColor: `rgb(${p.colors.apricot})` }}></div>
                                     </div>
-                                    <span className={cn("font-medium text-sm", settings.palette === p.id ? "text-primary" : "text-muted-foreground")}>{p.name}</span>
+                                    <span className={cn("font-medium text-sm", settings.palette === p.id ? "text-primary" : "text-muted-foreground")}>{t(p.name)}</span>
                                     {settings.palette === p.id && <Check className="absolute right-3 text-primary" size={16}/>}
                                 </button>
                             ))}
@@ -155,7 +157,7 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                 {/* --- AI TAB --- */}
                 <TabsContent value="ai" className="space-y-4 mt-4">
                     <div className="space-y-2">
-                        <Label htmlFor="gemini-key" className="text-base font-semibold">Gemini API Key</Label>
+                        <Label htmlFor="gemini-key" className="text-base font-semibold">{t('appSettings.geminiKey')}</Label>
                         <div className="flex gap-2">
                             <Input
                                 id="gemini-key"
@@ -167,20 +169,19 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ isOpen, onCl
                                 onChange={(e) => onUpdateSettings({ ...settings, geminiApiKey: e.target.value.trim() })}
                                 className="flex-1 font-mono"
                             />
-                            <Button variant="outline" size="icon" onClick={() => setShowKey(v => !v)} aria-label={showKey ? 'Gizle' : 'Göster'}>
+                            <Button variant="outline" size="icon" onClick={() => setShowKey(v => !v)} aria-label={showKey ? t('appSettings.hideKey') : t('appSettings.showKey')}>
                                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Şema analizi ve görselden parça listesi çıkarma için kullanılır. Anahtar yalnızca bu cihazda saklanır
-                            ve doğrudan Google'a gönderilir. Anahtar almak için: aistudio.google.com/apikey
+                            {t('appSettings.geminiHint')}
                         </p>
                     </div>
                 </TabsContent>
             </Tabs>
 
             <DialogFooter>
-                <Button onClick={onClose}>Close</Button>
+                <Button onClick={onClose}>{t('appSettings.close')}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

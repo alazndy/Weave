@@ -13,8 +13,8 @@ const TEMPLATE_PREFIX = '__junction__';
 export function withJunctions(instances: ProductInstance[], templates: ProductTemplate[], junctions: Junction[] = []) {
     if (!junctions.length) return { instances, templates };
     const template: ProductTemplate = {
-        id: TEMPLATE_PREFIX, name: 'Birleşme noktası', imageUrl: '', width: 0, height: 0,
-        ports: [{ id: JUNCTION_PORT, label: 'Nokta', x: 0, y: 0, type: 'bidirectional', connectorType: 'generic' }],
+        id: TEMPLATE_PREFIX, name: 'junction', imageUrl: '', width: 0, height: 0,
+        ports: [{ id: JUNCTION_PORT, label: 'junction', x: 0, y: 0, type: 'bidirectional', connectorType: 'generic' }],
     };
     return {
         instances: [...instances, ...junctions.map(j => ({ id: j.id, templateId: TEMPLATE_PREFIX, x: j.x, y: j.y }))],

@@ -108,8 +108,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   // Explicitly filter templates with memoization to ensure freshness
   const { components, blocks } = useMemo(() => {
     return {
-      components: templates.filter((t) => !t.isBlock),
-      blocks: templates.filter((t) => !!t.isBlock),
+      components: templates.filter((item) => !item.isBlock),
+      blocks: templates.filter((item) => !!item.isBlock),
     };
   }, [templates]);
 
@@ -137,14 +137,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <Edit2 className="h-3.5 w-3.5 mr-2" /> {t('sidebar.edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSingleExport?.(template); }}>
-                    <Download className="h-3.5 w-3.5 mr-2" /> Tekli Export
+                    <Download className="h-3.5 w-3.5 mr-2" /> {t('left.exportOne')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                     className="text-red-500 focus:text-red-500"
                     onClick={(e) => { 
                         e.stopPropagation(); 
-                        if (confirm("Silmek istediğinize emin misiniz?")) handleDeleteTemplate(template.id); 
+                        if (confirm(t('left.confirmDelete'))) handleDeleteTemplate(template.id); 
                     }}
                 >
                     <Trash2 className="h-3.5 w-3.5 mr-2" /> {t('sidebar.delete')}
@@ -224,8 +224,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <Tabs defaultValue="library" className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 pt-2">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="library">Library</TabsTrigger>
-                    <TabsTrigger value="project">Project</TabsTrigger>
+                    <TabsTrigger value="library">{t('left.library')}</TabsTrigger>
+                    <TabsTrigger value="project">{t('left.project')}</TabsTrigger>
                 </TabsList>
             </div>
 
@@ -236,24 +236,24 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 <div className="px-4 py-3 space-y-3 border-b border-border bg-muted/5">
                     <div className="flex items-center justify-between">
                         <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-                            Current Library
+                            {t('left.currentLibrary')}
                         </Label>
                         <div className="flex gap-1">
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startRename} aria-label="Kütüphaneyi yeniden adlandır">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startRename} aria-label={t('left.renameLibrary')}>
                                         <Edit2 className="h-3 w-3" />
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Rename Library</TooltipContent>
+                                <TooltipContent>{t('left.renameLibrary')}</TooltipContent>
                              </Tooltip>
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={createNew} aria-label="Yeni kütüphane">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={createNew} aria-label={t('left.newLibrary')}>
                                         <BookPlus className="h-3 w-3" />
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>New Library</TooltipContent>
+                                <TooltipContent>{t('left.newLibrary')}</TooltipContent>
                              </Tooltip>
                              <Tooltip>
                                 <TooltipTrigger asChild>
@@ -263,12 +263,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         className="h-6 w-6 hover:text-destructive"
                                         onClick={() => activeLibraryId && onDeleteLibrary?.(activeLibraryId)}
                                         disabled={libraries.length <= 1}
-                                        aria-label="Kütüphaneyi sil"
+                                        aria-label={t('left.deleteLibrary')}
                                     >
                                         <Trash2 className="h-3 w-3" />
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Delete Library</TooltipContent>
+                                <TooltipContent>{t('left.deleteLibrary')}</TooltipContent>
                              </Tooltip>
                         </div>
                     </div>
@@ -281,7 +281,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 className="h-8" 
                                 autoFocus
                             />
-                            <Button size="sm" onClick={saveRename}>Save</Button>
+                            <Button size="sm" onClick={saveRename}>{t('left.save')}</Button>
                         </div>
                     ) : (
                         <Select 
@@ -289,7 +289,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             onValueChange={(val) => onSwitchLibrary?.(val)}
                         >
                             <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Select library" />
+                                <SelectValue placeholder={t('left.selectLibrary')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {libraries.map((lib) => (
@@ -319,7 +319,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                      <div className="grid grid-cols-2 gap-2">
                                         {components.length === 0 ? (
                                             <div className="col-span-2 py-6 text-center text-xs text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
-                                                No components found
+                                                {t('left.noComponents')}
                                             </div>
                                         ) : (
                                             components.map(renderTemplateCard)
@@ -342,7 +342,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     <div className="grid grid-cols-2 gap-2">
                                         {blocks.length === 0 ? (
                                             <div className="col-span-2 py-6 text-center text-xs text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
-                                                No saved blocks
+                                                {t('left.noBlocks')}
                                             </div>
                                         ) : (
                                             blocks.map(renderTemplateCard)
@@ -359,29 +359,29 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 <div className="p-3 border-t border-border bg-muted/10 grid grid-cols-3 gap-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={handleExportLibrary} className="w-full h-8" aria-label="Kütüphaneyi indir">
+                            <Button variant="outline" size="sm" onClick={handleExportLibrary} className="w-full h-8" aria-label={t('left.downloadLibrary')}>
                                 <Download className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Download Library</TooltipContent>
+                        <TooltipContent>{t('left.downloadLibrary')}</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => libraryInputRef.current?.click()} className="w-full h-8" aria-label="Kütüphane içe aktar">
+                            <Button variant="outline" size="sm" onClick={() => libraryInputRef.current?.click()} className="w-full h-8" aria-label={t('left.importLibrary')}>
                                 <FileUp className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Import Library</TooltipContent>
+                        <TooltipContent>{t('left.importLibrary')}</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="default" size="sm" onClick={() => { setIsEditorOpen(true); setEditingTemplate(null); }} className="w-full h-8" aria-label="Yeni bileşen">
+                            <Button variant="default" size="sm" onClick={() => { setIsEditorOpen(true); setEditingTemplate(null); }} className="w-full h-8" aria-label={t('left.newComponent')}>
                                 <Plus className="h-3.5 w-3.5" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>New Component</TooltipContent>
+                        <TooltipContent>{t('left.newComponent')}</TooltipContent>
                     </Tooltip>
                     
                     <input type="file" ref={libraryInputRef} onChange={handleImportLibrary} accept=".json" className="hidden" />
@@ -395,13 +395,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         
                         {/* File Actions */}
                         <div className="space-y-2">
-                            <Label className="text-xs uppercase text-muted-foreground font-bold">Project File</Label>
+                            <Label className="text-xs uppercase text-muted-foreground font-bold">{t('left.projectFile')}</Label>
                             <div className="grid grid-cols-2 gap-2">
                                 <Button onClick={handleSaveProject} variant="outline" className="h-9 justify-start" size="sm">
-                                    <Save className="mr-2 h-3.5 w-3.5" /> Save
+                                    <Save className="mr-2 h-3.5 w-3.5" /> {t('left.save')}
                                 </Button>
                                 <Button onClick={() => projectInputRef.current?.click()} variant="outline" className="h-9 justify-start" size="sm">
-                                    <FolderOpen className="mr-2 h-3.5 w-3.5" /> Open
+                                    <FolderOpen className="mr-2 h-3.5 w-3.5" /> {t('left.open')}
                                 </Button>
                             </div>
                             <input type="file" ref={projectInputRef} onChange={handleLoadProject} accept=".weave,.json" className="hidden" />
@@ -411,10 +411,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
                         {/* Paper Settings */}
                         <div className="space-y-3">
-                            <Label className="text-xs uppercase text-muted-foreground font-bold">Canvas Settings</Label>
+                            <Label className="text-xs uppercase text-muted-foreground font-bold">{t('left.canvasSettings')}</Label>
                             
                             <div className="space-y-2">
-                                <Label className="text-xs">Paper Size</Label>
+                                <Label className="text-xs">{t('left.paperSize')}</Label>
                                 <Select 
                                     value={projectMetadata.paperSize} 
                                     onValueChange={(val: PaperSize) => setProjectMetadata({ ...projectMetadata, paperSize: val })}
@@ -431,7 +431,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs">Orientation</Label>
+                                <Label className="text-xs">{t('left.orientation')}</Label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button 
                                         variant={projectMetadata.orientation === 'landscape' ? 'default' : 'outline'}
@@ -439,7 +439,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         onClick={() => setProjectMetadata({ ...projectMetadata, orientation: 'landscape' })}
                                         className="h-8 text-xs"
                                     >
-                                        <Monitor className="mr-2 h-3 w-3" /> Landscape
+                                        <Monitor className="mr-2 h-3 w-3" /> {t('left.landscape')}
                                     </Button>
                                     <Button 
                                         variant={projectMetadata.orientation === 'portrait' ? 'default' : 'outline'}
@@ -447,7 +447,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         onClick={() => setProjectMetadata({ ...projectMetadata, orientation: 'portrait' })}
                                         className="h-8 text-xs"
                                     >
-                                        <FileText className="mr-2 h-3 w-3" /> Portrait
+                                        <FileText className="mr-2 h-3 w-3" /> {t('left.portrait')}
                                     </Button>
                                 </div>
                             </div>
@@ -458,16 +458,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         {(onNumberBySpace || onResetNumbers) && (
                             <>
                                 <div className="space-y-2" data-testid="numbering-section">
-                                    <Label className="text-xs uppercase text-muted-foreground font-bold">Numaralandırma</Label>
-                                    <p className="text-[10px] text-muted-foreground">Rozete çift tıklayarak tek tek değiştirebilirsin.</p>
+                                    <Label className="text-xs uppercase text-muted-foreground font-bold">{t('left.numbering')}</Label>
+                                    <p className="text-[10px] text-muted-foreground">{t('left.numberingHint')}</p>
                                     {onNumberBySpace && (
-                                        <Button onClick={onNumberBySpace} variant="outline" size="sm" className="w-full justify-start h-8 text-xs" title="Sayfadaki bileşenleri yukarıdan aşağı, soldan sağa 1, 2, 3… numarala">
-                                            Konuma göre numarala
+                                        <Button onClick={onNumberBySpace} variant="outline" size="sm" className="w-full justify-start h-8 text-xs" title={t('left.numberByPositionHint')}>
+                                            {t('left.numberByPosition')}
                                         </Button>
                                     )}
                                     {onResetNumbers && (
-                                        <Button onClick={onResetNumbers} variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" title="Elle verilen numaraları sil, otomatik sıraya dön">
-                                            Otomatiğe sıfırla
+                                        <Button onClick={onResetNumbers} variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" title={t('left.resetNumbersHint')}>
+                                            {t('left.resetNumbers')}
                                         </Button>
                                     )}
                                 </div>
@@ -477,10 +477,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
                         {/* Export & Integrations */}
                         <div className="space-y-2">
-                            <Label className="text-xs uppercase text-muted-foreground font-bold">Exports</Label>
+                            <Label className="text-xs uppercase text-muted-foreground font-bold">{t('left.exports')}</Label>
                             {onExportBOM && (
                                 <Button onClick={onExportBOM} variant="ghost" className="w-full justify-start h-8 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30">
-                                    <FileUp className="mr-2 h-3.5 w-3.5" /> Export BOM
+                                    <FileUp className="mr-2 h-3.5 w-3.5" /> {t('left.exportBom')}
                                 </Button>
                             )}
                         </div>
@@ -493,7 +493,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {/* Global Footer */}
         <div className="p-3 border-t border-border bg-background">
              <Button onClick={onOpenSettings} variant="secondary" className="w-full h-9">
-                 <Settings className="mr-2 h-4 w-4" /> App Settings
+                 <Settings className="mr-2 h-4 w-4" /> {t('left.appSettings')}
              </Button>
         </div>
     </div>

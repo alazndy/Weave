@@ -1,5 +1,6 @@
 
-import { ProductInstance, ProductTemplate, Point, ConnectionShape, ConnectorType, Connection, CONNECTOR_LABELS, AlignmentGuide, PortDefinition } from '../types';
+import { ProductInstance, ProductTemplate, Point, ConnectionShape, ConnectorType, Connection, connectorLabel, AlignmentGuide, PortDefinition } from '../types';
+import i18n from '../i18n';
 
 // Re-export specific logic from new modules
 export { SNAP_GRID_SIZE, snapToGrid, getPortPosition, getPortNormal, findIntersection, getInstanceRect } from './geometry';
@@ -316,16 +317,16 @@ export const validatePortCompatibility = (
 
     // 1. Flow Direction
     if (fromPort.type === 'input' && toPort.type === 'input') {
-        warnings.push('Giriş portuna giriş bağlanamaz');
+        warnings.push(i18n.t('warnings.inputInput'));
     }
     if (fromPort.type === 'output' && toPort.type === 'output') {
-        warnings.push('Çıkış portuna çıkış bağlanamaz');
+        warnings.push(i18n.t('warnings.outputOutput'));
     }
 
     // 2. Connector Type
     if (fromPort.connectorType !== 'generic' && toPort.connectorType !== 'generic') {
         if (fromPort.connectorType !== toPort.connectorType) {
-            warnings.push(`Konnektör uyumsuz (${CONNECTOR_LABELS[fromPort.connectorType]} -> ${CONNECTOR_LABELS[toPort.connectorType]})`);
+            warnings.push(i18n.t('warnings.connector', { from: connectorLabel(fromPort.connectorType, i18n.t), to: connectorLabel(toPort.connectorType, i18n.t) }));
         }
     }
 
@@ -333,17 +334,17 @@ export const validatePortCompatibility = (
     if (fromPort.isPower && toPort.isPower) {
         // GND Check
         if (!!fromPort.isGround !== !!toPort.isGround) {
-             warnings.push('Güç ve Toprak (GND) karıştırılamaz');
+             warnings.push(i18n.t('warnings.powerGround'));
         }
 
         // Type (AC/DC)
         if (fromPort.powerType && toPort.powerType && fromPort.powerType !== toPort.powerType) {
-            warnings.push(`Güç Tipi Uyumsuz (${fromPort.powerType} vs ${toPort.powerType})`);
+            warnings.push(i18n.t('warnings.powerType', { from: fromPort.powerType, to: toPort.powerType }));
         }
         
         // Voltage
         if (fromPort.voltage && toPort.voltage && fromPort.voltage !== toPort.voltage) {
-             warnings.push(`Voltaj Uyumsuz (${fromPort.voltage}V vs ${toPort.voltage}V)`);
+             warnings.push(i18n.t('warnings.voltage', { from: fromPort.voltage, to: toPort.voltage }));
         }
     }
 

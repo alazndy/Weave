@@ -11,7 +11,7 @@ test.describe('Antet (örnek lejanta göre) ve döküman protokolü', () => {
   test('antet örnek lejantın bölümlerini gösterir', async ({ page }) => {
     await openApp(page);
     const block = page.getByTestId('title-block');
-    for (const t of ['REVISIONS', 'DESCRIPTION', 'CHKD.', 'Drawing Name:', 'Page Name:', 'APPROVED', 'CHECKED', 'DRAWN', 'NAME', 'SIGN', 'Project Name:', 'Drawing No:', 'Scale', 'Sheet', 'T. Sheet', 'Norm', 'Revision'])
+    for (const t of ['REVİZYONLAR', 'AÇIKLAMA', 'KONT.', 'Çizim Adı:', 'Sayfa Adı:', 'ONAY', 'KONTROL', 'ÇİZEN', 'ADI', 'İMZA', 'Proje Adı:', 'Çizim No:', 'Ölçek', 'Sayfa', 'T. Sayfa', 'Norm', 'Revizyon'])
       await expect(block).toContainText(new RegExp(t, 'i'));
     await expect(page.getByTestId('legend-rev-symbol').locator('polygon')).toBeVisible();
     await expect(block).toContainText('A4');
@@ -21,9 +21,9 @@ test.describe('Antet (örnek lejanta göre) ve döküman protokolü', () => {
     const errors = trackErrors(page);
     await openApp(page);
     const modal = await open(page);
-    await modal.getByLabel('Çizim Adı (Drawing Name)').fill('CAS General Configuration');
+    await modal.getByLabel('Çizim Adı', { exact: true }).fill('CAS General Configuration');
     await modal.getByPlaceholder('Proje Adı').fill('Collision Avoidance System');
-    await modal.getByLabel('Kontrol Eden (Checked)').fill('M. Demir');
+    await modal.getByLabel('Kontrol Eden', { exact: true }).fill('M. Demir');
     await modal.getByLabel('Onay Tarihi').fill('02.11.2026');
     await modal.getByRole('button', { name: 'Revizyon Ekle' }).click();
     await modal.getByLabel('Revizyon 1 açıklama').fill('İlk taslak');
@@ -52,7 +52,7 @@ test.describe('Antet (örnek lejanta göre) ve döküman protokolü', () => {
     const section = modal.getByTestId('doc-numbering-section');
     await expect(section.getByTestId('doc-number-preview')).toHaveText('AAA-DWD-ELE-GEN-001-01 Rev-P1-0');
     await section.getByText('Protokolü kullan').click();
-    await section.getByLabel('Originator (AAA)').fill('anc');
+    await section.getByLabel('Hazırlayan Kuruluş (AAA)').fill('anc');
     await section.getByLabel('Döküman Tipi (BBB)').fill('PTC');
     await expect(section).toContainText('Protocol');
     await section.getByLabel('Lokasyon / Alan (DDD)').fill('CS3');
@@ -71,8 +71,8 @@ test.describe('Antet (örnek lejanta göre) ve döküman protokolü', () => {
     const section = modal.getByTestId('doc-numbering-section');
     await expect(page.getByTestId('legend-docno')).not.toHaveText(/Rev-P/);
     await section.getByText('Protokolü kullan').click();
-    await expect(section).toContainText('Eksik: Originator');
-    await section.getByLabel('Originator (AAA)').fill('ANC');
+    await expect(section).toContainText('Eksik: Hazırlayan kuruluş');
+    await section.getByLabel('Hazırlayan Kuruluş (AAA)').fill('ANC');
     await expect(section).not.toContainText('Eksik:');
   });
 });

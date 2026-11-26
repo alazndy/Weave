@@ -40,7 +40,7 @@ const upload = async (page: Page) => {
 
 const toPorts = async (page: Page) => {
   await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
-  await expect(page.getByAltText('Work area')).toBeVisible();
+  await expect(page.getByAltText('Çalışma alanı')).toBeVisible();
 };
 
 test.describe('Ürün editörü', () => {
@@ -73,10 +73,10 @@ test.describe('Ürün editörü', () => {
     await redo.click();
   });
 
-  test('araç düğmeleri (Seç, Sil, Öl, Tara) seçilebilir', async ({ page }) => {
+  test('araç düğmeleri (Seç, Sil, Ölç, Tara) seçilebilir', async ({ page }) => {
     await openApp(page);
     await upload(page);
-    for (const t of ['Sil', 'Öl', 'Tara', 'Seç']) {
+    for (const t of ['Sil', 'Ölç', 'Tara', 'Seç']) {
       await page.getByTitle(t, { exact: true }).click();
     }
   });
@@ -110,7 +110,7 @@ test.describe('Ürün editörü', () => {
     await page.getByPlaceholder('Örn: Motor Sürücü').fill('Yeni Sensör');
     await page.getByPlaceholder('Örn: MTR-001').fill('SNS-9');
 
-    const img = page.getByAltText('Work area');
+    const img = page.getByAltText('Çalışma alanı');
     const b = (await img.boundingBox())!;
     await img.click({ position: { x: b.width * 0.8, y: b.height * 0.5 } });
     await page.getByTitle('Port 1').click();
@@ -132,7 +132,7 @@ test.describe('Ürün editörü', () => {
     await openApp(page);
     await upload(page);
     await toPorts(page);
-    const img = page.getByAltText('Work area');
+    const img = page.getByAltText('Çalışma alanı');
     const b = (await img.boundingBox())!;
     await img.click({ position: { x: b.width * 0.3, y: b.height * 0.4 } });
     await page.getByTitle('Port 1').click();
@@ -166,7 +166,7 @@ test.describe('Port düzenleme kutusu konumu', () => {
       await page.getByRole('button', { name: 'Yeni bileşen' }).click();
       await page.locator('input[type=file][accept*=".png"]').setInputFiles({ name: 'p.png', mimeType: 'image/png', buffer: makePng(w, h) });
       await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
-      const img = page.getByAltText('Work area');
+      const img = page.getByAltText('Çalışma alanı');
       await expect(img).toBeVisible();
       const box = (await img.boundingBox())!;
 
@@ -209,7 +209,7 @@ test.describe('Port düzenleme kutusu konumu', () => {
     await page.getByRole('button', { name: 'Yeni bileşen' }).click();
     await page.locator('input[type=file][accept*=".png"]').setInputFiles({ name: 'p.png', mimeType: 'image/png', buffer: makePng(300, 200) });
     await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
-    const img = page.getByAltText('Work area');
+    const img = page.getByAltText('Çalışma alanı');
     const box = (await img.boundingBox())!;
     await img.click({ position: { x: box.width * 0.5, y: box.height * 0.9 } });
     await page.getByTitle('Port 1').click();
@@ -256,7 +256,7 @@ test('editörde porta pin bilgisi girilir ve ürünle birlikte saklanır', async
   await openApp(page);
   await upload(page);
   await toPorts(page);
-  const img = page.getByAltText('Work area');
+  const img = page.getByAltText('Çalışma alanı');
   await img.click({ position: { x: 40, y: 40 } });
   await page.getByTitle('Port 1').click();
   await page.getByRole('button', { name: /Port detayı/ }).click();

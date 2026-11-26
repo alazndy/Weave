@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Wand2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { 
   ProjectMetadata, 
@@ -122,6 +123,7 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   onRescaleAll,
   performCheckpoint
 }) => {
+  const { t } = useTranslation();
   const activePage = pages.find(p => p.id === activePageId);
 
   return (
@@ -130,7 +132,7 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200]">
           <div className="bg-ink border border-zinc-700 p-8 rounded-xl flex flex-col items-center gap-4 shadow-2xl">
              <Loader2 className="w-8 h-8 text-paprika animate-spin" />
-             <span className="text-vanilla font-medium">Yükleniyor...</span>
+             <span className="text-vanilla font-medium">{t('modalManager.loading')}</span>
           </div>
         </div>
       }>
@@ -167,8 +169,8 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
         isOpen={isClearModalOpen}
         onClose={() => setIsClearModalOpen(false)}
         onConfirm={onClearConfirm}
-        title="Sayfayı Temizle"
-        message="Bu sayfadaki tüm cihazlar ve bağlantılar silinecek. Diğer sayfalar etkilenmez."
+        title={t('modalManager.clearTitle')}
+        message={t('modalManager.clearMessage')}
       />
       
       <ShortcutsModal 
@@ -199,15 +201,15 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] no-print p-4">
             <div className="bg-ink/90 border border-alabaster/10 p-6 rounded-2xl w-full max-w-2xl shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200">
                 <h3 className="text-xl font-bold text-paprika mb-6 flex items-center gap-2">
-                    <Wand2 className="w-6 h-6"/> AI Analiz Raporu ({activePage?.name})
+                    <Wand2 className="w-6 h-6"/> {t('modalManager.reportTitle', { page: activePage?.name })}
                 </h3>
                 <div className="space-y-6 mb-8">
                     <div className="bg-black/40 p-5 rounded-xl border border-white/5">
-                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Sistem Özeti</h4>
+                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('modalManager.summary')}</h4>
                         <p className="text-alabaster text-sm leading-relaxed">{analysisResult.summary}</p>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Tespitler & Uyarılar</h4>
+                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('modalManager.findings')}</h4>
                         {analysisResult.warnings.length > 0 ? (
                             <ul className="space-y-2">
                                 {analysisResult.warnings.map((w, i) => (
@@ -220,13 +222,13 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
                         ) : (
                             <div className="flex items-center gap-3 text-apricot bg-apricot/20 p-4 rounded-xl border border-apricot/20">
                                 <CheckCircle2 size={24} />
-                                <span className="text-sm font-bold">Harika! Herhangi bir bağlantı sorunu tespit edilmedi.</span>
+                                <span className="text-sm font-bold">{t('modalManager.noIssues')}</span>
                             </div>
                         )}
                     </div>
                 </div>
                 <div className="flex justify-end">
-                    <button onClick={() => setAnalysisResult(null)} className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-bold text-sm transition-colors border border-white/10">Kapat</button>
+                    <button onClick={() => setAnalysisResult(null)} className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-bold text-sm transition-colors border border-white/10">{t('common.close')}</button>
                 </div>
             </div>
         </div>

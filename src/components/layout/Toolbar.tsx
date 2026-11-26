@@ -87,14 +87,14 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
                     disabled={pdfBusy}
                     variant="outline"
                     size="sm"
-                    aria-label="PDF olarak dışa aktar"
+                    aria-label={t('toolbar.exportPdf')}
                     className="text-xs font-bold gap-2"
                 >
                     <FileText className="w-3.5 h-3.5 2xl:mr-1" />
                     <span className="hidden 2xl:inline">{pdfBusy ? 'PDF…' : 'PDF'}</span>
                 </Button>
              </TooltipTrigger>
-             <TooltipContent><p>Tüm sayfaları tek PDF olarak dışa aktar (masaüstünde vektör: yazılar seçilebilir, yakınlaşınca pikselleşmez)</p></TooltipContent>
+             <TooltipContent><p>{t('toolbar.pdfHint')}</p></TooltipContent>
           </Tooltip>
         )}
 
@@ -209,7 +209,7 @@ export const Toolbar: React.FC<ToolbarProps> = (props) => {
         <ToolbarBtn 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             icon={theme === 'dark' ? Sun : Moon}
-            label={theme === 'dark' ? 'Aydınlık Mod' : 'Karanlık Mod'}
+            label={theme === 'dark' ? t('appSettings.lightMode') : t('appSettings.darkMode')}
         />
 
         <Separator orientation="vertical" className="h-6 mx-1 bg-border/50" />

@@ -64,7 +64,7 @@ export function useCanvasState(): CanvasState {
   const [toolSettings, setToolSettings] = useState<ToolSettings>({
       route: { color: '#6366f1', lineStyle: 'solid', strokeWidth: 'normal', cornerRadius: 10 },
       text: { fontSize: 16, color: '#ffffff' },
-      zone: { color: '#10b981', labelPrefix: 'BÖLGE' },
+      zone: { color: '#10b981', labelPrefix: '' },
       scale: { maintainAspectRatio: true }
   });
 

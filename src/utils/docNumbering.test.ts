@@ -21,7 +21,7 @@ describe('document numbering AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R', () => {
   });
   it('reports missing parts', () => {
     expect(missingParts(base)).toEqual([]);
-    expect(missingParts({ ...base, originator: 'AB', phase: 'X' })).toEqual(['Originator (3 harf)', 'Proje fazı (P0–P9)']);
+    expect(missingParts({ ...base, originator: 'AB', phase: 'X' })).toEqual(['docNumbering.originator', 'docNumbering.phase']);
   });
   it('uses the generated number only when enabled', () => {
     const m = { documentNo: 'MANUEL-1', docNumbering: base } as ProjectMetadata;

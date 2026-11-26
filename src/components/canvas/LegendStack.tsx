@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Maximize2 } from 'lucide-react';
 
 interface Props {
@@ -36,6 +37,7 @@ export const LegendStack: React.FC<Props> = ({ paperWidth, paperHeight, userScal
     return () => ro.disconnect();
   }, [paperHeight, paperWidth, user]);
 
+  const { t } = useTranslation();
   const startResize = (e: React.PointerEvent) => {
     if (!onUserScaleChange) return;
     e.preventDefault(); e.stopPropagation();
@@ -65,7 +67,7 @@ export const LegendStack: React.FC<Props> = ({ paperWidth, paperHeight, userScal
     >
       {children}
       {onUserScaleChange && (
-        <button type="button" data-testid="legend-scale-handle" aria-label="Lejant boyutunu ayarla" title="Sürükleyerek lejantın boyunu ayarla (çift tık: sıfırla)"
+        <button type="button" data-testid="legend-scale-handle" aria-label={t('legend.resizeAria')} title={t('legend.resizeHint')}
           onPointerDown={startResize}
           onDoubleClick={(e) => { e.stopPropagation(); onUserScaleChange(undefined, { checkpoint: true }); onUserScaleChange(undefined, { silent: true }); }}
           className="absolute -top-3 -left-3 z-[70] p-1 rounded-full bg-blue-600 text-white shadow-lg cursor-nwse-resize opacity-40 hover:opacity-100 pointer-events-auto no-print">

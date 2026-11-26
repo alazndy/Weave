@@ -73,7 +73,7 @@ test.describe('Bileşen numaralandırma', () => {
     const m = (await monitor.boundingBox())!, c = (await camera.boundingBox())!;
     await page.mouse.move(m.x + 40, m.y + 40); await page.mouse.down();
     await page.mouse.move(c.x - 140, c.y + 40, { steps: 8 }); await page.mouse.up();
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     await page.getByRole('button', { name: 'Konuma göre numarala' }).click();
     await expect(badge(monitor)).toHaveText('1');
     await expect(badge(camera)).toHaveText('2');

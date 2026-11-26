@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
-import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, Point, PortDefinition } from '../../types';
+import { useTranslation } from 'react-i18next';
+import { Connection, ProductInstance, ProductTemplate, connectorLabel, Point, PortDefinition } from '../../types';
 import { getPortPosition, getPortNormal, getRoutePath, validateConnection, getOrthogonalSegments, findIntersection } from '../../utils/canvasHelpers';
 import { getRouteEnds, normalizeInner, getHandles, curvedPathThrough, type Handle } from '../../utils/connectionRoute';
 import { Activity, ArrowDownToLine, Zap, Network, Video, ArrowRight, Cable, Edit2, Trash2, AlertTriangle, Lock } from 'lucide-react';
@@ -41,6 +42,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
   handleControlPointDoubleClick, removeConnection,
   selected = false, onSelect, onCableMenu, onHandleDown, onHandleDoubleClick
 }) => {
+    const { t } = useTranslation();
     const fromInst = instances.find(i => i.id === conn.fromInstanceId);
     const toInst = instances.find(i => i.id === conn.toInstanceId);
     const fromTemp = templates.find(t => t.id === fromInst?.templateId);
@@ -253,7 +255,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
 
                        <div className="flex justify-between items-start mb-3 pl-2">
                            <div>
-                               <span className={`block font-extrabold text-sm mb-0.5 ${theme === 'light' ? 'text-black' : 'text-zinc-200'}`}>{conn.label || 'Bağlantı'}</span>
+                               <span className={`block font-extrabold text-sm mb-0.5 ${theme === 'light' ? 'text-black' : 'text-zinc-200'}`}>{conn.label || t('cable.connection')}</span>
                                <span className="text-[10px] text-zinc-500 font-mono">{conn.id.slice(0,8)}</span>
                            </div>
                            <div className="w-4 h-4 rounded-full border border-zinc-600 shadow-inner" style={{ backgroundColor: strokeColor }}></div>
@@ -262,21 +264,21 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
                            <div className={`flex items-center gap-2 ${theme === 'light' ? 'text-zinc-700' : 'text-zinc-300'}`}>
                                <div className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center text-blue-400"><ArrowRight size={12} className="rotate-180"/></div>
                                <div className="flex flex-col">
-                                   <span className="text-[10px] text-zinc-500 font-bold uppercase">ÇIKIŞ / KAYNAK</span>
+                                   <span className="text-[10px] text-zinc-500 font-bold uppercase">{t('cable.source')}</span>
                                    <span className="font-bold">{fromTemp.name} <span className="text-zinc-500">•</span> {fromPort.label}</span>
                                </div>
                            </div>
                            <div className={`flex items-center gap-2 ${theme === 'light' ? 'text-zinc-700' : 'text-zinc-300'}`}>
                                <div className="w-5 h-5 rounded bg-green-500/20 flex items-center justify-center text-green-400"><ArrowRight size={12}/></div>
                                <div className="flex flex-col">
-                                   <span className="text-[10px] text-zinc-500 font-bold uppercase">GİRİŞ / HEDEF</span>
+                                   <span className="text-[10px] text-zinc-500 font-bold uppercase">{t('cable.target')}</span>
                                    <span className="font-bold">{toTemp.name} <span className="text-zinc-500">•</span> {toPort.label}</span>
                                </div>
                            </div>
                        </div>
                        <div className={`mt-3 pt-2 border-t flex items-center gap-2 pl-2 ${theme === 'light' ? 'border-zinc-200' : 'border-zinc-800'}`}>
                            <Cable size={12} className="text-zinc-500"/>
-                           <span className="text-[10px] font-mono text-zinc-400">{CONNECTOR_LABELS[fromPort.connectorType]} ↔ {CONNECTOR_LABELS[toPort.connectorType]}</span>
+                           <span className="text-[10px] font-mono text-zinc-400">{connectorLabel(fromPort.connectorType, t)} ↔ {connectorLabel(toPort.connectorType, t)}</span>
                        </div>
                   </div>
               </foreignObject>

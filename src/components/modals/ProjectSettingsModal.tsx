@@ -4,6 +4,9 @@ import { DOCUMENT_TYPES, DOCUMENT_DISCIPLINES, LOCATION_CODES, PROJECT_PHASES, t
 import { DEFAULT_DOC_NUMBERING, composeDocumentNo, missingParts } from '../../utils/docNumbering';
 import { Settings, Upload, RefreshCw, LayoutTemplate, ArrowLeftRight, Plus, Trash2, Save, FileText, Briefcase, User, Calendar } from 'lucide-react';
 import { PremiumModal } from '../ui/PremiumModal';
+import { useTranslation } from 'react-i18next';
+import { generateDocNo } from '../../utils/docNo';
+import { docLanguageOf } from '../../utils/documentDefaults';
 
 interface ProjectSettingsModalProps {
   metadata: ProjectMetadata;
@@ -12,22 +15,8 @@ interface ProjectSettingsModalProps {
   onCancel: () => void;
 }
 
-const generateDocNo = (projectName: string, revision: string) => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const acronym = projectName
-    .trim()
-    .split(/\s+/)
-    .map(word => word[0])
-    .join('')
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .substring(0, 6) || 'TSP';
-  const cleanRev = revision.replace(/[^a-zA-Z0-9]/g, '');
-  return `${acronym}-${date}-${cleanRev}`;
-};
-
 export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ metadata, onSave, onRescaleInstances, onCancel }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ProjectMetadata>(metadata);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,7 +42,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
 
   const revisions = formData.revisions ?? [];
   const addRevision = () => {
-    const next: RevisionEntry = { id: crypto.randomUUID(), rev: `Rev-${revisions.length}`, date: new Date().toLocaleDateString('tr-TR'), description: '', by: '', chkd: '' };
+    const next: RevisionEntry = { id: crypto.randomUUID(), rev: `Rev-${revisions.length}`, date: new Date().toLocaleDateString(docLanguageOf(formData) === 'en' ? 'en-GB' : 'tr-TR'), description: '', by: '', chkd: '' };
     setFormData(prev => ({ ...prev, revisions: [...(prev.revisions ?? []), next] }));
   };
   const updateRevision = (id: string, key: keyof Omit<RevisionEntry, 'id'>, val: string) =>
@@ -70,7 +59,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
         <label className={lbl} htmlFor={id}>{label}</label>
         <input id={id} list={`${id}-list`} value={value} maxLength={3} onChange={e => onChange(e.target.value.toUpperCase())} className={`${inp} font-mono`} placeholder={hint} />
         <datalist id={`${id}-list`}>{list.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</datalist>
-        <p className="text-[10px] mt-1 min-h-[14px] text-zinc-500">{found ? found.name : value ? 'Listede yok — özel kod olarak kullanılır' : ''}</p>
+        <p className="text-[10px] mt-1 min-h-[14px] text-zinc-500">{found ? found.name : value ? t('projectSettings.unlistedCode') : ''}</p>
       </div>
     );
   };
@@ -79,7 +68,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
   const addCustomField = () => {
     const newField: CustomField = {
       id: crypto.randomUUID(),
-      label: 'Yeni Alan',
+      label: t('projectSettings.newField'),
       value: ''
     };
     setFormData(prev => ({ ...prev, customFields: [...prev.customFields, newField] }));
@@ -107,19 +96,19 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
     <PremiumModal
       isOpen={true}
       onClose={onCancel}
-      title="Proje Detayları"
+      title={t('projectSettings.title')}
       icon={<Settings className="text-teal-400 w-5 h-5" />}
       width="max-w-4xl"
       footer={
           <>
             <button onClick={onCancel} className="px-6 py-2.5 text-sm font-bold text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-xl">
-                İptal
+                {t('projectSettings.cancel')}
             </button>
             <button 
                 onClick={() => onSave(formData)}
                 className="px-8 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-teal-500/20 transition-all hover:scale-105 active:scale-95"
             >
-                <Save className="w-4 h-4" /> Kaydet
+                <Save className="w-4 h-4" /> {t('projectSettings.save')}
             </button>
           </>
       }
@@ -139,12 +128,12 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                 <Upload className="w-8 h-8 text-zinc-600 group-hover/logo:text-teal-500 transition-colors" />
               )}
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity text-xs font-bold text-white backdrop-blur-[1px]">
-                Değiştir
+                {t('projectSettings.change')}
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-lg font-bold text-white mb-1">Şirket Logosu</label>
-              <p className="text-sm text-zinc-500 font-medium">Teknik çizim antetinde yer alacak resmi marka logosu. PNG, JPG veya SVG formatları desteklenir.</p>
+              <label className="block text-lg font-bold text-white mb-1">{t('projectSettings.logo')}</label>
+              <p className="text-sm text-zinc-500 font-medium">{t('projectSettings.logoHint')}</p>
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -158,59 +147,59 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
           <div className="grid grid-cols-2 gap-6 pb-6">
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                   <Briefcase size={12}/> Şirket Adı
+                   <Briefcase size={12}/> {t('projectSettings.companyName')}
               </label>
               <input 
                 type="text" 
                 value={formData.companyName}
                 onChange={e => setFormData({...formData, companyName: e.target.value})}
                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-base font-bold text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
-                placeholder="Firma Adı"
+                placeholder={t('projectSettings.companyPlaceholder')}
               />
             </div>
 
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  <User size={12}/> Müşteri
+                  <User size={12}/> {t('projectSettings.customer')}
               </label>
               <input 
                 type="text" 
                 value={formData.customerName || ''}
                 onChange={e => setFormData({...formData, customerName: e.target.value})}
                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-base font-bold text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
-                placeholder="Müşteri Adı / Firma"
+                placeholder={t('projectSettings.customerPlaceholder')}
               />
             </div>
 
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  <User size={12}/> Müşteri No
+                  <User size={12}/> {t('projectSettings.customerNo')}
               </label>
               <input
                 type="text"
-                aria-label="Müşteri No"
+                aria-label={t('projectSettings.customerNo')}
                 value={formData.customerNo || ''}
                 onChange={e => setFormData({...formData, customerNo: e.target.value})}
                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-base font-bold text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
-                placeholder="Müşteri numarası / kodu"
+                placeholder={t('projectSettings.customerNoPlaceholder')}
               />
             </div>
 
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  <FileText size={12}/> Proje Başlığı
+                  <FileText size={12}/> {t('projectSettings.projectTitle')}
               </label>
               <input 
                 type="text" 
                 value={formData.projectName}
                 onChange={e => setFormData({...formData, projectName: e.target.value})}
                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-base font-bold text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
-                placeholder="Proje Adı"
+                placeholder={t('projectSettings.projectName')}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Hazırlayan</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.preparedBy')}</label>
               <input 
                 type="text" 
                 value={formData.preparedBy}
@@ -220,7 +209,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
             </div>
             
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Onaylayan</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.approvedBy')}</label>
               <input 
                 type="text" 
                 value={formData.approvedBy}
@@ -230,7 +219,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Revizyon</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.revision')}</label>
               <input 
                 type="text" 
                 value={formData.revision}
@@ -240,7 +229,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Döküman No</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.documentNo')}</label>
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -251,7 +240,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                 <button 
                   onClick={handleGenerateDocNo}
                   className="bg-white/5 hover:bg-teal-500/10 text-zinc-400 hover:text-teal-400 px-3 py-2 rounded-xl border border-white/5 transition-colors flex items-center gap-2 text-xs font-bold whitespace-nowrap"
-                  title="Oto. Oluştur"
+                  title={t('projectSettings.generate')}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -260,7 +249,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
 
             <div>
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  <Calendar size={12}/> Tarih
+                  <Calendar size={12}/> {t('projectSettings.date')}
               </label>
               <input 
                 type="text" 
@@ -271,25 +260,39 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Görünür Ölçek</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.visibleScale')}</label>
               <input 
                 type="text" 
                 value={formData.scale}
                 onChange={e => setFormData({...formData, scale: e.target.value})}
                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-teal-500/50 focus:bg-black/40 outline-none transition-colors"
-                placeholder="Örn: 1:10"
+                placeholder={t('projectSettings.scalePlaceholder')}
               />
             </div>
 
             <div className="col-span-2 bg-gradient-to-br from-blue-600/10 to-transparent p-6 rounded-2xl border border-blue-500/20 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none"></div>
                 <h4 className="text-sm font-bold text-blue-200 mb-6 flex items-center gap-2">
-                    <LayoutTemplate size={18} className="text-blue-400"/> Sayfa Yapısı & Ölçek
+                    <LayoutTemplate size={18} className="text-blue-400"/> {t('projectSettings.pageSetup')}
                 </h4>
                 
+                <div className="mb-6">
+                    <label htmlFor="doc-language" className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">{t('projectSettings.docLanguage')}</label>
+                    <select
+                        id="doc-language"
+                        value={docLanguageOf(formData)}
+                        onChange={e => setFormData({ ...formData, docLanguage: e.target.value as 'tr' | 'en' })}
+                        className="w-full bg-black/30 border border-blue-500/20 rounded-xl px-4 py-3 text-sm font-bold text-blue-100 focus:border-blue-400/50 outline-none appearance-none"
+                    >
+                        <option value="tr">Türkçe</option>
+                        <option value="en">English</option>
+                    </select>
+                    <p className="text-[11px] text-blue-300/70 mt-2">{t('projectSettings.docLanguageHint')}</p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
-                        <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">Kağıt Boyutu</label>
+                        <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">{t('projectSettings.paperSize')}</label>
                         <select 
                             value={formData.paperSize}
                             onChange={e => setFormData({...formData, paperSize: e.target.value as PaperSize})}
@@ -301,21 +304,21 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                         </select>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">Yönlendirme</label>
+                        <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">{t('projectSettings.orientation')}</label>
                         <select 
                             value={formData.orientation}
                             onChange={e => setFormData({...formData, orientation: e.target.value as Orientation})}
                             className="w-full bg-black/30 border border-blue-500/20 rounded-xl px-4 py-3 text-sm font-bold text-blue-100 focus:border-blue-400/50 outline-none appearance-none"
                         >
-                            <option value="landscape">Yatay (Landscape)</option>
-                            <option value="portrait">Dikey (Portrait)</option>
+                            <option value="landscape">{t('projectSettings.landscape')}</option>
+                            <option value="portrait">{t('projectSettings.portrait')}</option>
                         </select>
                     </div>
                 </div>
 
                 <div className="flex items-end gap-6 pt-6 border-t border-blue-500/20">
                     <div className="flex-1">
-                         <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">Piksel Ölçeği (px/mm)</label>
+                         <label className="block text-[10px] font-bold text-blue-300/50 uppercase mb-2">{t('projectSettings.pixelScale')}</label>
                          <div className="flex items-center gap-4">
                              <input 
                                 type="number" 
@@ -332,7 +335,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                         onClick={() => onRescaleInstances(formData.pixelScale)}
                         className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all hover:translate-y-px active:translate-y-0"
                     >
-                        <ArrowLeftRight size={16}/> Tümünü Yeniden Boyutlandır
+                        <ArrowLeftRight size={16}/> {t('projectSettings.rescaleAll')}
                     </button>
                 </div>
             </div>
@@ -340,53 +343,53 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
 
           {/* Drawing info: names, signatures */}
           <div className="border-t border-white/5 pt-6" data-testid="drawing-info-section">
-            <label className="block text-sm font-bold text-zinc-200 mb-4">Çizim / İmza Bilgileri (Antet)</label>
+            <label className="block text-sm font-bold text-zinc-200 mb-4">{t('projectSettings.drawingInfo')}</label>
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-3">
-                <label className={lbl} htmlFor="drawing-name">Çizim Adı (Drawing Name)</label>
-                <input id="drawing-name" className={inp} value={formData.drawingName || ''} onChange={e => setFormData({ ...formData, drawingName: e.target.value })} placeholder="Örn: CAS General Configuration" />
+                <label className={lbl} htmlFor="drawing-name">{t('projectSettings.drawingName')}</label>
+                <input id="drawing-name" className={inp} value={formData.drawingName || ''} onChange={e => setFormData({ ...formData, drawingName: e.target.value })} placeholder={t('projectSettings.drawingNamePlaceholder')} />
               </div>
               <div>
-                <label className={lbl} htmlFor="checked-by">Kontrol Eden (Checked)</label>
+                <label className={lbl} htmlFor="checked-by">{t('projectSettings.checkedBy')}</label>
                 <input id="checked-by" className={inp} value={formData.checkedBy || ''} onChange={e => setFormData({ ...formData, checkedBy: e.target.value })} />
               </div>
               <div>
-                <label className={lbl} htmlFor="drawn-date">Çizim Tarihi (Drawn)</label>
+                <label className={lbl} htmlFor="drawn-date">{t('projectSettings.drawnDate')}</label>
                 <input id="drawn-date" className={inp} value={formData.drawnDate || ''} onChange={e => setFormData({ ...formData, drawnDate: e.target.value })} placeholder={formData.date} />
               </div>
               <div>
-                <label className={lbl} htmlFor="checked-date">Kontrol Tarihi</label>
+                <label className={lbl} htmlFor="checked-date">{t('projectSettings.checkedDate')}</label>
                 <input id="checked-date" className={inp} value={formData.checkedDate || ''} onChange={e => setFormData({ ...formData, checkedDate: e.target.value })} />
               </div>
               <div>
-                <label className={lbl} htmlFor="approved-date">Onay Tarihi</label>
+                <label className={lbl} htmlFor="approved-date">{t('projectSettings.approvedDate')}</label>
                 <input id="approved-date" className={inp} value={formData.approvedDate || ''} onChange={e => setFormData({ ...formData, approvedDate: e.target.value })} />
               </div>
             </div>
-            <p className="text-[10px] text-zinc-500 mt-2">Hazırlayan = DRAWN, Onaylayan = APPROVED. Sayfa adı antette PAGE NAME olarak görünür.</p>
+            <p className="text-[10px] text-zinc-500 mt-2">{t('projectSettings.titleBlockHint')}</p>
           </div>
 
           {/* Revision history */}
           <div className="border-t border-white/5 pt-6" data-testid="revisions-section">
             <div className="flex justify-between items-center mb-4">
-              <label className="block text-sm font-bold text-zinc-200">Revizyon Geçmişi</label>
+              <label className="block text-sm font-bold text-zinc-200">{t('projectSettings.revisionHistory')}</label>
               <button onClick={addRevision} className="text-xs font-bold bg-white/5 hover:bg-white/10 text-teal-400 border border-white/5 px-3 py-2 rounded-lg flex items-center gap-2">
-                <Plus size={14} /> Revizyon Ekle
+                <Plus size={14} /> {t('projectSettings.addRevision')}
               </button>
             </div>
             {revisions.length === 0 ? (
-              <div className="text-center py-6 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p className="text-xs text-zinc-500">Henüz revizyon yok.</p></div>
+              <div className="text-center py-6 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]"><p className="text-xs text-zinc-500">{t('projectSettings.noRevisions')}</p></div>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-[90px_100px_1fr_60px_60px_36px] gap-2 text-[10px] font-bold text-zinc-500 uppercase"><span>Rev</span><span>Tarih</span><span>Açıklama</span><span>By</span><span>Chkd.</span><span /></div>
+                <div className="grid grid-cols-[90px_100px_1fr_60px_60px_36px] gap-2 text-[10px] font-bold text-zinc-500 uppercase"><span>{t('projectSettings.revShort')}</span><span>{t('projectSettings.date')}</span><span>{t('projectSettings.description')}</span><span>{t('projectSettings.revBy')}</span><span>{t('projectSettings.revChkd')}</span><span /></div>
                 {revisions.map((r, i) => (
                   <div key={r.id} className="grid grid-cols-[90px_100px_1fr_60px_60px_36px] gap-2 items-center">
-                    <input aria-label={`Revizyon ${i + 1} no`} className={inp} value={r.rev} onChange={e => updateRevision(r.id, 'rev', e.target.value)} />
-                    <input aria-label={`Revizyon ${i + 1} tarih`} className={inp} value={r.date} onChange={e => updateRevision(r.id, 'date', e.target.value)} />
-                    <input aria-label={`Revizyon ${i + 1} açıklama`} className={inp} value={r.description} onChange={e => updateRevision(r.id, 'description', e.target.value)} />
-                    <input aria-label={`Revizyon ${i + 1} by`} className={inp} value={r.by} onChange={e => updateRevision(r.id, 'by', e.target.value)} />
-                    <input aria-label={`Revizyon ${i + 1} chkd`} className={inp} value={r.chkd} onChange={e => updateRevision(r.id, 'chkd', e.target.value)} />
-                    <button aria-label={`Revizyon ${i + 1} sil`} onClick={() => removeRevision(r.id)} className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10"><Trash2 size={15} /></button>
+                    <input aria-label={t('projectSettings.revisionNoAria', { number: i + 1 })} className={inp} value={r.rev} onChange={e => updateRevision(r.id, 'rev', e.target.value)} />
+                    <input aria-label={t('projectSettings.revisionDateAria', { number: i + 1 })} className={inp} value={r.date} onChange={e => updateRevision(r.id, 'date', e.target.value)} />
+                    <input aria-label={t('projectSettings.revisionDescAria', { number: i + 1 })} className={inp} value={r.description} onChange={e => updateRevision(r.id, 'description', e.target.value)} />
+                    <input aria-label={t('projectSettings.revisionByAria', { number: i + 1 })} className={inp} value={r.by} onChange={e => updateRevision(r.id, 'by', e.target.value)} />
+                    <input aria-label={t('projectSettings.revisionChkdAria', { number: i + 1 })} className={inp} value={r.chkd} onChange={e => updateRevision(r.id, 'chkd', e.target.value)} />
+                    <button aria-label={t('projectSettings.revisionDeleteAria', { number: i + 1 })} onClick={() => removeRevision(r.id)} className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10"><Trash2 size={15} /></button>
                   </div>
                 ))}
               </div>
@@ -396,63 +399,63 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
           {/* Document numbering protocol */}
           <div className="border-t border-white/5 pt-6" data-testid="doc-numbering-section">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-bold text-zinc-200">Döküman Numaralandırma (Protokol)</label>
+              <label className="block text-sm font-bold text-zinc-200">{t('projectSettings.numberingTitle')}</label>
               <label className="flex items-center gap-2 text-xs font-bold text-zinc-300 cursor-pointer">
-                <input type="checkbox" checked={numbering.enabled} onChange={e => setNumbering({ enabled: e.target.checked })} /> Protokolü kullan
+                <input type="checkbox" checked={numbering.enabled} onChange={e => setNumbering({ enabled: e.target.checked })} /> {t('projectSettings.useProtocol')}
               </label>
             </div>
-            <p className="text-[10px] text-zinc-500 mb-4 font-mono">AAA-BBB-CCC-DDD-XXX-YY Rev-PP-R · originator · tip · disiplin · lokasyon · sıra no · sheet · revizyon-faz-no</p>
+            <p className="text-[10px] text-zinc-500 mb-4 font-mono">{t('projectSettings.numberingPattern')}</p>
             <div className={`grid grid-cols-3 gap-4 ${numbering.enabled ? '' : 'opacity-50'}`}>
               <div>
-                <label className={lbl} htmlFor="dn-originator">Originator (AAA)</label>
-                <input id="dn-originator" value={numbering.originator} maxLength={3} onChange={e => setNumbering({ originator: e.target.value.toUpperCase() })} className={`${inp} font-mono`} placeholder="Örn: ANC" />
-                <p className="text-[10px] mt-1 text-zinc-500">Dökümanı hazırlayan kuruluş kodu (3 harf)</p>
+                <label className={lbl} htmlFor="dn-originator">{t('projectSettings.originator')}</label>
+                <input id="dn-originator" value={numbering.originator} maxLength={3} onChange={e => setNumbering({ originator: e.target.value.toUpperCase() })} className={`${inp} font-mono`} placeholder={t('projectSettings.originatorPlaceholder')} />
+                <p className="text-[10px] mt-1 text-zinc-500">{t('projectSettings.originatorHint')}</p>
               </div>
-              <CodePicker id="dn-type" label="Döküman Tipi (BBB)" list={DOCUMENT_TYPES} value={numbering.type} onChange={v => setNumbering({ type: v })} hint="DWD" />
-              <CodePicker id="dn-discipline" label="Disiplin (CCC)" list={DOCUMENT_DISCIPLINES} value={numbering.discipline} onChange={v => setNumbering({ discipline: v })} hint="ELE" />
-              <CodePicker id="dn-location" label="Lokasyon / Alan (DDD)" list={LOCATION_CODES} value={numbering.location} onChange={v => setNumbering({ location: v })} hint="GEN" />
+              <CodePicker id="dn-type" label={t('projectSettings.docType')} list={DOCUMENT_TYPES} value={numbering.type} onChange={v => setNumbering({ type: v })} hint="DWD" />
+              <CodePicker id="dn-discipline" label={t('projectSettings.discipline')} list={DOCUMENT_DISCIPLINES} value={numbering.discipline} onChange={v => setNumbering({ discipline: v })} hint="ELE" />
+              <CodePicker id="dn-location" label={t('projectSettings.location')} list={LOCATION_CODES} value={numbering.location} onChange={v => setNumbering({ location: v })} hint="GEN" />
               <div>
-                <label className={lbl} htmlFor="dn-sequence">Sıra No (XXX)</label>
+                <label className={lbl} htmlFor="dn-sequence">{t('projectSettings.sequence')}</label>
                 <input id="dn-sequence" value={numbering.sequence} maxLength={3} inputMode="numeric" onChange={e => setNumbering({ sequence: e.target.value.replace(/\D/g, '') })} className={`${inp} font-mono`} placeholder="001" />
               </div>
               <div>
-                <label className={lbl} htmlFor="dn-phase">Proje Fazı (PP)</label>
+                <label className={lbl} htmlFor="dn-phase">{t('projectSettings.phase')}</label>
                 <select id="dn-phase" value={numbering.phase} onChange={e => setNumbering({ phase: e.target.value })} className={inp}>
                   {PROJECT_PHASES.map(p => <option key={p.code} value={p.code}>{p.code} — {p.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className={lbl} htmlFor="dn-revision">Revizyon No (R)</label>
+                <label className={lbl} htmlFor="dn-revision">{t('projectSettings.revisionNo')}</label>
                 <input id="dn-revision" value={numbering.revision} maxLength={3} onChange={e => setNumbering({ revision: e.target.value.toUpperCase() })} className={`${inp} font-mono`} placeholder="0" />
               </div>
               <label className="col-span-2 flex items-center gap-2 text-xs text-zinc-300 cursor-pointer self-end pb-2">
                 <input type="checkbox" checked={numbering.sheetFromPage} onChange={e => setNumbering({ sheetFromPage: e.target.checked })} />
-                Sayfa numarasını Sheet (YY) olarak ekle — her sayfa kendi numarasını alır
+                {t('projectSettings.sheetFromPage')}
               </label>
             </div>
             <div className="mt-4 p-3 rounded-xl bg-black/30 border border-white/10">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase">Önizleme (Sayfa 1)</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase">{t('projectSettings.preview')}</span>
               <div className="font-mono text-base font-bold text-teal-400 break-all" data-testid="doc-number-preview">{composeDocumentNo(numbering, 1)}</div>
-              {missing.length > 0 && <p className="text-[11px] text-amber-400 mt-1">Eksik: {missing.join(', ')}</p>}
-              {!numbering.enabled && <p className="text-[11px] text-zinc-500 mt-1">Kapalı: antette yukarıdaki "Döküman No" alanı kullanılır.</p>}
+              {missing.length > 0 && <p className="text-[11px] text-amber-400 mt-1">{t('projectSettings.missing', { parts: missing.map(k => t(k)).join(', ') })}</p>}
+              {!numbering.enabled && <p className="text-[11px] text-zinc-500 mt-1">{t('projectSettings.numberingOff')}</p>}
             </div>
           </div>
 
           {/* Custom Fields Section */}
           <div className="border-t border-white/5 pt-6">
             <div className="flex justify-between items-center mb-5">
-               <label className="block text-sm font-bold text-zinc-200">Özel Alanlar</label>
+               <label className="block text-sm font-bold text-zinc-200">{t('projectSettings.customFields')}</label>
                <button 
                  onClick={addCustomField}
                  className="text-xs font-bold bg-white/5 hover:bg-white/10 text-teal-400 border border-white/5 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors active:scale-95"
                >
-                 <Plus size={14} /> Alan Ekle
+                 <Plus size={14} /> {t('projectSettings.addField')}
                </button>
             </div>
             
             {formData.customFields.length === 0 ? (
               <div className="text-center py-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
-                  <p className="text-xs text-zinc-500 font-medium">Ekstra bilgi alanı eklenmedi.</p>
+                  <p className="text-xs text-zinc-500 font-medium">{t('projectSettings.noCustomFields')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -460,14 +463,14 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
                   <div key={field.id} className="flex gap-3 items-center animate-in fade-in slide-in-from-bottom-2">
                      <input 
                        type="text"
-                       placeholder="Başlık (Örn: Kontrol Eden)"
+                       placeholder={t('projectSettings.fieldLabelPlaceholder')}
                        value={field.label}
                        onChange={e => updateCustomField(field.id, 'label', e.target.value)}
                        className="w-1/3 bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 focus:border-teal-500/50 outline-none transition-colors"
                      />
                      <input 
                        type="text"
-                       placeholder="Değer"
+                       placeholder={t('projectSettings.fieldValue')}
                        value={field.value}
                        onChange={e => updateCustomField(field.id, 'value', e.target.value)}
                        className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 focus:border-teal-500/50 outline-none transition-colors"
@@ -487,13 +490,13 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
           {/* External Parts Management */}
           {formData.externalParts && formData.externalParts.length > 0 && (
               <div className="border-t border-white/5 pt-6">
-                <label className="block text-sm font-bold text-zinc-200 mb-4">Harici Parçalar (PDF/AI Taraması)</label>
+                <label className="block text-sm font-bold text-zinc-200 mb-4">{t('projectSettings.externalParts')}</label>
                 <div className="max-h-56 overflow-y-auto bg-black/20 border border-white/10 rounded-xl custom-scrollbar">
                     <table className="w-full text-sm text-left text-zinc-400">
                         <thead>
                             <tr className="border-b border-white/10 bg-white/5">
-                                <th className="px-4 py-3 font-bold text-[10px] uppercase text-zinc-500 tracking-wider">Parça</th>
-                                <th className="px-4 py-3 w-24 text-center font-bold text-[10px] uppercase text-zinc-500 tracking-wider">Adet</th>
+                                <th className="px-4 py-3 font-bold text-[10px] uppercase text-zinc-500 tracking-wider">{t('projectSettings.part')}</th>
+                                <th className="px-4 py-3 w-24 text-center font-bold text-[10px] uppercase text-zinc-500 tracking-wider">{t('projectSettings.quantity')}</th>
                                 <th className="px-4 py-3 w-10"></th>
                             </tr>
                         </thead>
@@ -516,13 +519,13 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
           )}
 
           <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Teknik Notlar</label>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">{t('projectSettings.technicalNotes')}</label>
             <textarea 
               rows={5}
               value={formData.technicalNotes || ''}
               onChange={e => setFormData({...formData, technicalNotes: e.target.value})}
               className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-teal-500/50 outline-none resize-none transition-colors"
-              placeholder="Örn: 1. Tüm ölçüler mm'dir..."
+              placeholder={t('projectSettings.notesPlaceholder')}
             />
           </div>
         </div>

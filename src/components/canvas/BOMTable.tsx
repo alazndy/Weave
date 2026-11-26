@@ -2,6 +2,8 @@
 import React, { useMemo } from 'react';
 import { instanceNumber } from '../../utils/numbering';
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useDocumentT } from '../../i18nDocument';
 import { ProductInstance, ProductTemplate, ExternalPart } from '../../types';
 
 interface BOMTableProps {
@@ -14,21 +16,23 @@ interface BOMTableProps {
 }
 
 export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, externalParts, theme, onHide }) => {
+    const { t } = useTranslation();
+    const td = useDocumentT();
     // Aggregation Logic
     const bomData = useMemo(() => {
         const map = new Map<string, { name: string, model: string, count: number, refs: string[] }>();
 
         // 1. Count Canvas Instances
         instances.forEach((inst, idx) => {
-            const t = templates.find(temp => temp.id === inst.templateId);
-            if (t) {
-                const key = t.modelNumber ? `${t.name}-${t.modelNumber}` : t.name;
+            const template = templates.find(temp => temp.id === inst.templateId);
+            if (template) {
+                const key = template.modelNumber ? `${template.name}-${template.modelNumber}` : template.name;
                 const existing = map.get(key);
                 if (existing) {
                     existing.count++;
                     existing.refs.push(instanceNumber(inst, idx));
                 } else {
-                    map.set(key, { name: t.name, model: t.modelNumber || '-', count: 1, refs: [instanceNumber(inst, idx)] });
+                    map.set(key, { name: template.name, model: template.modelNumber || '-', count: 1, refs: [instanceNumber(inst, idx)] });
                 }
             }
         });
@@ -63,7 +67,7 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
             }}
         >
             {onHide && (
-                <button type="button" aria-label="Parça tablosunu sil" title="Parça tablosunu sil"
+                <button type="button" aria-label={t('bomTable.remove')} title={t('bomTable.remove')}
                     onClick={(e) => { e.stopPropagation(); onHide(); }}
                     className="absolute -top-2 -right-2 z-50 hidden group-hover/bom:flex p-1 rounded-md bg-red-600 text-white shadow-lg no-print">
                     <Trash2 size={13} />
@@ -71,11 +75,11 @@ export const BOMTable: React.FC<BOMTableProps> = ({ instances, templates, extern
             )}
             {/* Header */}
             <div className="flex border-b-2" style={{ borderColor: borderColor, backgroundColor: headerBg }}>
-                <div className="w-12 p-1 border-r flex items-center justify-center font-bold text-[10px]" style={{ borderColor: borderColor }}>NO</div>
-                <div className="flex-1 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>PARÇA ADI / AÇIKLAMA</div>
-                <div className="w-24 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>MODEL</div>
-                <div className="w-28 shrink-0 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>REF. NO</div>
-                <div className="w-16 p-1 flex items-center justify-center font-bold text-[10px]">ADET</div>
+                <div className="w-12 p-1 border-r flex items-center justify-center font-bold text-[10px]" style={{ borderColor: borderColor }}>{td('doc.bom.no')}</div>
+                <div className="flex-1 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>{td('doc.bom.name')}</div>
+                <div className="w-24 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>{td('doc.bom.model')}</div>
+                <div className="w-28 shrink-0 p-1 border-r flex items-center font-bold text-[10px]" style={{ borderColor: borderColor }}>{td('doc.bom.ref')}</div>
+                <div className="w-16 p-1 flex items-center justify-center font-bold text-[10px]">{td('doc.bom.qty')}</div>
             </div>
 
             {/* Rows */}

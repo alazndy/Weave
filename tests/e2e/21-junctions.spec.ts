@@ -126,9 +126,9 @@ test.describe('Birleşme noktası', () => {
     await page.getByRole('button', { name: /Pin (Haritası|Map)/ }).click();
     await expect(page.getByText('birleşme noktası üzerinden')).toHaveCount(3);
     await page.getByRole('button', { name: 'Kapat' }).click();
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('tabpanel').getByRole('button', { name: 'Kaydet', exact: true }).click();
     const file = Buffer.concat(await (await (await download).createReadStream()).toArray());
     await page.getByRole('button', { name: 'Sahneyi Temizle' }).click();
     await page.getByRole('button', { name: /Onayla|Sil|Evet|Temizle/ }).last().click();

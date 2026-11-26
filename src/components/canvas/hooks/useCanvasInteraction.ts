@@ -1,3 +1,4 @@
+import { useDocumentT } from '../../../i18nDocument';
 import React, { useCallback, useEffect, useRef } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { 
@@ -43,6 +44,7 @@ export function useCanvasInteraction({
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange, onSelectIds, onUndoCheckpoint, onSetActiveTool,
   canvasState, activeTool, scale, setPan, containerRef, junctions, onJunctionsChange
 }: UseCanvasInteractionProps) {
+  const td = useDocumentT();
 
   const {
       isGridSnapEnabled, toolSettings,
@@ -146,7 +148,7 @@ export function useCanvasInteraction({
                 onUndoCheckpoint();
                 const newText: TextNode = {
                     id: crypto.randomUUID(),
-                    content: 'Metin',
+                    content: td('doc.defaults.text'),
                     x, y, 
                     fontSize: toolSettings.text.fontSize, 
                     color: toolSettings.text.color
@@ -365,7 +367,7 @@ export function useCanvasInteraction({
               onUndoCheckpoint();
               const newZone: Zone = {
                   id: crypto.randomUUID(),
-                  label: toolSettings.zone.labelPrefix,
+                  label: toolSettings.zone.labelPrefix || td('doc.defaults.zone'),
                   x, y, width, height,
                   color: toolSettings.zone.color
               };

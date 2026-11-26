@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDocumentT } from '../../i18nDocument';
 
 interface ISOFrameProps {
     width: number;
@@ -7,6 +8,7 @@ interface ISOFrameProps {
 }
 
 export const ISOFrame: React.FC<ISOFrameProps> = ({ width, height, theme }) => {
+    const td = useDocumentT();
     const margin = 20; 
     const divisionsH = Math.floor(width / 100); 
     const divisionsV = Math.floor(height / 100); 
@@ -61,7 +63,7 @@ export const ISOFrame: React.FC<ISOFrameProps> = ({ width, height, theme }) => {
                 ))}
             </g>
             <text x={width / 2} y={height - 5} textAnchor="middle" fill={textFill} fontSize="14" fontFamily="monospace" fontWeight="bold" className="tracking-widest">
-                TS 88-20 EN ISO 128-20 • TS EN ISO 5457 UYUMLUDUR
+                {td('doc.frameNote')}
             </text>
         </svg>
     );

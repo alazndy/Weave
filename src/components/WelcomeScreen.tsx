@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { appLanguage } from '../i18n';
 import { Plus, FolderOpen, Clock, ChevronRight, LayoutTemplate, FileText, Settings, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,7 +15,8 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOpenProject, onOpenRecent, onSettings, onClose }) => {
-    const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
+    const { t } = useTranslation();
+  const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
     const [loadError, setLoadError] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -31,7 +34,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
 
     const handleDelete = async (e: React.MouseEvent, project: RecentProject) => {
         e.stopPropagation();
-        if (!confirm(`"${project.name}" yerel kayıtlardan silinsin mi?`)) return;
+        if (!confirm(t('welcome.confirmDelete', { name: project.name }))) return;
         await deleteProject(project.id);
         setRecentProjects(prev => prev.filter(p => p.id !== project.id));
     };
@@ -43,7 +46,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                     variant="ghost"
                     size="icon"
                     onClick={onClose}
-                    aria-label="Kapat"
+                    aria-label={t('common.close')}
                     className="absolute top-4 right-4 z-50 rounded-full hover:bg-background/20"
                 >
                     <X className="w-5 h-5 text-muted-foreground" />
@@ -59,7 +62,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                                 <LayoutTemplate className="w-6 h-6 text-primary-foreground" />
                             </div>
                             <h1 className="text-4xl font-bold tracking-tight text-foreground">Weave</h1>
-                            <p className="text-muted-foreground font-medium text-lg">Sistem Kablolama Şemaları</p>
+                            <p className="text-muted-foreground font-medium text-lg">{t('welcome.tagline')}</p>
                         </div>
 
                         <div className="space-y-4">
@@ -69,7 +72,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                                 className="w-full h-14 justify-start pl-6 text-base font-medium shadow-md group"
                             >
                                 <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
-                                Yeni Proje
+                                {t('welcome.newProject')}
                             </Button>
 
                             <Button
@@ -79,7 +82,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                                 className="w-full h-14 justify-start pl-6 text-base font-medium bg-background/50 hover:bg-background"
                             >
                                 <FolderOpen className="w-5 h-5 mr-3 text-blue-500" />
-                                Dosyadan Aç (.weave)
+                                {t('welcome.openFile')}
                             </Button>
 
                             <input
@@ -95,7 +98,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                     {onSettings && (
                         <div className="relative pt-6 border-t border-border/10 flex gap-4">
                             <Button variant="ghost" size="sm" onClick={onSettings} className="gap-2 text-muted-foreground">
-                                <Settings className="w-4 h-4" /> Ayarlar
+                                <Settings className="w-4 h-4" /> {t('welcome.settings')}
                             </Button>
                         </div>
                     )}
@@ -106,9 +109,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                     <div className="mb-8">
                         <h2 className="text-xl font-bold flex items-center gap-2">
                             <Clock className="w-5 h-5 text-muted-foreground" />
-                            Son Projeler
+                            {t('welcome.recent')}
                         </h2>
-                        <p className="text-xs text-muted-foreground mt-1">Projeler bu cihazda otomatik kaydedilir.</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('welcome.autosave')}</p>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2">
@@ -128,13 +131,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-medium truncate group-hover:text-primary transition-colors">{project.name}</h3>
                                         <p className="text-xs text-muted-foreground mt-0.5">
-                                            Son düzenleme: {new Date(project.updatedAt).toLocaleString('tr-TR')}
+                                            {t('welcome.lastEdit', { date: new Date(project.updatedAt).toLocaleString(appLanguage() === 'en' ? 'en-GB' : 'tr-TR') })}
                                         </p>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        aria-label="Sil"
+                                        aria-label={t('common.delete')}
                                         onClick={e => handleDelete(e, project)}
                                         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                                     >
@@ -148,7 +151,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNewProject, onOp
                                 <div className="p-4 rounded-full bg-muted">
                                     <FolderOpen className="w-8 h-8 stroke-1" />
                                 </div>
-                                <p>{loadError ? 'Yerel kayıtlara erişilemedi' : 'Henüz kayıtlı proje yok'}</p>
+                                <p>{loadError ? t('welcome.loadError') : t('welcome.noProjects')}</p>
                             </div>
                         )}
                     </div>

@@ -1,4 +1,5 @@
 import { withJunctions } from '../../utils/junctions';
+import { useTranslation } from 'react-i18next';
 
 import React from 'react';
 import { Page, ProductTemplate } from '../../types';
@@ -17,17 +18,18 @@ interface PageGridProps {
 }
 
 const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: ProductTemplate[] }) => {
+    const { t } = useTranslation();
     // Calculate bounds to fit content
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
     if (page.instances.length === 0) {
-        return <div className="w-full h-full flex items-center justify-center text-zinc-600 text-[10px]">Boş Sayfa</div>;
+        return <div className="w-full h-full flex items-center justify-center text-zinc-600 text-[10px]">{t('pageGrid.empty')}</div>;
     }
 
     page.instances.forEach(inst => {
-        const t = templates.find(temp => temp.id === inst.templateId);
-        const w = inst.width || t?.width || 100;
-        const h = inst.height || t?.height || 100;
+        const template = templates.find(temp => temp.id === inst.templateId);
+        const w = inst.width || template?.width || 100;
+        const h = inst.height || template?.height || 100;
         minX = Math.min(minX, inst.x);
         minY = Math.min(minY, inst.y);
         maxX = Math.max(maxX, inst.x + w);
@@ -69,9 +71,9 @@ const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: Product
 
              {/* Instances */}
              {page.instances.map(inst => {
-                 const t = templates.find(temp => temp.id === inst.templateId);
-                 const w = inst.width || t?.width || 100;
-                 const h = inst.height || t?.height || 100;
+                 const template = templates.find(temp => temp.id === inst.templateId);
+                 const w = inst.width || template?.width || 100;
+                 const h = inst.height || template?.height || 100;
                  return (
                      <rect 
                         key={inst.id}
@@ -93,12 +95,13 @@ const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: Product
 export const PageGrid: React.FC<PageGridProps> = ({ 
     pages, templates, activePageId, onSwitchPage, onRemovePage, onDuplicatePage, onMovePage, theme 
 }) => {
+    const { t } = useTranslation();
     const [dragId, setDragId] = React.useState<string | null>(null);
     const [overId, setOverId] = React.useState<string | null>(null);
     return (
         <div className="w-full h-full overflow-y-auto p-10 bg-ink">
             <h2 className="text-2xl font-bold text-alabaster mb-8 flex items-center gap-3">
-                <FileText className="text-paprika"/> Sayfa Genel Bakış
+                <FileText className="text-paprika"/> {t('pageGrid.overview')}
             </h2>
             
             <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-8">
@@ -123,14 +126,14 @@ export const PageGrid: React.FC<PageGridProps> = ({
                                     <span className="bg-zinc-800 w-6 h-6 flex items-center justify-center rounded-full text-xs">{index + 1}</span>
                                     {page.name}
                                 </h3>
-                                <p className="text-[10px] text-zinc-400 mt-0.5 ml-8">{page.instances.length} Cihaz • {page.connections.length} Bağlantı</p>
+                                <p className="text-[10px] text-zinc-400 mt-0.5 ml-8">{t('pageGrid.counts', { devices: page.instances.length, links: page.connections.length })}</p>
                             </div>
                             {onMovePage && (
                                 <div className="flex gap-1 pointer-events-auto">
-                                    <button type="button" aria-label={`${page.name} sayfasını öne al`} title="Öne al" disabled={index === 0}
+                                    <button type="button" aria-label={t('pageGrid.earlierAria', { name: page.name })} title={t('pageGrid.earlier')} disabled={index === 0}
                                         onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index - 1); }}
                                         className="p-1 rounded bg-black/50 text-white hover:bg-paprika disabled:opacity-30"><ChevronLeft size={14} /></button>
-                                    <button type="button" aria-label={`${page.name} sayfasını arkaya al`} title="Arkaya al" disabled={index === pages.length - 1}
+                                    <button type="button" aria-label={t('pageGrid.laterAria', { name: page.name })} title={t('pageGrid.later')} disabled={index === pages.length - 1}
                                         onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index + 1); }}
                                         className="p-1 rounded bg-black/50 text-white hover:bg-paprika disabled:opacity-30"><ChevronRight size={14} /></button>
                                 </div>
@@ -151,7 +154,7 @@ export const PageGrid: React.FC<PageGridProps> = ({
                                 <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-lg border border-white/10">
                                     <MousePointer2 size={20} />
                                 </div>
-                                <span className="text-xs font-bold">Düzenle</span>
+                                <span className="text-xs font-bold">{t('common.edit')}</span>
                             </button>
                             
                             <button 
@@ -161,18 +164,18 @@ export const PageGrid: React.FC<PageGridProps> = ({
                                 <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-lg border border-white/10">
                                     <Copy size={20} />
                                 </div>
-                                <span className="text-xs font-bold">Çoğalt</span>
+                                <span className="text-xs font-bold">{t('pageGrid.duplicate')}</span>
                             </button>
 
                             {pages.length > 1 && (
                                 <button 
-                                    onClick={(e) => { e.stopPropagation(); if(confirm('Bu sayfayı silmek istediğinize emin misiniz?')) onRemovePage(page.id); }}
+                                    onClick={(e) => { e.stopPropagation(); if(confirm(t('pageGrid.confirmDelete'))) onRemovePage(page.id); }}
                                     className="flex flex-col items-center gap-2 text-white hover:text-red-400 transition-colors"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-lg border border-white/10">
                                         <Trash2 size={20} />
                                     </div>
-                                    <span className="text-xs font-bold">Sil</span>
+                                    <span className="text-xs font-bold">{t('common.delete')}</span>
                                 </button>
                             )}
                         </div>

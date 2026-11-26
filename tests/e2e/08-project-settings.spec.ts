@@ -20,7 +20,7 @@ const openTitleBlockEditor = async (page: Page) => {
 test.describe('Proje sekmesi', () => {
   test('kağıt boyutu A3/A4/A6 tuval boyutunu değiştirir', async ({ page }) => {
     await openApp(page);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const a4 = await paperSize(page);
     await page.getByRole('combobox').click();
     await page.getByRole('option', { name: 'A3' }).click();
@@ -32,21 +32,21 @@ test.describe('Proje sekmesi', () => {
 
   test('dikey/yatay yön tuval boyutlarını çevirir', async ({ page }) => {
     await openApp(page);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const land = await paperSize(page);
     expect(land.w).toBeGreaterThan(land.h);
-    await page.getByRole('button', { name: 'Portrait' }).click();
+    await page.getByRole('button', { name: 'Dikey' }).click();
     await expect.poll(async () => (await paperSize(page)).w).toBeLessThan(land.w);
-    await page.getByRole('button', { name: 'Landscape' }).click();
+    await page.getByRole('button', { name: 'Yatay' }).click();
     await expect.poll(async () => (await paperSize(page)).w).toBe(land.w);
   });
 
   test('Save .weave dosyası indirir; içerik proje verisini taşır', async ({ page }) => {
     await openApp(page);
     await placePair(page);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('tabpanel').getByRole('button', { name: 'Kaydet', exact: true }).click();
     const file = await download;
     expect(file.suggestedFilename()).toMatch(/\.weave$/);
     const project = JSON.parse(await readDownload(file));
@@ -66,9 +66,9 @@ test.describe('Proje sekmesi', () => {
     autoDialogs(page);
     await openApp(page);
     await placePair(page);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('tabpanel').getByRole('button', { name: 'Kaydet', exact: true }).click();
     const saved = await readDownload(await download);
 
     await page.getByRole('button', { name: 'Sahneyi Temizle' }).click();
@@ -85,9 +85,9 @@ test.describe('Proje sekmesi', () => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 430, 300);
     await dropTemplate(page, CAMERA.id, 700, 300);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Export BOM' }).click();
+    await page.getByRole('button', { name: 'Malzeme Listesi (BOM)' }).click();
     const csv = await readDownload(await download);
     expect(csv).toContain('"Test Kamera","CAM-1","","2"');
   });
@@ -95,8 +95,8 @@ test.describe('Proje sekmesi', () => {
   test('boş sayfada Export BOM uyarı verir', async ({ page }) => {
     const dialogs = autoDialogs(page);
     await openApp(page);
-    await leftTab(page, 'Project');
-    await page.getByRole('button', { name: 'Export BOM' }).click();
+    await leftTab(page, 'Proje');
+    await page.getByRole('button', { name: 'Malzeme Listesi (BOM)' }).click();
     await expect.poll(() => dialogs.map(d => d.message)).toContain('Bu sayfada malzeme listesine girecek ürün yok.');
   });
 });
@@ -176,16 +176,16 @@ test.describe('Antet / proje detayları', () => {
 
 test.describe('Uygulama ayarları', () => {
   const open = async (page: Page) => {
-    await page.getByRole('button', { name: /App Settings/ }).click();
+    await page.getByRole('button', { name: /Uygulama Ayarları/ }).click();
     return page.getByRole('dialog');
   };
 
   test('tema kartları temayı değiştirir', async ({ page }) => {
     await openApp(page);
     const dlg = await open(page);
-    await dlg.getByText('Light Mode').click();
+    await dlg.getByText('Aydınlık Mod').click();
     await expect(page.locator('html')).not.toHaveClass(/dark/);
-    await dlg.getByText('Dark Mode').click();
+    await dlg.getByText('Karanlık Mod').click();
     await expect(page.locator('html')).toHaveClass(/dark/);
   });
 
@@ -193,7 +193,7 @@ test.describe('Uygulama ayarları', () => {
     await openApp(page);
     const dlg = await open(page);
     const before = await page.evaluate(() => document.documentElement.style.getPropertyValue('--color-paprika'));
-    await dlg.getByRole('button', { name: /Ocean Deep/ }).click();
+    await dlg.getByRole('button', { name: /Derin Okyanus/ }).click();
     const after = await page.evaluate(() => document.documentElement.style.getPropertyValue('--color-paprika'));
     expect(after).not.toBe(before);
     await page.reload();
@@ -212,7 +212,7 @@ test.describe('Uygulama ayarları', () => {
       });
     });
     expect(await lightText()).toBe(true);
-    for (const name of [/Ocean Deep/, /Weave/]) {
+    for (const name of [/Derin Okyanus/, /Weave/]) {
       await dlg.getByRole('button', { name }).first().click();
       expect(await lightText()).toBe(true);
     }
@@ -231,7 +231,7 @@ test.describe('Uygulama ayarları', () => {
     await openApp(page);
     const dlg = await open(page);
     await dlg.getByRole('tab', { name: /AI/ }).click();
-    const key = dlg.getByLabel('Gemini API Key');
+    const key = dlg.getByLabel('Gemini API Anahtarı');
     await expect(key).toHaveAttribute('type', 'password');
     await key.fill('AIza-test-key');
     await dlg.getByRole('button', { name: 'Göster' }).click();
@@ -240,13 +240,13 @@ test.describe('Uygulama ayarları', () => {
     await page.getByRole('button', { name: 'Kapat' }).click();
     const dlg2 = await open(page);
     await dlg2.getByRole('tab', { name: /AI/ }).click();
-    await expect(dlg2.getByLabel('Gemini API Key')).toHaveValue('AIza-test-key');
+    await expect(dlg2.getByLabel('Gemini API Anahtarı')).toHaveValue('AIza-test-key');
   });
 
   test('Close düğmesi ayarları kapatır', async ({ page }) => {
     await openApp(page);
     const dlg = await open(page);
-    await dlg.getByRole('button', { name: 'Close' }).first().click();
+    await dlg.getByRole('button', { name: 'Kapat' }).first().click();
     await expect(dlg).toBeHidden();
   });
 });

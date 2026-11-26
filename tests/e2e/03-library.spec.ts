@@ -31,14 +31,14 @@ test.describe('Sol panel – Kütüphane', () => {
     await openApp(page);
     await page.getByRole('button', { name: 'Yeni kütüphane' }).click();
     await expect(page.getByRole('combobox')).toContainText('İkinci Kütüphane');
-    await expect(page.getByText('No components found')).toBeVisible();
+    await expect(page.getByText('Bileşen yok')).toBeVisible();
   });
 
   test('kütüphaneler arasında geçiş yapılır', async ({ page }) => {
     autoDialogs(page, 'Boş Kütüphane');
     await openApp(page);
     await page.getByRole('button', { name: 'Yeni kütüphane' }).click();
-    await expect(page.getByText('No components found')).toBeVisible();
+    await expect(page.getByText('Bileşen yok')).toBeVisible();
     await page.getByRole('combobox').click();
     await page.getByRole('option', { name: 'Test' }).click();
     await expect(card(page, CAMERA.name)).toBeVisible();
@@ -49,7 +49,7 @@ test.describe('Sol panel – Kütüphane', () => {
     await page.getByRole('button', { name: 'Kütüphaneyi yeniden adlandır' }).click();
     const input = page.getByRole('textbox').first();
     await input.fill('Yeni Ad');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('tabpanel').getByRole('button', { name: 'Kaydet', exact: true }).click();
     await expect(page.getByRole('combobox')).toContainText('Yeni Ad');
   });
 
@@ -80,7 +80,7 @@ test.describe('Sol panel – Kütüphane', () => {
     await card(page, CAMERA.name).hover();
     await card(page, CAMERA.name).getByRole('button').click();
     const download = page.waitForEvent('download');
-    await page.getByRole('menuitem', { name: 'Tekli Export' }).click();
+    await page.getByRole('menuitem', { name: 'Tekli Dışa Aktar' }).click();
     const file = await download;
     expect(file.suggestedFilename()).toBe('Test_Kamera.json');
     const body = JSON.parse(Buffer.concat(await (await file.createReadStream()).toArray()).toString());
@@ -147,7 +147,7 @@ test.describe('Sol panel – Kütüphane', () => {
 
   test('uygulama ayarları butonu ayarları açar', async ({ page }) => {
     await openApp(page);
-    await page.getByRole('button', { name: /App Settings/ }).click();
+    await page.getByRole('button', { name: /Uygulama Ayarları/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 
@@ -161,9 +161,9 @@ test.describe('Sol panel – Kütüphane', () => {
   test('proje sekmesi açılır', async ({ page }) => {
     const errors = trackErrors(page);
     await openApp(page);
-    await leftTab(page, 'Project');
-    await expect(page.getByText('Canvas Settings')).toBeVisible();
-    await leftTab(page, 'Library');
+    await leftTab(page, 'Proje');
+    await expect(page.getByText('Sayfa Ayarları')).toBeVisible();
+    await leftTab(page, 'Kütüphane');
     await expect(card(page, CAMERA.name)).toBeVisible();
     errors.expectNone();
   });

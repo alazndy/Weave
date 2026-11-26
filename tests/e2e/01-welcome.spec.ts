@@ -28,8 +28,8 @@ test.describe('Karşılama ekranı', () => {
   test('Ayarlar butonu uygulama ayarlarını açar', async ({ page }) => {
     await seed(page);
     await page.goto('/');
-    await page.getByRole('button', { name: 'Ayarlar' }).click();
-    await expect(page.getByRole('dialog')).toContainText('Application Settings');
+    await page.getByRole('button', { name: 'Ayarlar', exact: true }).click();
+    await expect(page.getByRole('dialog')).toContainText('Uygulama Ayarları');
   });
 
   test('otomatik kaydedilen proje son projeler listesinde çıkar ve açılır', async ({ page }) => {
@@ -92,7 +92,7 @@ test.describe('Karşılama ekranı', () => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 450, 300);
     await expect(nodes(page)).toHaveCount(1);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const project = { templates: [], pages: [EMPTY_PAGE], metadata: { projectName: 'Boş' } };
     await page.locator('input[type=file][accept=".weave,.json"]').setInputFiles({
       name: 'empty.weave', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(project)),

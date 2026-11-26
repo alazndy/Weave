@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActiveTool } from './CanvasToolbar';
 import { Minus, MoreHorizontal, GripHorizontal, Type, Square, Cable, Scaling } from 'lucide-react';
 import { LineStyle } from '../../types';
@@ -32,6 +33,7 @@ interface ToolSettingsBarProps {
 }
 
 export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, settings, onUpdateSettings, theme }) => {
+    const { t } = useTranslation();
     // Only show for tools that have settings
     if (!['manual-route', 'text', 'zone', 'scale'].includes(activeTool)) return null;
 
@@ -48,9 +50,9 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
                 {activeTool === 'zone' && <Square size={14} className="text-paprika"/>}
                 {activeTool === 'scale' && <Scaling size={14} className="text-paprika"/>}
                 <span className={`text-xs font-bold ${theme === 'light' ? 'text-zinc-700' : 'text-zinc-200'}`}>
-                    {activeTool === 'manual-route' ? 'Kablo Ayarları' : 
-                     activeTool === 'text' ? 'Metin Ayarları' : 
-                     activeTool === 'zone' ? 'Bölge Ayarları' : 'Ölçekleme'}
+                    {activeTool === 'manual-route' ? t('toolSettings.cable') : 
+                     activeTool === 'text' ? t('toolSettings.text') : 
+                     activeTool === 'zone' ? t('toolSettings.zone') : t('toolSettings.scaling')}
                 </span>
             </div>
 
@@ -58,7 +60,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
             {activeTool === 'manual-route' && (
                 <>
                     <div>
-                        <label className={labelClass}>Renk</label>
+                        <label className={labelClass}>{t('toolSettings.color')}</label>
                         <div className="flex items-center gap-2">
                              <input 
                                 type="color" 
@@ -70,28 +72,28 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
                         </div>
                     </div>
                     <div>
-                        <label className={labelClass}>Çizgi Stili</label>
+                        <label className={labelClass}>{t('toolSettings.lineStyle')}</label>
                         <div className="flex bg-black/20 rounded p-1 gap-1">
-                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'solid')} title="Düz" className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'solid' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><Minus size={14}/></button>
-                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'dashed')} title="Kesikli" className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'dashed' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><GripHorizontal size={14}/></button>
-                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'dotted')} title="Noktalı" className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'dotted' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><MoreHorizontal size={14}/></button>
+                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'solid')} title={t('line.solid')} className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'solid' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><Minus size={14}/></button>
+                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'dashed')} title={t('line.dashed')} className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'dashed' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><GripHorizontal size={14}/></button>
+                            <button onClick={() => onUpdateSettings('route', 'lineStyle', 'dotted')} title={t('line.dotted')} className={`flex-1 p-1 rounded flex justify-center ${settings.route.lineStyle === 'dotted' ? 'bg-paprika text-white' : 'hover:bg-white/10 text-zinc-500'}`}><MoreHorizontal size={14}/></button>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                          <div>
-                            <label className={labelClass}>Kalınlık</label>
+                            <label className={labelClass}>{t('line.thickness')}</label>
                             <select 
                                 value={settings.route.strokeWidth}
                                 onChange={(e) => onUpdateSettings('route', 'strokeWidth', e.target.value)}
                                 className={inputClass}
                             >
-                                <option value="thin">İnce</option>
-                                <option value="normal">Normal</option>
-                                <option value="thick">Kalın</option>
+                                <option value="thin">{t('line.thin')}</option>
+                                <option value="normal">{t('line.normal')}</option>
+                                <option value="thick">{t('line.thick')}</option>
                             </select>
                          </div>
                          <div>
-                            <label className={labelClass}>Radius</label>
+                            <label className={labelClass}>{t('toolSettings.radius')}</label>
                             <input 
                                 type="number" 
                                 min="0" max="50" step="5"
@@ -108,7 +110,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
             {activeTool === 'text' && (
                 <>
                     <div>
-                        <label className={labelClass}>Yazı Boyutu (px)</label>
+                        <label className={labelClass}>{t('toolSettings.fontSize')}</label>
                         <input 
                             type="number" 
                             min="8" max="100"
@@ -118,7 +120,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
                         />
                     </div>
                     <div>
-                        <label className={labelClass}>Renk</label>
+                        <label className={labelClass}>{t('toolSettings.color')}</label>
                         <div className="flex items-center gap-2">
                              <input 
                                 type="color" 
@@ -136,7 +138,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
             {activeTool === 'zone' && (
                 <>
                     <div>
-                        <label className={labelClass}>Varsayılan Etiket</label>
+                        <label className={labelClass}>{t('toolSettings.defaultLabel')}</label>
                         <input 
                             type="text" 
                             value={settings.zone.labelPrefix}
@@ -145,7 +147,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
                         />
                     </div>
                     <div>
-                        <label className={labelClass}>Kenarlık Rengi</label>
+                        <label className={labelClass}>{t('toolSettings.borderColor')}</label>
                         <div className="flex items-center gap-2">
                              <input 
                                 type="color" 
@@ -169,7 +171,7 @@ export const ToolSettingsBar: React.FC<ToolSettingsBarProps> = ({ activeTool, se
                         className="accent-paprika"
                         id="aspect-check"
                     />
-                    <label htmlFor="aspect-check" className={`text-xs font-medium cursor-pointer ${theme === 'light' ? 'text-zinc-700' : 'text-zinc-300'}`}>En/Boy Oranını Koru</label>
+                    <label htmlFor="aspect-check" className={`text-xs font-medium cursor-pointer ${theme === 'light' ? 'text-zinc-700' : 'text-zinc-300'}`}>{t('toolSettings.keepRatio')}</label>
                  </div>
             )}
         </div>

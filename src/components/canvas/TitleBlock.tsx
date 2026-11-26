@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ProjectMetadata } from '../../types';
 import { documentNoFor } from '../../utils/docNumbering';
+import { useTranslation } from 'react-i18next';
+import { useDocumentT } from '../../i18nDocument';
 import { Edit, ChevronLeft, ChevronRight, Trash2, Undo2 } from 'lucide-react';
 
 interface TitleBlockProps {
@@ -21,14 +23,6 @@ interface TitleBlockProps {
     onBomHiddenChange?: (hide: boolean) => void;
 }
 
-export const LABEL_DEFAULTS: Record<string, string> = {
-    revCol: 'REV', dateCol: 'DATE', descCol: 'DESCRIPTION', byCol: 'BY', chkdCol: 'CHKD.', revisions: 'REVISIONS',
-    drawingName: 'Drawing Name:', pageName: 'Page Name:',
-    nameCol: 'NAME', signDateCol: 'DATE', signCol: 'SIGN', approved: 'APPROVED', checked: 'CHECKED', drawn: 'DRAWN',
-    projectName: 'Project Name:', drawingNo: 'Drawing No:',
-    scale: 'Scale', sheet: 'Sheet', norm: 'Norm', totalSheet: 'T. Sheet', revision: 'Revision',
-    company: 'Firma', customer: 'Müşteri', customerNo: 'Müşteri No', notes: 'Teknik Notlar',
-};
 export const MAIN_SECTIONS = ['revisions', 'drawing', 'project'];
 
 /** Returns `saved` restricted to `all` plus any ids missing from it (so new fields always show up). */
@@ -50,6 +44,7 @@ const Ed: React.FC<{
     multiline?: boolean; placeholder?: string; testid?: string; display?: string; label: string;
     onHide?: () => void;
 }> = ({ value, onCommit, className = '', style, multiline, placeholder, testid, display, label, onHide }) => {
+    const { t } = useTranslation();
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(value);
     const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
@@ -75,7 +70,7 @@ const Ed: React.FC<{
         return (
             <span className="inline-flex items-center gap-0.5 w-full">
                 {field}
-                <button type="button" aria-label={`${label} başlığını sil`} title="Başlığı sil"
+                <button type="button" aria-label={t('titleBlock.removeHeadingAria', { label })} title={t('titleBlock.removeHeading')}
                     onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     onClick={(e) => { e.stopPropagation(); setEditing(false); onHide(); }}
                     className="shrink-0 p-0.5 rounded bg-red-600 text-white no-print"><Trash2 size={11} /></button>
@@ -85,13 +80,16 @@ const Ed: React.FC<{
     return (
         <span
             className={`${className} ${/\bblock\b/.test(className) ? '' : 'inline-block'} min-w-[2rem] min-h-[1em] cursor-text hover:bg-blue-500/15 rounded-sm`} style={style} data-testid={testid}
-            title="Düzenlemek için tıkla"
+            title={t('titleBlock.clickToEdit')}
             onClick={(e) => { e.stopPropagation(); setDraft(value); setEditing(true); }}
         >{shown || <span className="opacity-40">{placeholder || '—'}</span>}</span>
     );
 };
 
 export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageName, pageNumber, totalPages, onEdit, onMetadataChange, onRenamePage, pageDrawingNo, onPageDrawingNoChange, bomHidden, onBomHiddenChange }) => {
+    const { t } = useTranslation();
+    const td = useDocumentT();
+    const defaultLabel = (k: string) => td(`doc.title.${k}`);
     const isDark = theme === 'dark';
     const line = isDark ? 'rgba(255, 255, 255, 0.35)' : '#000000';
     const textColor = isDark ? '#e4e4e7' : '#000000';
@@ -111,16 +109,16 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const bd = { borderColor: line } as React.CSSProperties;
 
     const labels = metadata.legendLabels || {};
-    const lbl = (k: string) => labels[k] || LABEL_DEFAULTS[k];
+    const lbl = (k: string) => labels[k] || defaultLabel(k);
     /** Editable heading. Clearing it restores the default. */
     const hidden = metadata.legendHidden || [];
     const hide = (id: string) => set({ legendHidden: [...hidden.filter(x => x !== id), id] });
     const sizes = metadata.legendSizes || {};
     const H = (k: string, className = '', style?: React.CSSProperties) => hidden.includes(k) ? null : (
-        <Ed key={k} onHide={edit ? () => hide(k) : undefined} label={`Başlık: ${LABEL_DEFAULTS[k]}`} value={lbl(k)} testid={`lbl-${k}`}
+        <Ed key={k} onHide={edit ? () => hide(k) : undefined} label={t('titleBlock.headingAria', { name: defaultLabel(k) })} value={lbl(k)} testid={`lbl-${k}`}
             onCommit={edit ? (v) => {
                 const next = { ...labels };
-                if (v.trim() && v.trim() !== LABEL_DEFAULTS[k]) next[k] = v.trim(); else delete next[k];
+                if (v.trim() && v.trim() !== defaultLabel(k)) next[k] = v.trim(); else delete next[k];
                 set({ legendLabels: next });
             } : undefined}
             className={className} style={style} />
@@ -135,7 +133,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const wStyle = (id: string): React.CSSProperties => sizes[id] ? { flex: `0 0 ${sizes[id]}px`, width: sizes[id], minWidth: 0 } : {};
     /** Drag handle on the right edge (axis x) or bottom edge (axis y) of its parent; double-click resets. */
     const Resizer = (id: string, axis: 'x' | 'y') => !edit ? null : (
-        <div key={`rs-${id}`} data-testid={`resize-${id}`} title={axis === 'x' ? 'Genişliği ayarla (çift tık: sıfırla)' : 'Yüksekliği ayarla (çift tık: sıfırla)'}
+        <div key={`rs-${id}`} data-testid={`resize-${id}`} title={axis === 'x' ? t('titleBlock.resizeWidth') : t('titleBlock.resizeHeight')}
             className={`absolute z-40 hidden bg-blue-500/70 hover:bg-blue-500 no-print ${axis === 'x' ? 'group-hover/sec:block top-0 bottom-0 -right-[3px] w-[6px] cursor-col-resize' : 'group-hover/strip:block left-0 right-0 -bottom-[3px] h-[6px] cursor-row-resize'}`}
             onDoubleClick={(e) => { e.stopPropagation(); const n = { ...sizes }; delete n[id]; set({ legendSizes: n }); }}
             onPointerDown={(e) => {
@@ -164,10 +162,10 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     /** Hover arrows that move a section left/right (not exported). */
     const Mover = (id: string, order: string[], field: 'legendOrder' | 'legendExtraOrder') => !edit ? null : (
         <div className="absolute top-0 right-0 z-40 hidden group-hover/sec:flex gap-0.5 p-0.5 no-print" data-testid={`mover-${id}`}>
-            <button type="button" aria-label={`${id} bölümünü sola taşı`} disabled={order.indexOf(id) === 0}
+            <button type="button" aria-label={t('titleBlock.moveLeft', { id })} disabled={order.indexOf(id) === 0}
                 onClick={(e) => { e.stopPropagation(); set({ [field]: moveInOrder(order, id, -1) }); }}
                 className="p-0.5 rounded bg-blue-600 text-white disabled:opacity-30"><ChevronLeft size={12} /></button>
-            <button type="button" aria-label={`${id} bölümünü sağa taşı`} disabled={order.indexOf(id) === order.length - 1}
+            <button type="button" aria-label={t('titleBlock.moveRight', { id })} disabled={order.indexOf(id) === order.length - 1}
                 onClick={(e) => { e.stopPropagation(); set({ [field]: moveInOrder(order, id, 1) }); }}
                 className="p-0.5 rounded bg-blue-600 text-white disabled:opacity-30"><ChevronRight size={12} /></button>
         </div>
@@ -210,12 +208,12 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 <div className="flex-1 min-w-0 flex flex-col border-r" style={bd}>
                     <div className="flex-1 p-1.5 border-b" style={bd} data-testid="legend-drawing-name">
                         {L('drawingName')}
-                        <div className="text-sm font-bold break-words mt-1" style={{ color: accent }}>{V('Drawing Name', metadata.drawingName || '', 'drawingName')}</div>
+                        <div className="text-sm font-bold break-words mt-1" style={{ color: accent }}>{V(t('titleBlock.drawingName'), metadata.drawingName || '', 'drawingName')}</div>
                     </div>
                     <div className="flex-1 p-1.5" data-testid="legend-page-name">
                         {L('pageName')}
                         <div className="text-sm font-bold break-words mt-1" style={{ color: accent }}>
-                            <Ed label="Sayfa adı" value={pageName} display={pageName || '-'} onCommit={onRenamePage && edit ? onRenamePage : undefined} />
+                            <Ed label={t('titleBlock.pageName')} value={pageName} display={pageName || '-'} onCommit={onRenamePage && edit ? onRenamePage : undefined} />
                         </div>
                     </div>
                 </div>
@@ -233,8 +231,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                     ] as const).map(([role, nameField, name, dateField, date], i) => (
                         <div key={role} className={`flex flex-1 min-h-[1.75rem] ${i < 2 ? 'border-b' : ''}`} style={bd}>
                             <div className="w-[70px] shrink-0 border-r p-1 font-bold flex items-center" style={bd}>{H(role)}</div>
-                            <div className="flex-1 min-w-0 border-r p-1 font-semibold break-words flex items-center justify-center text-center" style={bd}>{V(`${role} isim`, name || '', nameField, '', undefined, '')}</div>
-                            <div className="flex-1 border-r p-1 font-mono flex items-center justify-center" style={bd}>{V(`${role} tarih`, date || '', dateField, '', undefined, '')}</div>
+                            <div className="flex-1 min-w-0 border-r p-1 font-semibold break-words flex items-center justify-center text-center" style={bd}>{V(t(`titleBlock.signName.${role}`), name || '', nameField, '', undefined, '')}</div>
+                            <div className="flex-1 border-r p-1 font-mono flex items-center justify-center" style={bd}>{V(t(`titleBlock.signDate.${role}`), date || '', dateField, '', undefined, '')}</div>
                             <div className="flex-1" />
                         </div>
                     ))}
@@ -246,19 +244,19 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {Mover('project', mainOrder, 'legendOrder')}{Resizer('project', 'x')}
                 <div className="flex border-b" style={bd}>
                     <div className="w-[88px] shrink-0 border-r p-1.5 flex items-center" style={bd}>{L('projectName')}</div>
-                    <div className="flex-1 min-w-0 p-1.5 pr-8 text-sm font-bold break-words flex items-center justify-center text-center uppercase" style={{ color: accent }}>{V('Proje adı', metadata.projectName || '', 'projectName', '', undefined, 'İsimsiz Proje')}</div>
+                    <div className="flex-1 min-w-0 p-1.5 pr-8 text-sm font-bold break-words flex items-center justify-center text-center uppercase" style={{ color: accent }}>{V(t('titleBlock.projectName'), metadata.projectName || '', 'projectName', '', undefined, td('doc.untitledProject'))}</div>
                 </div>
                 <div className="flex border-b" style={bd}>
                     <div className="w-[88px] shrink-0 border-r p-1.5 flex items-center" style={bd}>{L('drawingNo')}</div>
                     <div className="flex-1 min-w-0 p-1.5 text-[11px] font-mono font-bold break-all text-center flex items-center justify-center" data-testid="legend-docno">
-                        <Ed label="Çizim numarası (bu sayfa)" value={docNo} display={docNo || '-'}
+                        <Ed label={t('titleBlock.drawingNo')} value={docNo} display={docNo || '-'}
                             onCommit={edit && onPageDrawingNoChange ? (v) => onPageDrawingNoChange(v.trim() === computedDocNo ? '' : v) : undefined} />
                     </div>
                 </div>
                 <div className="flex flex-1">
                     <div className="flex-1 grid grid-cols-[auto_1fr_auto_1fr] text-[10px]">
                         {([
-                            [H('scale'), V('Ölçek', metadata.scale || '', 'scale', '', undefined, 'N.A.'), H('sheet'), String(pageNumber)],
+                            [H('scale'), V(t('titleBlock.scale'), metadata.scale || '', 'scale', '', undefined, 'N.A.'), H('sheet'), String(pageNumber)],
                             [H('norm'), metadata.paperSize, H('totalSheet'), String(totalPages)],
                         ]).map((row, ri) => (
                             <React.Fragment key={ri}>
@@ -270,7 +268,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                     </div>
                     <div className="w-[84px] shrink-0 border-l flex flex-col items-center justify-center p-1" style={bd} data-testid="legend-rev-symbol">
                         {L('revision', 'mb-0.5')}
-                        <svg width="46" height="40" viewBox="0 0 34 30" aria-label={`Revizyon ${rev}`}>
+                        <svg width="46" height="40" viewBox="0 0 34 30" aria-label={td('doc.revisionSymbol', { rev })}>
                             <polygon points="17,2 32,28 2,28" fill="none" stroke={accent} strokeWidth="1.8" />
                             <text x="17" y="24" textAnchor="middle" fontSize={rev.length > 3 ? 7 : rev.length > 1 ? 9.5 : 12} fontWeight="700" fill={accent}>{rev}</text>
                         </svg>
@@ -287,26 +285,26 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 {Mover('logo', extraOrder, 'legendExtraOrder')}{Resizer('logo', 'x')}
                 {metadata.companyLogo
                     ? <img src={metadata.companyLogo} alt="Logo" className="max-w-full max-h-14 object-contain" />
-                    : <div className="text-[10px] text-center text-zinc-400 font-bold uppercase p-1 border border-dashed border-zinc-500/30 rounded">Logo Yok</div>}
+                    : <div className="text-[10px] text-center text-zinc-400 font-bold uppercase p-1 border border-dashed border-zinc-500/30 rounded">{td('doc.noLogo')}</div>}
             </div>
         ),
         company: (
             <div key="company" className={cell} style={{ ...bd, ...wStyle('company') }}>
                 {Mover('company', extraOrder, 'legendExtraOrder')}{Resizer('company', 'x')}
-                {L('company')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Firma', metadata.companyName || '', 'companyName', 'block w-full min-h-[1.25rem]')}</div>
+                {L('company')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V(t('titleBlock.company'), metadata.companyName || '', 'companyName', 'block w-full min-h-[1.25rem]')}</div>
             </div>
         ),
         customer: (
             <div key="customer" className={cell} style={{ ...bd, ...wStyle('customer') }}>
                 {Mover('customer', extraOrder, 'legendExtraOrder')}{Resizer('customer', 'x')}
-                {L('customer')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Müşteri', metadata.customerName || '', 'customerName', 'block w-full min-h-[1.25rem]')}</div>
+                {L('customer')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V(t('titleBlock.customer'), metadata.customerName || '', 'customerName', 'block w-full min-h-[1.25rem]')}</div>
             </div>
         ),
     };
     extras.customerNo = (
         <div key="customerNo" className={cell} style={{ ...bd, ...wStyle('customerNo') }} data-testid="legend-customer-no">
             {Mover('customerNo', extraOrder, 'legendExtraOrder')}{Resizer('customerNo', 'x')}
-            {L('customerNo')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V('Müşteri No', metadata.customerNo || '', 'customerNo', 'block w-full min-h-[1.25rem]')}</div>
+            {L('customerNo')}<div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">{V(t('titleBlock.customerNo'), metadata.customerNo || '', 'customerNo', 'block w-full min-h-[1.25rem]')}</div>
         </div>
     );
     customFields.forEach(f => {
@@ -314,11 +312,11 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
         extras[`cf:${f.id}`] = (
             <div key={f.id} className={cell} style={{ ...bd, ...wStyle(`cf:${f.id}`) }} data-testid="legend-custom-field">
                 {Mover(`cf:${f.id}`, extraOrder, 'legendExtraOrder')}{Resizer(`cf:${f.id}`, 'x')}
-                {!hidden.includes(`cf:${f.id}`) && <Ed label={`Alan başlığı: ${f.label}`} value={f.label} display={f.label || 'Alan'} onCommit={edit ? (v) => upd({ label: v }) : undefined}
+                {!hidden.includes(`cf:${f.id}`) && <Ed label={t('titleBlock.fieldHeadingAria', { name: f.label })} value={f.label} display={f.label || td('doc.field')} onCommit={edit ? (v) => upd({ label: v }) : undefined}
                     onHide={edit ? () => hide(`cf:${f.id}`) : undefined}
                     className="text-[10px] font-bold uppercase tracking-wide leading-none" style={{ color: labelColor }} />}
                 <div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">
-                    <Ed label={`${f.label} değeri`} value={f.value} display={f.value || '-'} className="block w-full min-h-[1.25rem]" onCommit={edit ? (v) => upd({ value: v }) : undefined} />
+                    <Ed label={t('titleBlock.fieldValueAria', { name: f.label })} value={f.value} display={f.value || '-'} className="block w-full min-h-[1.25rem]" onCommit={edit ? (v) => upd({ value: v }) : undefined} />
                 </div>
             </div>
         );
@@ -335,7 +333,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(); }}
                     className="absolute top-1 left-1 p-1.5 bg-blue-600 text-white rounded-md shadow-lg opacity-0 group-hover/titleblock:opacity-100 transition-opacity z-50 hover:bg-blue-500 no-print"
-                    title="Anteti Düzenle"
+                    title={t('titleBlock.edit')}
                 >
                     <Edit size={14} />
                 </button>
@@ -344,17 +342,17 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
             {edit && (hidden.length > 0 || (bomHidden && onBomHiddenChange)) && (
                 <div className="absolute top-1 left-10 z-50 flex gap-1 no-print">
                     {hidden.length > 0 && (
-                        <button type="button" aria-label="Silinen başlıkları geri getir" title="Silinen başlıkları geri getir"
+                        <button type="button" aria-label={t('titleBlock.restoreHeadings')} title={t('titleBlock.restoreHeadings')}
                             onClick={(e) => { e.stopPropagation(); set({ legendHidden: [] }); }}
                             className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg">
-                            <Undo2 size={12} /> {hidden.length} gizli başlık
+                            <Undo2 size={12} /> {t('titleBlock.hiddenHeadings', { total: hidden.length })}
                         </button>
                     )}
                     {bomHidden && onBomHiddenChange && (
-                        <button type="button" aria-label="Parça tablosunu geri getir" title="Parça tablosunu geri getir"
+                        <button type="button" aria-label={t('titleBlock.restoreBom')} title={t('titleBlock.restoreBom')}
                             onClick={(e) => { e.stopPropagation(); onBomHiddenChange?.(false); }}
                             className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold bg-amber-500 text-black rounded-md shadow-lg">
-                            <Undo2 size={12} /> Parça tablosu gizli
+                            <Undo2 size={12} /> {t('titleBlock.bomHidden')}
                         </button>
                     )}
                 </div>
@@ -371,7 +369,7 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
                 <div className="p-1.5 border-t" style={bd} data-testid="legend-notes">
                     {L('notes')}
                     <p className="text-[11px] font-mono leading-snug whitespace-pre-wrap break-words mt-0.5 opacity-90">
-                        <Ed label="Teknik notlar" multiline value={metadata.technicalNotes || ''} placeholder="Not eklemek için tıkla"
+                        <Ed label={t('titleBlock.notes')} multiline value={metadata.technicalNotes || ''} placeholder={t('titleBlock.addNote')}
                             onCommit={edit ? (v) => set({ technicalNotes: v }) : undefined} />
                     </p>
                 </div>

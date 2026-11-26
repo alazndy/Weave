@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { useState, useEffect, useRef } from 'react';
 import { LibraryMetadata, ProductTemplate } from '../types';
 import {
@@ -25,7 +26,7 @@ export function useLibraryManager() {
       .catch(e => {
         console.error('Library initialization failed:', e);
         setLibraryError(true);
-        const fallback = { id: crypto.randomUUID(), name: 'Default', createdAt: new Date().toISOString() };
+        const fallback = { id: crypto.randomUUID(), name: i18n.t('library.defaultName'), createdAt: new Date().toISOString() };
         setLibraries([fallback]);
         setActiveLibraryId(fallback.id);
         lastLoadedLibraryId.current = fallback.id;
@@ -60,7 +61,7 @@ export function useLibraryManager() {
   const handleCreateLibrary = (name: string) => {
     const newLib: LibraryMetadata = {
       id: crypto.randomUUID(),
-      name: name.trim() || 'Yeni Kütüphane',
+      name: name.trim() || i18n.t('library.newName'),
       createdAt: new Date().toISOString(),
     };
     setLibraries(prev => [...prev, newLib]);
@@ -69,10 +70,10 @@ export function useLibraryManager() {
 
   const handleDeleteLibrary = (id: string) => {
     if (libraries.length <= 1) {
-      alert('En az bir kütüphane kalmalıdır.');
+      alert(i18n.t('library.keepOne'));
       return;
     }
-    if (!confirm('Bu kütüphaneyi ve içindeki tüm ürünleri silmek istediğinize emin misiniz?')) return;
+    if (!confirm(i18n.t('library.confirmDelete'))) return;
 
     const newLibs = libraries.filter(l => l.id !== id);
     setLibraries(newLibs);

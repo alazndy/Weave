@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Comment } from '../../types';
 import { MessageSquare, X, Check, Trash2, Lock } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export const CommentMarker: React.FC<CommentMarkerProps> = ({
     const [editContent, setEditContent] = useState(comment.content);
     const [editColor, setEditColor] = useState(comment.color);
 
+    const { t } = useTranslation();
     const handleSave = () => {
         onUpdate(comment.id, editContent, editColor, comment.isResolved || false);
         setIsOpen(false);
@@ -77,7 +79,7 @@ export const CommentMarker: React.FC<CommentMarkerProps> = ({
                     <textarea 
                         value={editContent}
                         onChange={e => setEditContent(e.target.value)}
-                        placeholder="Notunuzu buraya yazın..."
+                        placeholder={t('comment.placeholder')}
                         className={`w-full h-24 text-sm p-2 rounded resize-none outline-none mb-3 font-medium ${theme === 'light' ? 'bg-zinc-100 text-zinc-800' : 'bg-zinc-950 text-zinc-200 border border-zinc-800'}`}
                         disabled={comment.locked}
                     />
@@ -99,7 +101,7 @@ export const CommentMarker: React.FC<CommentMarkerProps> = ({
                             disabled={comment.locked}
                             className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors"
                         >
-                            Tamam
+                            {t('comment.ok')}
                         </button>
                     </div>
                     
@@ -113,7 +115,7 @@ export const CommentMarker: React.FC<CommentMarkerProps> = ({
                             disabled={comment.locked}
                         />
                         <label htmlFor={`resolve-${comment.id}`} className="text-xs font-medium text-zinc-500 cursor-pointer select-none">
-                            Çözüldü olarak işaretle
+                            {t('comment.resolved')}
                         </label>
                     </div>
                 </div>

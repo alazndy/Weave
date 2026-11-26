@@ -1,4 +1,5 @@
 import type { Junction } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     junction: Junction;
@@ -10,13 +11,16 @@ interface Props {
 }
 
 /** Filled dot where cable branches meet. SVG, so it stays vector in exports. */
-export const JunctionNode = ({ junction, color, selected, theme, onMouseDown, onMouseUp }: Props) => (
+export const JunctionNode = ({ junction, color, selected, theme, onMouseDown, onMouseUp }: Props) => {
+    const { t } = useTranslation();
+    return (
     <g data-junction-id={junction.id} className="pointer-events-auto cursor-move"
         onMouseDown={e => onMouseDown(e, junction.id)} onMouseUp={e => onMouseUp(e, junction.id)}
         onClick={e => e.stopPropagation()}>
-        <title>Birleşme noktası: tıkla ve kol çek, sürükle ve taşı</title>
+        <title>{t('junction.hint')}</title>
         <circle cx={junction.x} cy={junction.y} r={12} fill="transparent" />
         {selected && <circle cx={junction.x} cy={junction.y} r={10} fill="none" stroke="#38bdf8" strokeWidth={3} className="no-print" />}
         <circle cx={junction.x} cy={junction.y} r={6} fill={color} stroke={theme === 'light' ? '#ffffff' : '#09090b'} strokeWidth={1.5} />
     </g>
 );
+};

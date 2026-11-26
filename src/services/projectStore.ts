@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 /**
  * projectStore - local project persistence (IndexedDB).
  *
@@ -52,7 +53,7 @@ function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequ
 export async function saveProject(id: string, data: StoredProject['data']): Promise<void> {
   const record: StoredProject = {
     id,
-    name: data.metadata.projectName || 'Adsız Proje',
+    name: data.metadata.projectName || i18n.t('library.unnamedProject'),
     updatedAt: new Date().toISOString(),
     data,
   };

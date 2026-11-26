@@ -1,4 +1,5 @@
 import { ExternalPart, ProductInstance, ProductTemplate } from "../types";
+import i18n, { documentT, type Language } from "../i18n";
 
 export interface BomRow {
     name: string;
@@ -11,7 +12,8 @@ export interface BomRow {
 export const buildBOM = (
     instances: ProductInstance[],
     templates: ProductTemplate[],
-    externalParts: ExternalPart[] = []
+    externalParts: ExternalPart[] = [],
+    language: Language = "tr"
 ): BomRow[] => {
     const byTemplate = new Map<string, BomRow>();
 
@@ -28,15 +30,16 @@ export const buildBOM = (
         byTemplate.set(template.id, row);
     });
 
-    const rows = Array.from(byTemplate.values()).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-    externalParts.forEach(part => rows.push({ name: part.name, modelNumber: "", description: "Harici parça", quantity: part.count }));
+    const rows = Array.from(byTemplate.values()).sort((a, b) => a.name.localeCompare(b.name, language));
+    externalParts.forEach(part => rows.push({ name: part.name, modelNumber: "", description: documentT(language)("doc.csv.externalPart"), quantity: part.count }));
     return rows;
 };
 
 const csvCell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
 
-export const bomToCSV = (rows: BomRow[]): string => {
-    const headers = ["Ürün", "Model No", "Açıklama", "Adet"];
+export const bomToCSV = (rows: BomRow[], language: Language = "tr"): string => {
+    const td = documentT(language);
+    const headers = [td("doc.csv.product"), td("doc.csv.model"), td("doc.csv.description"), td("doc.csv.qty")];
     return [headers, ...rows.map(r => [r.name, r.modelNumber, r.description, r.quantity])]
         .map(r => r.map(csvCell).join(","))
         .join("\r\n");
@@ -46,15 +49,16 @@ export const exportBOM = (
     instances: ProductInstance[],
     templates: ProductTemplate[],
     projectName: string,
-    externalParts: ExternalPart[] = []
+    externalParts: ExternalPart[] = [],
+    language: Language = "tr"
 ) => {
-    const rows = buildBOM(instances, templates, externalParts);
+    const rows = buildBOM(instances, templates, externalParts, language);
     if (rows.length === 0) {
-        alert("Bu sayfada malzeme listesine girecek ürün yok.");
+        alert(i18n.t("alerts.noBomItems"));
         return;
     }
     // Leading BOM so Excel opens Turkish characters correctly.
-    const blob = new Blob(["﻿" + bomToCSV(rows)], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(["﻿" + bomToCSV(rows, language)], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

@@ -119,7 +119,7 @@ test.describe('PDF yükleme (çözünürlükten bağımsız)', () => {
     await page.getByTitle('Sil', { exact: true }).click();
     await drag(page, [700, 800], [900, 800]);
     await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
-    const img = page.getByAltText('Work area');
+    const img = page.getByAltText('Çalışma alanı');
     await expect(img).toBeVisible();
     const natural = await img.evaluate((i: HTMLImageElement) => ({ w: i.naturalWidth, h: i.naturalHeight }));
     expect(natural.w).toBe(4096);                              // far above the 2400px working size

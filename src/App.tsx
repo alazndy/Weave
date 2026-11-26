@@ -41,40 +41,17 @@ import { useAppShortcuts } from './hooks/useAppShortcuts';
 import { ActiveTool } from './components/canvas/CanvasToolbar';
 import { exportBOM } from './utils/bom-exporter';
 import { saveProject, loadProject, type RecentProject } from './services/projectStore';
-import i18n from './i18n';
+import i18n, { appLanguage, documentT, type Language } from './i18n';
+import { useTranslation } from 'react-i18next';
+import { DocumentLanguageProvider } from './i18nDocument';
+import { createMetadata, defaultPageName, docLanguageOf, retranslateDefaults } from './utils/documentDefaults';
 import html2canvas from 'html2canvas-pro';
 
 // Lazy load keys just in case but ModalManager handles them mostly
 
-const generateDocNo = (projectName: string = 'Weave Project', revision: string = 'R01') => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const acronym = projectName.trim().split(/\s+/).map(word => word[0]).join('').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6) || 'WP';
-  const cleanRev = revision.replace(/[^a-zA-Z0-9]/g, '');
-  return `${acronym}-${date}-${cleanRev}`;
-};
-
-const INITIAL_METADATA: ProjectMetadata = {
-  projectName: 'Yeni Sistem Şeması',
-  companyName: 'Şirket Adı',
-  companyLogo: null,
-  customerName: '',
-  preparedBy: '',
-  approvedBy: '',
-  documentNo: generateDocNo('Yeni Sistem Şeması', 'R.01'),
-  scale: '1:1',
-  pixelScale: 10,
-  paperSize: 'A4',
-  orientation: 'landscape',
-  revision: 'R.01',
-  date: new Date().toLocaleDateString('tr-TR'),
-  technicalNotes: '1. Tüm bağlantılar belirtilen tork değerinde sıkılmalıdır.\n2. Kablolama sırasında renk kodlarına dikkat ediniz.\n3. Montaj işlemi kalifiye personel tarafından yapılmalıdır.',
-  customFields: [],
-  externalParts: []
-};
-
-const createNewPage = (order: number): Page => ({
+const createNewPage = (order: number, language: Language = appLanguage()): Page => ({
     id: crypto.randomUUID(),
-    name: `Sayfa ${order}`,
+    name: defaultPageName(language, order),
     instances: [],
     connections: [],
     zones: [],
@@ -111,6 +88,7 @@ const PAPER_DIMENSIONS: Record<PaperSize, { w: number, h: number }> = {
 };
 
 export default function App() {
+  useTranslation(); // re-renders the messages below when the app language changes
   // --- CUSTOM HOOKS ---
   const { 
     libraries, 
@@ -139,7 +117,7 @@ export default function App() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [activeTool, setActiveTool] = useState<ActiveTool>('cursor'); 
 
-  const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>(INITIAL_METADATA);
+  const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata>(() => createMetadata(appLanguage()));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [clipboardInstance, setClipboardInstance] = useState<ProductInstance | null>(null);
   
@@ -180,6 +158,8 @@ export default function App() {
 
   // Apply App Settings (Theme & Palette)
   useEffect(() => {
+      // CSS uppercasing follows this: with 'tr', English "Library" would become "LİBRARY".
+      document.documentElement.lang = appSettings.language;
       // 1. Save to local storage
       try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings)); } catch { /* storage unavailable */ }
       if (i18n.language !== appSettings.language) i18n.changeLanguage(appSettings.language);
@@ -220,6 +200,13 @@ export default function App() {
       i18n.on('languageChanged', onChange);
       return () => i18n.off('languageChanged', onChange);
   }, []);
+
+  /** Saves project settings; a document language change also translates untouched default sheet texts. */
+  const applyProjectSettings = (metadata: ProjectMetadata) => {
+      const next = retranslateDefaults(metadata, pages, docLanguageOf(projectMetadata));
+      setProjectMetadata(next.metadata);
+      if (next.pages !== pages) setPages(next.pages);
+  };
 
   // --- DERIVED STATE (Shortcuts to active page data) ---
   const activePage = pages.find(p => p.id === activePageId) || pages[0];
@@ -433,7 +420,7 @@ export default function App() {
       // 2. Capture Canvas
       const element = document.getElementById('canvas-export-area');
       if (!element) {
-          alert("Canvas alanı bulunamadı.");
+          alert(i18n.t('alerts.noCanvas'));
           return;
       }
 
@@ -450,7 +437,7 @@ export default function App() {
           });
           
           const imageUrl = canvas.toDataURL('image/png');
-          const name = prompt("Yeni Blok Şablonu Adı:", "Yeni Blok");
+          const name = prompt(i18n.t('prompts.blockName'), i18n.t('prompts.blockDefault'));
           if (!name) return;
 
           const newTemplate: ProductTemplate = {
@@ -465,11 +452,11 @@ export default function App() {
           };
           
           setTemplates(prev => [...prev, newTemplate]);
-          alert("Blok kütüphaneye eklendi.");
+          alert(i18n.t('alerts.blockSaved'));
 
       } catch (e) {
           console.error("Block save failed", e);
-          alert("Hata oluştu.");
+          alert(i18n.t('alerts.generic'));
       }
   };
 
@@ -576,16 +563,16 @@ export default function App() {
               // Accept a full library (array) or a single exported template (object)
               const imported = Array.isArray(parsed) ? parsed : (parsed && parsed.id && Array.isArray(parsed.ports) ? [parsed] : null);
               if (imported) {
-                  if (confirm("Mevcut kütüphane ile birleştirilsin mi?")) {
+                  if (confirm(i18n.t('prompts.mergeLibrary'))) {
                       const newTemplates = [...templates];
                       imported.forEach((imp: ProductTemplate) => { if (!newTemplates.find(t => t.id === imp.id)) newTemplates.push(imp); });
                       setTemplates(newTemplates);
                   } else {
                       setTemplates(imported);
                   }
-                  alert("Kütüphane başarıyla yüklendi.");
-              } else { alert("Geçersiz dosya formatı."); }
-          } catch (err) { console.error("Import Error", err); alert("Dosya okunamadı."); }
+                  alert(i18n.t('alerts.libraryLoaded'));
+              } else { alert(i18n.t('alerts.badFormat')); }
+          } catch (err) { console.error("Import Error", err); alert(i18n.t('alerts.unreadable')); }
       };
       reader.readAsText(file);
       if (libraryInputRef.current) libraryInputRef.current.value = '';
@@ -730,7 +717,7 @@ export default function App() {
               setActivePageId(pages[i].id);
               await new Promise(r => setTimeout(r, i === 0 ? 900 : 600));
               const element = document.getElementById('canvas-export-area');
-              if (!element) throw new Error('Canvas alanı bulunamadı.');
+              if (!element) throw new Error(i18n.t('alerts.noCanvas'));
               if (vector) {
                   vectorParts.push(await printSheetToPdf(element as HTMLElement, { widthMm: wMm, heightMm: hMm, pixelScale: projectMetadata.pixelScale }));
                   continue;
@@ -745,7 +732,7 @@ export default function App() {
                   },
               });
               const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
-              if (!blob) throw new Error('Sayfa görüntüsü oluşturulamadı.');
+              if (!blob) throw new Error(i18n.t('alerts.pageImageFailed'));
               images.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), widthPx: canvas.width, heightPx: canvas.height, widthMm: wMm, heightMm: hMm });
           }
           const meta = { title: projectMetadata.projectName, author: projectMetadata.preparedBy || projectMetadata.companyName };
@@ -754,7 +741,7 @@ export default function App() {
           downloadBlob(new Blob([pdf as BlobPart], { type: 'application/pdf' }), `${base}.pdf`);
       } catch (err) {
           console.error('PDF export failed', err);
-          alert('PDF oluşturulurken bir hata oluştu.');
+          alert(i18n.t('alerts.pdfFailed'));
       } finally {
           setActivePageId(prevActive);
           setAppSettings(prev => ({ ...prev, theme: prevTheme }));
@@ -815,8 +802,8 @@ export default function App() {
               const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); 
               const filenameBase = `${(activePage.drawingNo ? activePage.drawingNo.trim().replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '') : fileSafeDocNo(projectMetadata, pages.indexOf(activePage) + 1)) || 'Weave'}_${dateStr}_${timeStr}_${activePage.name.replace(/\s/g, '_')}`;
               canvas.toBlob((blob: Blob | null) => downloadBlob(blob, `${filenameBase}.png`));
-          } catch (err) { console.error("Export failed", err); alert("Görüntü oluşturulurken bir hata meydana geldi."); }
-      } else { alert("Dışa aktarılacak alan bulunamadı."); }
+          } catch (err) { console.error("Export failed", err); alert(i18n.t('alerts.imageFailed')); }
+      } else { alert(i18n.t('alerts.noExportArea')); }
       
       setAppSettings(prev => ({...prev, theme: prevTheme})); 
       setSelectedIds(prevSelection); setIsLegendCollapsed(prevLegendCollapsed);
@@ -860,7 +847,7 @@ export default function App() {
           nextPages = data.pages;
       } else {
           // Legacy single-page format (or empty project)
-          const legacyPage = createNewPage(1);
+          const legacyPage = createNewPage(1, docLanguageOf(data.metadata || {}));
           legacyPage.instances = data.instances || [];
           legacyPage.connections = data.connections || [];
           legacyPage.zones = data.zones || [];
@@ -881,7 +868,8 @@ export default function App() {
               return Array.from(byId.values());
           });
       }
-      setProjectMetadata({ ...INITIAL_METADATA, ...(data.metadata || {}) });
+      const stored = data.metadata || {};
+      setProjectMetadata({ ...createMetadata(docLanguageOf(stored)), ...stored });
       setProjectId(id);
       setSelectedIds(new Set());
       setAnalysisResult(null);
@@ -894,11 +882,11 @@ export default function App() {
       reader.onload = (evt) => {
           try {
               const data = JSON.parse(evt.target?.result as string);
-              if (!applyProjectData(data)) { alert("Geçersiz proje dosyası."); return; }
+              if (!applyProjectData(data)) { alert(i18n.t('alerts.badProject')); return; }
               setShowWelcome(false);
-          } catch (err) { console.error("Load Error", err); alert("Dosya okunamadı."); }
+          } catch (err) { console.error("Load Error", err); alert(i18n.t('alerts.unreadable')); }
       };
-      reader.onerror = () => alert("Dosya okunamadı.");
+      reader.onerror = () => alert(i18n.t('alerts.unreadable'));
       reader.readAsText(file);
   };
 
@@ -906,12 +894,12 @@ export default function App() {
       const file = e.target.files?.[0];
       if (e.target) e.target.value = '';
       if (!file) return;
-      if (!confirm("Mevcut proje kapatılacak (otomatik kaydedildi). Devam etmek istiyor musunuz?")) return;
+      if (!confirm(i18n.t('prompts.closeProject'))) return;
       readProjectFile(file);
   };
 
   const handleCreateNewProject = () => {
-      applyProjectData({ templates: [], metadata: INITIAL_METADATA });
+      applyProjectData({ templates: [], metadata: createMetadata(appLanguage()) });
       setShowWelcome(false);
   };
 
@@ -919,19 +907,19 @@ export default function App() {
       try {
           const stored = await loadProject(project.id);
           if (!stored || !applyProjectData(stored.data, stored.id)) {
-              alert("Proje yerel kayıtlarda bulunamadı.");
+              alert(i18n.t('alerts.recentMissing'));
               return;
           }
           setShowWelcome(false);
       } catch (err) {
           console.error("Recent load failed", err);
-          alert("Proje açılamadı.");
+          alert(i18n.t('alerts.openFailed'));
       }
   };
   
   const handleAddPage = () => {
       performCheckpoint();
-      const newPage = createNewPage(pages.length + 1);
+      const newPage = createNewPage(pages.length + 1, docLanguageOf(projectMetadata));
       setPages([...pages, newPage]);
       setActivePageId(newPage.id);
   };
@@ -943,7 +931,7 @@ export default function App() {
       const newPage = {
           ...JSON.parse(JSON.stringify(page)), 
           id: crypto.randomUUID(),
-          name: `${page.name} (Kopya)`,
+          name: documentT(docLanguageOf(projectMetadata))('doc.defaults.pageCopy', { name: page.name }),
           drawingNo: undefined,
           order: pages.length + 1
       };
@@ -983,6 +971,7 @@ export default function App() {
   };
 
   return (
+    <DocumentLanguageProvider value={docLanguageOf(projectMetadata)}>
     <TooltipProvider>
     <UpdateBanner />
     <div className="flex h-screen w-full bg-ink text-alabaster overflow-hidden font-sans select-none transition-colors duration-300 relative">
@@ -997,18 +986,18 @@ export default function App() {
          )}
          {autosaveError && (
              <div role="alert" className="fixed bottom-16 right-4 z-[300] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-lg no-print">
-                 Otomatik kayıt başarısız — projeyi dosyaya kaydedin (Ctrl+S).
+                 {i18n.t('alerts.autosaveFailed')}
              </div>
          )}
          {libraryError && (
              <div role="alert" className="fixed bottom-28 right-4 z-[300] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-lg no-print">
-                 Kütüphane kaydedilemedi — tarayıcı depolaması dolu veya kapalı olabilir. Kütüphaneyi dışa aktarın.
+                 {i18n.t('alerts.librarySaveFailed')}
              </div>
          )}
          <div className="flex-1 flex overflow-hidden relative">
             <LeftSidebar
                 projectMetadata={projectMetadata}
-                setProjectMetadata={(m) => { performCheckpoint(); setProjectMetadata(m); }}
+                setProjectMetadata={(m) => { performCheckpoint(); applyProjectSettings(m); }}
                 templates={templates}
                 handleSaveProject={handleSaveProject}
                 handleLoadProject={handleLoadProject}
@@ -1029,7 +1018,7 @@ export default function App() {
                 onOpenSettings={() => setIsAppSettingsOpen(true)}
                 onNumberBySpace={() => { performCheckpoint(); const m = numberBySpace(instances); setInstances(prev => prev.map(i => m.has(i.id) ? { ...i, number: m.get(i.id) } : i)); }}
                 onResetNumbers={() => { performCheckpoint(); setInstances(prev => prev.map(i => i.number ? { ...i, number: undefined } : i)); }}
-                onExportBOM={() => exportBOM(activePage.instances, templates, projectMetadata.projectName, projectMetadata.externalParts)}
+                onExportBOM={() => exportBOM(activePage.instances, templates, projectMetadata.projectName, projectMetadata.externalParts, docLanguageOf(projectMetadata))}
                 onSingleExport={(template) => {
                     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
                     downloadBlob(blob, `${template.name.replace(/\s/g, '_')}.json`);
@@ -1160,7 +1149,7 @@ export default function App() {
 
       <ModalManager
         projectMetadata={projectMetadata}
-        setProjectMetadata={setProjectMetadata}
+        setProjectMetadata={applyProjectSettings}
         appSettings={appSettings}
         setAppSettings={setAppSettings}
         templates={templates}
@@ -1200,5 +1189,6 @@ export default function App() {
       </div>
     </div>
     </TooltipProvider>
+    </DocumentLanguageProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { Keyboard, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -6,30 +7,31 @@ interface ShortcutsModalProps {
 }
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
   
   const shortcuts = [
-    { keys: ['Ctrl', 'Z'], desc: 'Geri Al' },
-    { keys: ['Ctrl', 'Y'], desc: 'İleri Al' },
-    { keys: ['Ctrl', 'C'], desc: 'Kopyala' },
-    { keys: ['Ctrl', 'V'], desc: 'Yapıştır' },
-    { keys: ['Delete'], desc: 'Seçileni Sil' },
-    { keys: ['Yön Tuşları'], desc: 'Hassas Taşıma' },
-    { keys: ['Shift', 'Yön'], desc: 'Hızlı Taşıma' },
-    { keys: ['Shift', 'Sürükle'], desc: 'Çoklu Seçim' },
-    { keys: ['V'], desc: 'Seçim Aracı' },
-    { keys: ['M'], desc: 'Taşı Aracı' },
-    { keys: ['S'], desc: 'Ölçekle Aracı' },
-    { keys: ['B'], desc: 'Kutu Seçimi' },
-    { keys: ['R'], desc: 'Manuel Rota' },
-    { keys: ['Z'], desc: 'Bölge Ekle' },
-    { keys: ['T'], desc: 'Metin Ekle' },
-    { keys: ['C'], desc: 'Yorum Ekle' },
-    { keys: ['Alt', 'R'], desc: 'Otomatik Rota' },
-    { keys: ['Ctrl', 'G'], desc: 'Grupla / Ctrl+Shift+G Grubu Boz' },
-    { keys: ['Ctrl', 'S'], desc: 'Projeyi Dosyaya Kaydet' },
-    { keys: ['Mouse Teker'], desc: 'Zoom' },
-    { keys: ['Teker Tıkla'], desc: 'Kaydır (Pan)' },
+    { keys: ['Ctrl', 'Z'], desc: t('shortcutDesc.undo') },
+    { keys: ['Ctrl', 'Y'], desc: t('shortcutDesc.redo') },
+    { keys: ['Ctrl', 'C'], desc: t('shortcutDesc.copy') },
+    { keys: ['Ctrl', 'V'], desc: t('shortcutDesc.paste') },
+    { keys: ['Delete'], desc: t('shortcutDesc.deleteSelected') },
+    { keys: [t('shortcutKeys.arrows')], desc: t('shortcutDesc.nudge') },
+    { keys: ['Shift', t('shortcutKeys.arrow')], desc: t('shortcutDesc.fastMove') },
+    { keys: ['Shift', t('shortcutKeys.drag')], desc: t('shortcutDesc.multiSelect') },
+    { keys: ['V'], desc: t('shortcutDesc.selectTool') },
+    { keys: ['M'], desc: t('shortcutDesc.moveTool') },
+    { keys: ['S'], desc: t('shortcutDesc.scaleTool') },
+    { keys: ['B'], desc: t('shortcutDesc.boxSelect') },
+    { keys: ['R'], desc: t('shortcutDesc.manualRoute') },
+    { keys: ['Z'], desc: t('shortcutDesc.addZone') },
+    { keys: ['T'], desc: t('shortcutDesc.addText') },
+    { keys: ['C'], desc: t('shortcutDesc.addComment') },
+    { keys: ['Alt', 'R'], desc: t('shortcutDesc.autoRoute') },
+    { keys: ['Ctrl', 'G'], desc: t('shortcutDesc.group') },
+    { keys: ['Ctrl', 'S'], desc: t('shortcutDesc.saveFile') },
+    { keys: [t('shortcutKeys.wheel')], desc: t('shortcutDesc.zoom') },
+    { keys: [t('shortcutKeys.middle')], desc: t('shortcutDesc.pan') },
   ];
 
   return (
@@ -40,9 +42,9 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 p-2 rounded-lg border border-teal-500/20">
               <Keyboard className="text-teal-400 w-6 h-6" />
             </div>
-            Klavye Kısayolları
+            {t('shortcutDesc.title')}
           </h3>
-          <button onClick={onClose} aria-label="Kapat" className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+          <button onClick={onClose} aria-label={t('common.close')} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -63,7 +65,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         </div>
         
         <div className="mt-6 pt-4 border-t border-white/10 text-center">
-            <p className="text-xs text-zinc-500">İpucu: Nesneleri sağ tıklayarak bağlam menüsüne erişebilirsiniz.</p>
+            <p className="text-xs text-zinc-500">{t('shortcutDesc.tip')}</p>
         </div>
       </div>
     </div>

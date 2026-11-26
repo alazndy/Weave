@@ -163,10 +163,10 @@ test.describe('Üst araç çubuğu', () => {
   test('dil düğmesi arayüz dilini değiştirir ve kalıcıdır', async ({ page }) => {
     await openApp(page);
     await expect(page.getByRole('button', { name: 'Geri Al' })).toBeVisible();
-    await page.getByTitle('Switch Language').click();
+    await page.getByTitle('Dili değiştir').click();
     await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
     await page.reload();
-    await page.getByRole('button', { name: 'Close' }).or(page.getByRole('button', { name: 'Kapat' })).first().click();
+    await page.getByRole('button', { name: 'Close' }).first().click();
     await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
   });
 

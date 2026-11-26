@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { ProductInstance, ProductTemplate, CONNECTOR_LABELS, PortDefinition } from '../../types';
+import { useTranslation } from 'react-i18next';
+import { ProductInstance, ProductTemplate, connectorLabel, PortDefinition } from '../../types';
 import { getConnectorShapeClass, validatePortCompatibility } from '../../utils/canvasHelpers';
 import { FlipHorizontal, RotateCw, Trash2, ArrowDownRight, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowDownToLine, Zap, Lock, AlertTriangle } from 'lucide-react';
 
@@ -47,6 +48,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
 }) => {
     const [editingNumber, setEditingNumber] = React.useState(false);
     const [numberDraft, setNumberDraft] = React.useState('');
+    const { t } = useTranslation();
     const commitNumber = () => {
         if (!editingNumber) return;
         setEditingNumber(false);
@@ -86,7 +88,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
           >
                 <div
                     data-testid="number-badge"
-                    title={isDuplicateNumber ? 'Aynı numara başka bir bileşende de var — çift tıkla ve değiştir' : 'Numarayı değiştirmek için çift tıkla'}
+                    title={isDuplicateNumber ? t('node.duplicateNumber') : t('node.renumberHint')}
                     className={`absolute -top-3 -left-3 min-w-9 h-9 px-1.5 text-black font-extrabold rounded-full border flex items-center justify-center z-50 shadow-md pointer-events-auto cursor-text ${isDuplicateNumber ? 'bg-red-400 border-red-800 ring-2 ring-red-600' : 'bg-yellow-400 border-black'} ${String(itemIndex).length > 3 ? 'text-[11px]' : String(itemIndex).length > 2 ? 'text-sm' : 'text-base'}`}
                     style={{ transform: `rotate(${-r}deg)` }}
                     onMouseDown={(e) => { if (editingNumber) e.stopPropagation(); }}
@@ -95,7 +97,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                     {editingNumber ? (
                         <input
                             autoFocus
-                            aria-label="Bileşen numarası"
+                            aria-label={t('node.numberAria')}
                             value={numberDraft}
                             placeholder={String(itemIndex)}
                             maxLength={12}
@@ -120,14 +122,14 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                             className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-500 shadow"
                             onClick={(e) => { e.stopPropagation(); toggleMirrorInstance(inst.id); }}
                             onMouseDown={e => e.stopPropagation()}
-                            title="Aynala / Çevir"
+                            title={t('node.mirror')}
                         >
                             <FlipHorizontal size={14} />
                         </button>
                         <button 
                             className="bg-indigo-600 text-white p-1.5 rounded-full hover:bg-indigo-500 shadow cursor-grab active:cursor-grabbing"
                             onMouseDown={(e) => { setRotatingInstance(inst.id); onUndoCheckpoint && onUndoCheckpoint(); e.stopPropagation(); }}
-                            title="Döndür (Sürükle)"
+                            title={t('node.rotate')}
                         >
                             <RotateCw size={14} />
                         </button>
@@ -135,7 +137,7 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                             className="bg-red-600 text-white p-1.5 rounded-full hover:bg-red-500 shadow" 
                             onClick={(e) => removeInstance(inst.id)} 
                             onMouseDown={e => e.stopPropagation()}
-                            title="Sil"
+                            title={t('common.delete')}
                         >
                             <Trash2 size={14} />
                         </button>
@@ -214,14 +216,14 @@ const ProductNodeComponent: React.FC<ProductNodeProps> = ({
                             {startPort && !isCompatible ? (
                                 <div className="flex flex-col items-center">
                                     <div className="flex items-center gap-1 text-red-400 font-bold mb-1">
-                                        <AlertTriangle size={12} /> Bağlantı Uyumsuz
+                                        <AlertTriangle size={12} /> {t('node.incompatible')}
                                     </div>
                                     {compatibility.map((c, i) => <span key={i} className="text-[9px] text-zinc-400">{c}</span>)}
                                 </div>
                             ) : (
                                 <>
                                     <span className="font-extrabold mb-0.5">{port.label}</span>
-                                    <span className="text-zinc-300 font-medium text-[10px]">{CONNECTOR_LABELS[port.connectorType]}</span>
+                                    <span className="text-zinc-300 font-medium text-[10px]">{connectorLabel(port.connectorType, t)}</span>
                                     {port.isPower && (
                                         <span className={`text-[10px] font-mono font-bold mt-1 pt-1 border-t border-zinc-600 ${port.isGround ? 'text-zinc-400' : 'text-yellow-400'}`}>
                                             {port.isGround ? 'GND / EARTH' : `${port.voltage}V ${port.powerType} ${port.amperage ? `/ ${port.amperage}A` : ''}`}

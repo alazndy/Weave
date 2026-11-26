@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ProductInstance, ProductTemplate, Connection, Zone, TextNode, Comment, CONNECTOR_LABELS } from '../../types';
+import { useTranslation } from 'react-i18next';
+import { ProductInstance, ProductTemplate, Connection, Zone, TextNode, Comment, connectorLabel } from '../../types';
 import { X, Trash2, CircuitBoard, Copy, ClipboardCopy, Type, Eye, EyeOff, Zap, ChevronRight, Lock, Unlock, Settings2, Box, MessageSquare } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   comments = [],
   handleUpdateItem
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(true);
   
   const selectedInstanceId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : null;
@@ -86,9 +88,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         <div className="flex items-center justify-between p-4 border-b border-border">
              <div className="flex items-center gap-2 font-bold text-lg">
                 <Settings2 className="h-5 w-5 text-primary" />
-                Properties
+                {t('right.properties')}
              </div>
-             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8" aria-label="Sağ paneli daralt" title="Sağ paneli daralt">
+             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8" aria-label={t('right.collapse')} title={t('right.collapse')}>
                  <ChevronRight className="h-4 w-4" />
              </Button>
         </div>
@@ -96,8 +98,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         <Tabs defaultValue="properties" className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 pt-2">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="properties">Properties</TabsTrigger>
-                    <TabsTrigger value="layers">Layers</TabsTrigger>
+                    <TabsTrigger value="properties">{t('right.properties')}</TabsTrigger>
+                    <TabsTrigger value="layers">{t('right.layers')}</TabsTrigger>
                 </TabsList>
             </div>
 
@@ -112,10 +114,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                 <Card className="bg-primary/5 border-primary/20">
                                     <CardContent className="p-4 flex items-center justify-between">
                                         <div>
-                                            <p className="font-bold text-primary">{selectedIds.size} Items Selected</p>
-                                            <p className="text-xs text-muted-foreground">Use actions below</p>
+                                            <p className="font-bold text-primary">{t('right.itemsSelected', { total: selectedIds.size })}</p>
+                                            <p className="text-xs text-muted-foreground">{t('right.useActions')}</p>
                                         </div>
-                                        <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} aria-label="Seçimi temizle">
+                                        <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} aria-label={t('right.clearSelection')}>
                                             <X className="h-4 w-4" />
                                         </Button>
                                     </CardContent>
@@ -125,7 +127,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                     className="w-full" 
                                     onClick={handleDeleteSelected}
                                 >
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                                    <Trash2 className="mr-2 h-4 w-4" /> {t('right.deleteSelected')}
                                 </Button>
                             </div>
                         ) : selectedInstance && selectedTemplate ? (
@@ -135,21 +137,21 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                     <CardHeader className="p-4 pb-2">
                                         <div className="flex justify-between items-start">
                                             <CardTitle className="text-base font-bold">{selectedTemplate.name}</CardTitle>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2" onClick={() => setSelectedIds(new Set())} aria-label="Seçimi temizle">
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2" onClick={() => setSelectedIds(new Set())} aria-label={t('right.clearSelection')}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
                                         <div className="flex gap-2 mt-1">
-                                             <Badge variant="outline" className="text-[10px] font-mono">{selectedTemplate.modelNumber || 'No Model #'}</Badge>
+                                             <Badge variant="outline" className="text-[10px] font-mono">{selectedTemplate.modelNumber || t('right.noModel')}</Badge>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0">
                                          <div className="grid grid-cols-2 gap-2 mt-4">
                                             <Button variant="outline" size="sm" onClick={handleCopyInstance}>
-                                                <Copy className="mr-2 h-3.5 w-3.5" /> Copy
+                                                <Copy className="mr-2 h-3.5 w-3.5" /> {t('right.copy')}
                                             </Button>
                                             <Button variant="outline" size="sm" onClick={handleDuplicateInstance}>
-                                                <ClipboardCopy className="mr-2 h-3.5 w-3.5" /> Duplicate
+                                                <ClipboardCopy className="mr-2 h-3.5 w-3.5" /> {t('right.duplicate')}
                                             </Button>
                                          </div>
                                     </CardContent>
@@ -159,18 +161,18 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
                                 {/* COMPONENT NUMBER */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="component-number" className="text-xs uppercase text-muted-foreground font-bold">Bileşen Numarası</Label>
+                                    <Label htmlFor="component-number" className="text-xs uppercase text-muted-foreground font-bold">{t('right.componentNumber')}</Label>
                                     <input
                                         id="component-number"
                                         key={selectedInstance.id}
                                         defaultValue={selectedInstance.number ?? ''}
-                                        placeholder={`Otomatik (${instances.findIndex(i => i.id === selectedInstance.id) + 1})`}
+                                        placeholder={t('right.automatic', { number: instances.findIndex(i => i.id === selectedInstance.id) + 1 })}
                                         maxLength={12}
                                         onBlur={(e) => { const v = e.target.value.trim(); if (v !== (selectedInstance.number ?? '')) handleUpdateItem?.('instance', selectedInstance.id, { number: v || undefined }); }}
                                         onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                                         className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-primary"
                                     />
-                                    <p className="text-[10px] text-muted-foreground">Boş bırakırsan otomatik numara kullanılır. Rozete çift tıklayarak da değiştirebilirsin.</p>
+                                    <p className="text-[10px] text-muted-foreground">{t('right.componentNumberHint')}</p>
                                 </div>
 
                                 <Separator />
@@ -179,7 +181,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <Label className="uppercase text-xs font-bold text-muted-foreground flex items-center gap-2">
-                                            <Type className="h-3 w-3" /> Label Settings
+                                            <Type className="h-3 w-3" /> {t('right.labelSettings')}
                                         </Label>
                                          <Button 
                                             variant="ghost" 
@@ -188,7 +190,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                             onClick={() => updateInstanceLabelConfig('visible', !selectedInstance.labelConfig?.visible)}
                                         >
                                             {selectedInstance.labelConfig?.visible ? <Eye className="h-3.5 w-3.5 mr-1" /> : <EyeOff className="h-3.5 w-3.5 mr-1" />}
-                                            {selectedInstance.labelConfig?.visible ? 'Visible' : 'Hidden'}
+                                            {selectedInstance.labelConfig?.visible ? t('right.visible') : t('right.hidden')}
                                         </Button>
                                     </div>
 
@@ -196,23 +198,23 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                         <div className="space-y-4 p-3 border rounded-lg bg-muted/20">
                                             
                                             <div className="space-y-2">
-                                                <Label className="text-xs">Position</Label>
+                                                <Label className="text-xs">{t('right.position')}</Label>
                                                 <Tabs 
                                                     value={selectedInstance.labelConfig?.position || 'bottom'} 
                                                     onValueChange={(v) => updateInstanceLabelConfig('position', v)}
                                                     className="w-full"
                                                 >
                                                     <TabsList className="grid w-full grid-cols-3 h-8">
-                                                        <TabsTrigger value="top" className="text-xs">Top</TabsTrigger>
-                                                        <TabsTrigger value="center" className="text-xs">Center</TabsTrigger>
-                                                        <TabsTrigger value="bottom" className="text-xs">Bottom</TabsTrigger>
+                                                        <TabsTrigger value="top" className="text-xs">{t('right.top')}</TabsTrigger>
+                                                        <TabsTrigger value="center" className="text-xs">{t('right.center')}</TabsTrigger>
+                                                        <TabsTrigger value="bottom" className="text-xs">{t('right.bottom')}</TabsTrigger>
                                                     </TabsList>
                                                 </Tabs>
                                             </div>
 
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center">
-                                                    <Label className="text-xs">Font Size</Label>
+                                                    <Label className="text-xs">{t('right.fontSize')}</Label>
                                                     <span className="text-xs text-muted-foreground tabular-nums">{selectedInstance.labelConfig?.fontSize || 14}px</span>
                                                 </div>
                                                 <Slider 
@@ -224,7 +226,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1.5">
-                                                    <Label className="text-xs">Text Color</Label>
+                                                    <Label className="text-xs">{t('right.textColor')}</Label>
                                                     <div className="flex items-center gap-2">
                                                         <input 
                                                             type="color" 
@@ -236,7 +238,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1.5">
-                                                    <Label className="text-xs">Background</Label>
+                                                    <Label className="text-xs">{t('right.background')}</Label>
                                                     <div className="flex items-center gap-2">
                                                         <input 
                                                             type="color" 
@@ -256,7 +258,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
                                 {/* PORTS */}
                                 <div>
-                                    <Label className="uppercase text-xs font-bold text-muted-foreground mb-3 block">Ports</Label>
+                                    <Label className="uppercase text-xs font-bold text-muted-foreground mb-3 block">{t('right.ports')}</Label>
                                     <div className="border rounded-lg overflow-hidden">
                                          <div className="p-4 bg-muted/30 border-b flex justify-center">
                                              <img src={selectedTemplate.imageUrl} alt={selectedTemplate.name} className="h-20 object-contain mix-blend-multiply dark:mix-blend-normal"/>
@@ -274,7 +276,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                                             <span className="font-medium truncate">{port.label}</span>
                                                             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                                                 {port.isPower && <Zap className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                                                                <span className="truncate">{CONNECTOR_LABELS[port.connectorType]}</span>
+                                                                <span className="truncate">{connectorLabel(port.connectorType, t)}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -299,8 +301,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                 <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
                                     <CircuitBoard className="h-8 w-8 opacity-50" />
                                 </div>
-                                <h3 className="font-semibold text-lg mb-1">No Selection</h3>
-                                <p className="text-sm max-w-[200px]">Select an item from the canvas to edit its properties.</p>
+                                <h3 className="font-semibold text-lg mb-1">{t('right.noSelection')}</h3>
+                                <p className="text-sm max-w-[200px]">{t('right.noSelectionHint')}</p>
                             </div>
                         )}
                     </div>
@@ -317,13 +319,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                             <AccordionItem value="instances">
                                 <AccordionTrigger className="hover:no-underline py-2">
                                     <span className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
-                                        <Box className="h-3.5 w-3.5" /> Devices ({instances.length})
+                                        <Box className="h-3.5 w-3.5" /> {t('right.devices', { total: instances.length })}
                                     </span>
                                 </AccordionTrigger>
                                 <AccordionContent className="space-y-1 pt-1">
-                                    {instances.length === 0 && <div className="text-xs text-muted-foreground px-2 italic">No devices</div>}
+                                    {instances.length === 0 && <div className="text-xs text-muted-foreground px-2 italic">{t('right.noDevices')}</div>}
                                     {instances.map(inst => {
-                                        const t = templates.find(temp => temp.id === inst.templateId);
+                                        const template = templates.find(temp => temp.id === inst.templateId);
                                         const isSelected = selectedIds.has(inst.id);
                                         return (
                                             <div 
@@ -337,7 +339,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                                 <div className="flex items-center gap-2 truncate flex-1">
                                                     <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-primary" : "bg-muted-foreground/30")} />
                                                     <span className={cn("truncate font-medium", inst.hidden && "text-muted-foreground line-through decoration-muted-foreground/50 opacity-50")}>
-                                                        {t?.name || 'Unknown Device'}
+                                                        {template?.name || t('right.unknownDevice')}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-0.5">
@@ -364,11 +366,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                             <AccordionItem value="connections">
                                 <AccordionTrigger className="hover:no-underline py-2">
                                      <span className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
-                                        <CircuitBoard className="h-3.5 w-3.5" /> Connections ({connections.length})
+                                        <CircuitBoard className="h-3.5 w-3.5" /> {t('right.connections', { total: connections.length })}
                                     </span>
                                 </AccordionTrigger>
                                 <AccordionContent className="space-y-1 pt-1">
-                                    {connections.length === 0 && <div className="text-xs text-muted-foreground px-2 italic">No connections</div>}
+                                    {connections.length === 0 && <div className="text-xs text-muted-foreground px-2 italic">{t('right.noConnections')}</div>}
                                     {connections.map(conn => (
                                         <div 
                                             key={conn.id} 
@@ -401,16 +403,16 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                              <AccordionItem value="others">
                                 <AccordionTrigger className="hover:no-underline py-2">
                                      <span className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
-                                        <Type className="h-3.5 w-3.5" /> Annotations ({zones.length + textNodes.length + comments.length})
+                                        <Type className="h-3.5 w-3.5" /> {t('right.annotations', { total: zones.length + textNodes.length + comments.length })}
                                     </span>
                                 </AccordionTrigger>
                                 <AccordionContent className="space-y-1 pt-1">
-                                    {[...zones, ...textNodes, ...comments].length === 0 && <div className="text-xs text-muted-foreground px-2 italic">No annotations</div>}
+                                    {[...zones, ...textNodes, ...comments].length === 0 && <div className="text-xs text-muted-foreground px-2 italic">{t('right.noAnnotations')}</div>}
                                     
                                     {zones.map(z => (
                                         <div key={z.id} className="flex items-center justify-between p-2 rounded-md border border-transparent hover:bg-muted text-sm transition-colors cursor-pointer" onClick={() => setSelectedIds(new Set([z.id]))}>
                                             <div className="flex items-center gap-2 truncate">
-                                                <Badge variant="secondary" className="text-[9px] px-1 h-4">ZONE</Badge>
+                                                <Badge variant="secondary" className="text-[9px] px-1 h-4">{t('right.zoneBadge')}</Badge>
                                                 <span className={cn("truncate", z.hidden && "opacity-50")}>{z.label}</span>
                                             </div>
                                             <div className="flex items-center gap-0.5">
@@ -419,14 +421,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                         </div>
                                     ))}
                                     
-                                    {textNodes.map(t => (
-                                        <div key={t.id} className="flex items-center justify-between p-2 rounded-md border border-transparent hover:bg-muted text-sm transition-colors cursor-pointer" onClick={() => setSelectedIds(new Set([t.id]))}>
+                                    {textNodes.map(node => (
+                                        <div key={node.id} className="flex items-center justify-between p-2 rounded-md border border-transparent hover:bg-muted text-sm transition-colors cursor-pointer" onClick={() => setSelectedIds(new Set([node.id]))}>
                                             <div className="flex items-center gap-2 truncate">
-                                                <Badge variant="secondary" className="text-[9px] px-1 h-4">TXT</Badge>
-                                                <span className={cn("truncate", t.hidden && "opacity-50")}>{t.content}</span>
+                                                <Badge variant="secondary" className="text-[9px] px-1 h-4">{t('right.textBadge')}</Badge>
+                                                <span className={cn("truncate", node.hidden && "opacity-50")}>{node.content}</span>
                                             </div>
                                             <div className="flex items-center gap-0.5">
-                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {e.stopPropagation(); toggleHide('text', t.id, !!t.hidden)}}>{t.hidden ? <EyeOff className="h-3 w-3"/>:<Eye className="h-3 w-3"/>}</Button>
+                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {e.stopPropagation(); toggleHide('text', node.id, !!node.hidden)}}>{node.hidden ? <EyeOff className="h-3 w-3"/>:<Eye className="h-3 w-3"/>}</Button>
                                             </div>
                                         </div>
                                     ))}
@@ -435,7 +437,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                                          <div key={c.id} className="flex items-center justify-between p-2 rounded-md border border-transparent hover:bg-muted text-sm transition-colors cursor-pointer" onClick={() => setSelectedIds(new Set([c.id]))}>
                                             <div className="flex items-center gap-2 truncate">
                                                 <MessageSquare className="h-3 w-3 text-yellow-500" />
-                                                <span className={cn("truncate text-muted-foreground", c.hidden && "opacity-50")}>{c.content || '(Empty)'}</span>
+                                                <span className={cn("truncate text-muted-foreground", c.hidden && "opacity-50")}>{c.content || t('right.empty')}</span>
                                             </div>
                                             <div className="flex items-center gap-0.5">
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {e.stopPropagation(); toggleHide('comment', c.id, !!c.hidden)}}>{c.hidden ? <EyeOff className="h-3 w-3"/>:<Eye className="h-3 w-3"/>}</Button>

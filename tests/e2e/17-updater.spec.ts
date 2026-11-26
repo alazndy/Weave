@@ -39,7 +39,7 @@ test.describe('Uygulama güncelleme', () => {
     await page.addInitScript(fakeBridge({ state: 'none' }));
     await openApp(page);
     await expect(page.getByTestId('update-banner')).toHaveCount(0);
-    await page.getByRole('button', { name: /App Settings/ }).click();
+    await page.getByRole('button', { name: /Uygulama Ayarları/ }).click();
     await expect(page.getByTestId('update-settings')).toContainText('Weave güncel.');
     await page.getByRole('button', { name: 'Güncellemeleri denetle' }).click();
     expect(await page.evaluate(() => (window as any).__updCalls)).toContain('check');
@@ -48,7 +48,7 @@ test.describe('Uygulama güncelleme', () => {
   test('tarayıcıda / taşınabilir sürümde (desteklenmiyor) hiçbir şey görünmez', async ({ page }) => {
     await openApp(page);
     await expect(page.getByTestId('update-banner')).toHaveCount(0);
-    await page.getByRole('button', { name: /App Settings/ }).click();
+    await page.getByRole('button', { name: /Uygulama Ayarları/ }).click();
     await expect(page.getByTestId('update-settings')).toHaveCount(0);
   });
 });

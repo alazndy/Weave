@@ -114,9 +114,9 @@ test.describe('Port detay kartı', () => {
     await openApp(page);
     await placePair(page);
     await addCard(page);
-    await leftTab(page, 'Project');
+    await leftTab(page, 'Proje');
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('tabpanel').getByRole('button', { name: 'Kaydet', exact: true }).click();
     const stream = await (await download).createReadStream();
     const chunks: Buffer[] = [];
     for await (const c of stream) chunks.push(c as Buffer);

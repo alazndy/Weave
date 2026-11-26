@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HistoryState, HistorySnapshot } from '../../types';
 import { History, X, RotateCcw, Save, Clock } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface HistoryModalProps {
 export const HistoryModal: React.FC<HistoryModalProps> = ({ 
     isOpen, onClose, pastStates, snapshots, currentState, onRestoreState, onCreateSnapshot 
 }) => {
+  const { t } = useTranslation();
   const [snapshotName, setSnapshotName] = useState('');
   const [activeTab, setActiveTab] = useState<'timeline' | 'snapshots'>('snapshots');
 
@@ -36,7 +38,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
             <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 p-2 rounded-lg border border-orange-500/20">
               <History className="text-orange-400 w-6 h-6" />
             </div>
-            Versiyon Geçmişi (Time Travel)
+            {t('history_.title')}
           </h3>
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
             <X className="w-5 h-5" />
@@ -49,13 +51,13 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                 onClick={() => setActiveTab('snapshots')} 
                 className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'snapshots' ? 'text-orange-400 border-b-2 border-orange-400 bg-white/5' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
-                Kayıtlı Versiyonlar ({snapshots.length})
+                {t('history_.versions', { total: snapshots.length })}
             </button>
             <button 
                 onClick={() => setActiveTab('timeline')} 
                 className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'timeline' ? 'text-orange-400 border-b-2 border-orange-400 bg-white/5' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
-                İşlem Geçmişi ({pastStates.length})
+                {t('history_.timeline', { total: pastStates.length })}
             </button>
         </div>
 
@@ -64,13 +66,13 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
             {activeTab === 'snapshots' ? (
                 <div className="space-y-6">
                     <div className="bg-zinc-800/50 p-4 rounded-xl border border-zinc-700">
-                        <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase">Mevcut Durumu Kaydet</label>
+                        <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase">{t('history_.saveState')}</label>
                         <div className="flex gap-2">
                             <input 
                                 type="text" 
                                 value={snapshotName}
                                 onChange={e => setSnapshotName(e.target.value)}
-                                placeholder="Versiyon Adı (Örn: Müşteri Onayı Öncesi)"
+                                placeholder={t('history_.versionPlaceholder')}
                                 className="flex-1 bg-zinc-950 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 outline-none"
                             />
                             <button 
@@ -78,14 +80,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                                 disabled={!snapshotName.trim()}
                                 className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
                             >
-                                <Save size={16} /> Oluştur
+                                <Save size={16} /> {t('history_.create')}
                             </button>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         {snapshots.length === 0 ? (
-                            <div className="text-center text-zinc-500 py-8 italic">Henüz kayıtlı versiyon yok.</div>
+                            <div className="text-center text-zinc-500 py-8 italic">{t('history_.noVersions')}</div>
                         ) : (
                             snapshots.map((snap) => (
                                 <div key={snap.id} className="bg-zinc-800/30 border border-zinc-700 rounded-xl p-4 flex justify-between items-center hover:bg-zinc-800/50 transition-colors group">
@@ -97,14 +99,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                                     </div>
                                     <button 
                                         onClick={() => {
-                                            if(confirm(`"${snap.name}" versiyonuna geri dönmek istediğinize emin misiniz? Mevcut, kaydedilmemiş değişiklikler kaybolabilir.`)) {
+                                            if(confirm(t('history_.confirmRestore', { name: snap.name }))) {
                                                 onRestoreState(snap.state);
                                                 onClose();
                                             }
                                         }}
                                         className="bg-zinc-700 hover:bg-orange-600 text-zinc-300 hover:text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors opacity-0 group-hover:opacity-100"
                                     >
-                                        <RotateCcw size={14} /> Geri Yükle
+                                        <RotateCcw size={14} /> {t('history_.restore')}
                                     </button>
                                 </div>
                             ))
@@ -128,8 +130,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                             </div>
                             <div className="flex-1 bg-zinc-800/30 border border-zinc-700 rounded-lg p-3 flex justify-between items-center hover:bg-zinc-800 transition-colors">
                                 <div>
-                                    <span className="text-sm font-medium text-zinc-300 block">Geçmiş Durum</span>
-                                    <span className="text-[10px] text-zinc-500">{instanceCount} Cihaz, {connectionCount} Bağlantı ({state.pages?.length || 0} Sayfa)</span>
+                                    <span className="text-sm font-medium text-zinc-300 block">{t('history_.past')}</span>
+                                    <span className="text-[10px] text-zinc-500">{t('history_.counts', { devices: instanceCount, links: connectionCount, sheets: state.pages?.length || 0 })}</span>
                                 </div>
                                 <button 
                                     onClick={() => {
@@ -137,14 +139,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                                         onClose();
                                     }}
                                     className="text-zinc-500 hover:text-orange-400 p-2"
-                                    title="Bu duruma dön"
+                                    title={t('history_.goBack')}
                                 >
                                     <RotateCcw size={16} />
                                 </button>
                             </div>
                         </div>
                     )})}
-                    {pastStates.length === 0 && <div className="text-center text-zinc-500 py-8 italic">İşlem geçmişi boş.</div>}
+                    {pastStates.length === 0 && <div className="text-center text-zinc-500 py-8 italic">{t('history_.empty')}</div>}
                 </div>
             )}
         </div>

@@ -9,20 +9,20 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await openApp(page);
     const lbl = page.getByTestId('lbl-drawingName');
     await lbl.click();
-    await page.getByLabel('Başlık: Drawing Name:', { exact: true }).fill('Çizim Adı:');
+    await page.getByLabel('Başlık: Çizim Adı:', { exact: true }).fill('Resim Adı:');
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('lbl-drawingName')).toHaveText('Çizim Adı:');
+    await expect(page.getByTestId('lbl-drawingName')).toHaveText('Resim Adı:');
     await undoBtn(page).click();
-    await expect(page.getByTestId('lbl-drawingName')).toHaveText('Drawing Name:');
+    await expect(page.getByTestId('lbl-drawingName')).toHaveText('Çizim Adı:');
     // boşaltma = varsayılan
     await page.getByTestId('lbl-scale').click();
-    await page.getByLabel('Başlık: Scale', { exact: true }).fill('Ölçek');
+    await page.getByLabel('Başlık: Ölçek', { exact: true }).fill('Skala');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('lbl-scale')).toHaveText('Skala');
+    await page.getByTestId('lbl-scale').click();
+    await page.getByLabel('Başlık: Ölçek', { exact: true }).fill('');
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('lbl-scale')).toHaveText('Ölçek');
-    await page.getByTestId('lbl-scale').click();
-    await page.getByLabel('Başlık: Scale', { exact: true }).fill('');
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('lbl-scale')).toHaveText('Scale');
     errors.expectNone();
   });
 
@@ -70,7 +70,7 @@ test.describe('Lejant: tıklayarak düzenleme ve yer değiştirme', () => {
     await expect(page.getByTestId('lbl-sheet')).toHaveCount(1);
     await page.getByTestId('title-block').hover();
     await page.getByRole('button', { name: 'Silinen başlıkları geri getir' }).click();
-    await expect(page.getByTestId('lbl-scale')).toHaveText('Scale');
+    await expect(page.getByTestId('lbl-scale')).toHaveText('Ölçek');
     await undoBtn(page).click();
     await expect(page.getByTestId('lbl-scale')).toHaveCount(0);
   });

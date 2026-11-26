@@ -42,16 +42,16 @@ export function composeDocumentNo(n: DocNumbering, sheet?: number): string {
 export const documentNoFor = (m: ProjectMetadata, sheet: number): string =>
   m.docNumbering?.enabled ? composeDocumentNo(m.docNumbering, sheet) : m.documentNo;
 
-/** Missing parts of an enabled numbering (for the settings warning). */
+/** Translation keys of the missing parts of an enabled numbering (for the settings warning). */
 export function missingParts(n: DocNumbering): string[] {
   const v = normalizeNumbering(n);
   const out: string[] = [];
-  if (v.originator.length !== 3) out.push('Originator (3 harf)');
-  if (v.type.length !== 3) out.push('Döküman tipi');
-  if (v.discipline.length !== 3) out.push('Disiplin');
-  if (v.location.length !== 3) out.push('Lokasyon');
-  if (v.sequence.length !== 3) out.push('Sıra no (3 hane)');
-  if (!/^P\d$/.test(v.phase)) out.push('Proje fazı (P0–P9)');
-  if (!v.revision) out.push('Revizyon');
+  if (v.originator.length !== 3) out.push('docNumbering.originator');
+  if (v.type.length !== 3) out.push('docNumbering.type');
+  if (v.discipline.length !== 3) out.push('docNumbering.discipline');
+  if (v.location.length !== 3) out.push('docNumbering.location');
+  if (v.sequence.length !== 3) out.push('docNumbering.sequence');
+  if (!/^P\d$/.test(v.phase)) out.push('docNumbering.phase');
+  if (!v.revision) out.push('docNumbering.revision');
   return out;
 }

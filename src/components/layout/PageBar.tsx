@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Page } from '../../types';
 import { Plus, X, Copy, FileText, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 
@@ -19,7 +20,8 @@ interface PageBarProps {
 export const PageBar: React.FC<PageBarProps> = ({ 
     pages, activePageId, onSwitchPage, onAddPage, onDuplicatePage, onRemovePage, onRenamePage, onMovePage, onToggleGridView, isGridView, theme 
 }) => {
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const { t } = useTranslation();
+  const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [dragId, setDragId] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export const PageBar: React.FC<PageBarProps> = ({
                     onClick={() => setIsCollapsed(false)}
                     className="h-7 px-4 rounded-t-xl text-xs font-bold flex items-center justify-center gap-2 border-t border-x border-white/20 shadow-lg backdrop-blur-xl glass-panel text-zinc-500 hover:text-paprika transition-all"
                 >
-                    <ChevronUp size={14}/> Sayfalar ({pages.length})
+                    <ChevronUp size={14}/> {t('pageBar.pages', { total: pages.length })}
                 </button>
             </div>
         )
@@ -60,8 +62,8 @@ export const PageBar: React.FC<PageBarProps> = ({
             <button 
                 onClick={() => setIsCollapsed(true)}
                 className="h-5 w-16 rounded-t-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-all bg-black/20 text-white/50 hover:bg-black/40 hover:text-white backdrop-blur-sm"
-                title="Sayfa çubuğunu daralt"
-                aria-label="Sayfa çubuğunu daralt"
+                title={t('pageBar.collapse')}
+                aria-label={t('pageBar.collapse')}
             >
                 <ChevronDown size={14}/>
             </button>
@@ -71,7 +73,7 @@ export const PageBar: React.FC<PageBarProps> = ({
                 <button
                     onClick={onToggleGridView}
                     className={`h-9 w-9 mb-1 rounded-xl flex items-center justify-center transition-all mr-2 ${isGridView ? 'bg-paprika text-white shadow-lg shadow-paprika/20' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-white hover:bg-white/10'}`}
-                    title="Sayfa Izgarası"
+                    title={t('pageBar.grid')}
                 >
                     <LayoutGrid size={18} />
                 </button>
@@ -109,8 +111,8 @@ export const PageBar: React.FC<PageBarProps> = ({
                                 onKeyDown={e => handleKeyDown(e, page.id)}
                                 autoFocus
                                 className="w-full bg-transparent border-none outline-none text-xs font-bold text-zinc-900 dark:text-white"
-                                placeholder="Sayfa adı"
-                                aria-label="Sayfa adı"
+                                placeholder={t('titleBlock.pageName')}
+                                aria-label={t('titleBlock.pageName')}
                             />
                         ) : (
                             <span className="text-xs font-bold truncate flex-1">{page.name}</span>
@@ -119,10 +121,10 @@ export const PageBar: React.FC<PageBarProps> = ({
                         <div className={`flex items-center gap-1 ml-2 ${page.id === activePageId ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                             {onMovePage && pages.length > 1 && page.id === activePageId && (
                                 <>
-                                    <button type="button" aria-label={`${page.name} sayfasını sola taşı`} title="Sola taşı" disabled={index === 0}
+                                    <button type="button" aria-label={t('pageBar.moveLeftAria', { name: page.name })} title={t('pageBar.moveLeft')} disabled={index === 0}
                                         onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index - 1); }}
                                         className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-emerald-500 disabled:opacity-30 transition-colors"><ChevronLeft size={12}/></button>
-                                    <button type="button" aria-label={`${page.name} sayfasını sağa taşı`} title="Sağa taşı" disabled={index === pages.length - 1}
+                                    <button type="button" aria-label={t('pageBar.moveRightAria', { name: page.name })} title={t('pageBar.moveRight')} disabled={index === pages.length - 1}
                                         onClick={(e) => { e.stopPropagation(); onMovePage(page.id, index + 1); }}
                                         className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-emerald-500 disabled:opacity-30 transition-colors"><ChevronRight size={12}/></button>
                                 </>
@@ -130,7 +132,7 @@ export const PageBar: React.FC<PageBarProps> = ({
                             <button 
                                 onClick={(e) => { e.stopPropagation(); onDuplicatePage(page.id); }}
                                 className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-blue-500 transition-colors"
-                                title="Sayfayı Çoğalt"
+                                title={t('pageBar.duplicate')}
                             >
                                 <Copy size={12}/>
                             </button>
@@ -138,10 +140,10 @@ export const PageBar: React.FC<PageBarProps> = ({
                                 <button 
                                     onClick={(e) => { 
                                         e.stopPropagation(); 
-                                        if(confirm(`"${page.name}" sayfasını silmek istediğinize emin misiniz?`)) onRemovePage(page.id); 
+                                        if(confirm(t('pageBar.confirmDelete', { name: page.name }))) onRemovePage(page.id); 
                                     }}
                                     className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-zinc-400 hover:text-red-500 transition-colors"
-                                    title="Sayfayı Sil"
+                                    title={t('pageBar.delete')}
                                 >
                                     <X size={12}/>
                                 </button>
@@ -158,7 +160,7 @@ export const PageBar: React.FC<PageBarProps> = ({
                 <button 
                     onClick={onAddPage}
                     className="ml-1 h-9 w-9 mb-1 rounded-xl flex items-center justify-center transition-all text-zinc-500 hover:text-apricot hover:bg-apricot/10"
-                    title="Yeni Sayfa Ekle"
+                    title={t('pageBar.add')}
                 >
                     <Plus size={18} />
                 </button>

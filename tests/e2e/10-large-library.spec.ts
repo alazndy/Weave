@@ -22,7 +22,7 @@ test('büyük görsel kütüphaneye kaydedilir ve kalıcıdır', async ({ page }
   await page.locator('input[type=file][accept*=".png"]').setInputFiles({ name: 'big.png', mimeType: 'image/png', buffer: noisePng(1600, 1200) });
   await page.getByRole('button', { name: /Tamamla ve İlerle/ }).click();
   await page.getByPlaceholder('Örn: Motor Sürücü').fill('Büyük Ürün');
-  await page.getByAltText('Work area').click({ position: { x: 100, y: 100 } });
+  await page.getByAltText('Çalışma alanı').click({ position: { x: 100, y: 100 } });
   await page.locator('div.fixed.z-\\[110\\]').getByRole('button', { name: 'Kaydet', exact: true }).last().click();
   await expect(page.getByTitle('Büyük Ürün')).toBeVisible();
   await page.waitForTimeout(500);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { PremiumModal } from '../ui/PremiumModal';
 
@@ -11,6 +12,7 @@ interface ConfirmationModalProps {
 }
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+  const { t } = useTranslation();
   return (
     <PremiumModal
       isOpen={isOpen}
@@ -24,14 +26,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, on
                 onClick={onClose} 
                 className="px-5 py-2.5 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black/10 dark:hover:bg-white/10"
             >
-                İptal
+                {t('common.cancel')}
             </button>
             <button 
                 onClick={onConfirm} 
                 className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-500/20 flex items-center gap-2 transition-transform active:scale-95"
             >
                 <Trash2 className="w-4 h-4" />
-                Evet, Temizle
+                {t('common.confirmClear')}
             </button>
         </>
       }

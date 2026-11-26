@@ -22,9 +22,9 @@ test.describe('Cihazlar', () => {
   test('tıklama cihazı seçer, Properties paneli seçili cihazı gösterir', async ({ page }) => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 450, 300);
-    await expect(page.getByText('No Selection')).toBeVisible();
+    await expect(page.getByText('Seçim yok')).toBeVisible();
     await nodes(page).first().click();
-    await expect(page.getByText('No Selection')).toBeHidden();
+    await expect(page.getByText('Seçim yok')).toBeHidden();
     await expect(page.getByText(CAMERA.name).last()).toBeVisible();
   });
 
@@ -33,7 +33,7 @@ test.describe('Cihazlar', () => {
     await dropTemplate(page, CAMERA.id, 450, 300);
     await nodes(page).first().click();
     await page.mouse.click(600, 550);
-    await expect(page.getByText('No Selection')).toBeVisible();
+    await expect(page.getByText('Seçim yok')).toBeVisible();
   });
 
   test('Shift ile çoklu seçim yapılır', async ({ page }) => {
@@ -87,7 +87,7 @@ test.describe('Cihazlar', () => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 450, 300);
     await nodes(page).first().click();
-    await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
+    await page.getByRole('button', { name: 'Çoğalt', exact: true }).click();
     await expect(nodes(page)).toHaveCount(2);
   });
 
@@ -96,12 +96,12 @@ test.describe('Cihazlar', () => {
     const { camera, monitor } = await placePair(page);
     await camera.click();
     await page.getByRole('button', { name: 'Seçimi temizle' }).click();
-    await expect(page.getByText('No Selection')).toBeVisible();
+    await expect(page.getByText('Seçim yok')).toBeVisible();
 
     await camera.click();
     await monitor.click({ modifiers: ['Shift'] });
-    await expect(page.getByText('2 Items Selected')).toBeVisible();
-    await page.getByRole('button', { name: 'Delete Selected' }).click();
+    await expect(page.getByText('2 öğe seçili')).toBeVisible();
+    await page.getByRole('button', { name: 'Seçilenleri Sil' }).click();
     await expect(nodes(page)).toHaveCount(0);
     await undoBtn(page).click();
     await expect(nodes(page)).toHaveCount(2);
@@ -135,7 +135,7 @@ test.describe('Cihazlar', () => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 450, 300);
     await nodes(page).first().click({ button: 'right' });
-    await page.getByRole('button', { name: 'Kopyala', exact: true }).click();
+    await page.getByTestId('canvas-viewport').getByRole('button', { name: 'Kopyala', exact: true }).click();
     await page.keyboard.press('Control+v');
     await expect(nodes(page)).toHaveCount(2);
   });
@@ -185,7 +185,7 @@ test.describe('Cihazlar', () => {
   test('sağ panel katmanlar: gizle tuvalden kaldırır, kilitle sürüklemeyi engeller', async ({ page }) => {
     await openApp(page);
     await dropTemplate(page, CAMERA.id, 450, 300);
-    await rightTab(page, 'Layers').click();
+    await rightTab(page, 'Katmanlar').click();
     const row = page.locator('div.cursor-pointer', { hasText: CAMERA.name });
     const [hide, lock] = [row.locator('button').nth(0), row.locator('button').nth(1)];
 
@@ -208,7 +208,7 @@ test.describe('Cihazlar', () => {
   test('sağ panel daraltılır ve ayarlar düğmesiyle yeniden açılır', async ({ page }) => {
     const errors = trackErrors(page);
     await openApp(page);
-    const props = page.getByRole('tab', { name: 'Properties', exact: true });
+    const props = page.getByRole('tab', { name: 'Özellikler', exact: true });
     await expect(props).toBeInViewport();
     await page.getByRole('button', { name: 'Sağ paneli daralt' }).click();
     await expect(props).not.toBeInViewport();

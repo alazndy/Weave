@@ -98,7 +98,7 @@ export async function wirePair(page: Page, camera: Locator, monitor: Locator) {
 }
 
 /** Opens a tab of the left sidebar. */
-export const leftTab = (page: Page, name: 'Library' | 'Project') => page.getByRole('tab', { name }).first().click();
+export const leftTab = (page: Page, name: 'Kütüphane' | 'Proje') => page.getByRole('tab', { name }).first().click();
 
 /** Waits for the autosave debounce to flush. */
 export const flushAutosave = (page: Page) => page.waitForTimeout(2200);

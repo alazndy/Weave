@@ -1,10 +1,11 @@
 import React, { useState, useRef, MouseEvent, useEffect, useLayoutEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { PortDetailDialog } from './modals/PortDetailDialog';
 import { PortDefinition, ProductTemplate, ConnectorType, PortFlowType, ExternalPart } from '../types';
 import { X, Edit2, Plus, Zap, Trash2, ArrowDownToLine, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { extractPartListFromImage, MISSING_KEY_MESSAGE } from '../services/geminiService';
+import { extractPartListFromImage, missingKeyMessage } from '../services/geminiService';
 import { EditorSidebar } from './editor/EditorSidebar';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import {
@@ -32,6 +33,7 @@ type EditorMode = 'upload' | 'preprocess' | 'ports';
 type ToolType = 'select' | 'eraser' | 'scan' | 'measure';
 
 export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, onSave, onExtractParts, onCancel, pixelScale = 2, geminiApiKey }) => {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<EditorMode>('upload');
   const [name, setName] = useState('');
   const [modelNumber, setModelNumber] = useState('');
@@ -256,7 +258,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
         setMode('preprocess');
       } catch (err) {
         console.error("PDF Error", err);
-        alert("PDF işlenirken hata oluştu.");
+        alert(t('editor.pdfError'));
       }
     } else {
       const reader = new FileReader();
@@ -538,7 +540,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
       setShowMeasureInput(false);
       setMeasuredLengthMm('');
       setTool('select'); 
-      alert(`Kalibrasyon tamamlandı. Ürün genişliği: ${calculatedPhysicalWidth.toFixed(1)} mm olarak ayarlandı.`);
+      alert(t('editor.calibrated', { width: calculatedPhysicalWidth.toFixed(1) }));
   };
 
   const applyCrop = async () => {
@@ -593,7 +595,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
               const parts = await extractPartListFromImage(geminiApiKey, imageBase64);
               setScannedParts(parts);
           } catch (e) {
-              alert(e instanceof Error && e.message === MISSING_KEY_MESSAGE ? e.message : "Tarama başarısız oldu.");
+              alert(e instanceof Error && e.message === missingKeyMessage() ? e.message : t('editor.scanFailed'));
           }
       }
       setIsScanning(false);
@@ -604,7 +606,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
           onExtractParts(scannedParts);
           setScannedParts(null);
           setSelection(null);
-          alert(`${scannedParts.length} parça proje listesine eklendi.`);
+          alert(t('editor.partsAdded', { total: scannedParts.length }));
       }
   }
 
@@ -617,7 +619,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
               setMode('ports');
           } catch (err) {
               console.error('PDF export failed', err);
-              alert('PDF işlenirken hata oluştu.');
+              alert(t('editor.pdfError'));
           }
           return;
       }
@@ -810,7 +812,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.03] backdrop-blur-3xl shrink-0">
           <h2 className="text-2xl font-black bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3 drop-shadow-sm">
             {initialTemplate ? <Edit2 className="w-7 h-7 text-teal-400"/> : <Plus className="w-7 h-7 text-teal-400" />} 
-            {mode === 'upload' ? 'Görsel Yükleme' : mode === 'preprocess' ? 'Ön İşleme & Kalibrasyon' : initialTemplate ? 'Ürün Düzenle' : 'Port Tanımlama'}
+            {t(mode === 'upload' ? 'editor.titleUpload' : mode === 'preprocess' ? 'editor.titlePreprocess' : initialTemplate ? 'editor.titleEdit' : 'editor.titlePorts')}
           </h2>
           <div className="flex items-center gap-4">
                {mode === 'ports' && (
@@ -819,10 +821,10 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                   className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-white/10 transition-all active:scale-95"
                   >
                   <Save size={18} />
-                  Kaydet
+                  {t('common.save')}
                   </button>
               )}
-            <button onClick={onCancel} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors" title="Kapat" aria-label="Kapat">
+            <button onClick={onCancel} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors" title={t('common.close')} aria-label={t('common.close')}>
                 <X className="w-6 h-6" />
             </button>
           </div>
@@ -870,8 +872,8 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                      <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
                          <Upload className="w-10 h-10 opacity-30"/>
                      </div>
-                     <p className="text-xl font-bold text-white mb-2">Başlamak için Bir Resim Yükleyin</p>
-                     <p className="text-sm font-medium">Sol menüyü kullanarak cihazınızdan bir resim veya PDF dosyası seçin.</p>
+                     <p className="text-xl font-bold text-white mb-2">{t('editor.startUpload')}</p>
+                     <p className="text-sm font-medium">{t('editor.startHint')}</p>
                  </div>
              )}
 
@@ -899,7 +901,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                 <img 
                   ref={imageRef}
                   src={processedImage} 
-                  alt="Work area"
+                  alt={t('editor.workArea')}
                   onClick={handleImageClick}
                   className="max-h-[calc(85vh-80px)] max-w-[calc(90vw-26rem)] object-contain bg-white block cursor-crosshair rounded-xl"
                   draggable={false}
@@ -959,13 +961,13 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                        <h4 className="font-bold text-white text-sm">Port Düzenle</h4>
+                        <h4 className="font-bold text-white text-sm">{t('portDialog.title')}</h4>
                         <button onClick={cancelEditing} className="text-zinc-500 hover:text-white transition-colors"><X size={14}/></button>
                     </div>
                     
                     <div className="space-y-3">
                         <div>
-                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Etiket</label>
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">{t('port.label')}</label>
                             <input 
                                 type="text" 
                                 value={tempPortLabel} 
@@ -977,28 +979,28 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                         
                         <div className="grid grid-cols-2 gap-2">
                              <div>
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Tip</label>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">{t('portDialog.powerKind')}</label>
                                 <select 
                                     value={tempPortType} 
                                     onChange={e => setTempPortType(e.target.value as any)}
                                     className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 outline-none"
                                 >
-                                    <option value="input">Giriş</option>
-                                    <option value="output">Çıkış</option>
-                                    <option value="bidirectional">Çift Yönlü</option>
+                                    <option value="input">{t('editor.inputShort')}</option>
+                                    <option value="output">{t('editor.outputShort')}</option>
+                                    <option value="bidirectional">{t('port.bidirectional')}</option>
                                 </select>
                              </div>
                              <div>
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Yön</label>
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">{t('editor.direction')}</label>
                                 <select 
                                     value={tempDirection} 
                                     onChange={e => setTempDirection(e.target.value as any)}
                                     className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 outline-none"
                                 >
-                                    <option value="bottom">Aşağı</option>
-                                    <option value="top">Yukarı</option>
-                                    <option value="left">Sola</option>
-                                    <option value="right">Sağa</option>
+                                    <option value="bottom">{t('editor.down')}</option>
+                                    <option value="top">{t('editor.up')}</option>
+                                    <option value="left">{t('editor.left')}</option>
+                                    <option value="right">{t('editor.right')}</option>
                                 </select>
                              </div>
                         </div>
@@ -1006,11 +1008,11 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                         <div className="flex gap-2 pt-1">
                              <label className={`flex-1 p-2 rounded-lg border cursor-pointer transition-all flex items-center justify-center gap-2 ${tempIsPower ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 font-bold' : 'bg-black/20 border-white/10 text-zinc-500 hover:text-white'}`}>
                                  <input type="checkbox" checked={tempIsPower} onChange={e => setTempIsPower(e.target.checked)} className="hidden" />
-                                 <Zap size={14} fill={tempIsPower ? "currentColor" : "none"}/> Güç
+                                 <Zap size={14} fill={tempIsPower ? "currentColor" : "none"}/> {t('port.power')}
                              </label>
                              <label className={`flex-1 p-2 rounded-lg border cursor-pointer transition-all flex items-center justify-center gap-2 ${tempIsGround ? 'bg-zinc-600/30 border-zinc-500 text-zinc-300 font-bold' : 'bg-black/20 border-white/10 text-zinc-500 hover:text-white'}`}>
                                  <input type="checkbox" checked={tempIsGround} onChange={e => setTempIsGround(e.target.checked)} className="hidden" />
-                                 <ArrowDownToLine size={14}/> Toprak
+                                 <ArrowDownToLine size={14}/> {t('editor.ground')}
                              </label>
                         </div>
                         
@@ -1018,14 +1020,14 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                             <div className="grid grid-cols-2 gap-2 animate-in fade-in">
                                 <input 
                                     type="text" 
-                                    placeholder="Voltaj (5V)" 
+                                    placeholder={t('editor.voltagePlaceholder')} 
                                     value={tempVoltage} 
                                     onChange={e => setTempVoltage(e.target.value)}
                                     className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500"
                                 />
                                 <input 
                                     type="text" 
-                                    placeholder="Akım (2A)" 
+                                    placeholder={t('editor.currentPlaceholder')} 
                                     value={tempAmperage} 
                                     onChange={e => setTempAmperage(e.target.value)}
                                     className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-amber-500"
@@ -1034,7 +1036,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
                         )}
 
                         <button type="button" onClick={() => setDetailOpen(true)} className="w-full rounded-lg border border-white/10 bg-black/30 py-2 text-xs font-bold text-zinc-300 hover:text-white">
-                            Port detayı (görsel + pinler){editingPort?.detail ? ' ✓' : ''}
+                            {t('portDetail.open')}{editingPort?.detail ? ' ✓' : ''}
                         </button>
                         {detailOpen && editingPort && (
                             <PortDetailDialog title={tempPortLabel} connectorType={tempConnectorType} detail={editingPort.detail}
@@ -1044,7 +1046,7 @@ export const ProductEditor: React.FC<ProductEditorProps> = ({ initialTemplate, o
 
                         <div className="flex gap-2 mt-4 pt-2 border-t border-white/10">
                             <button onClick={updatePort} className="flex-1 bg-amber-500 hover:bg-amber-400 text-black py-2 rounded-lg text-sm font-bold transition-transform active:scale-95 shadow-lg shadow-amber-500/20">
-                                Kaydet
+                                {t('common.save')}
                             </button>
                             <button onClick={() => removePort(editingPortId!)} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition-colors">
                                 <Trash2 size={18} />

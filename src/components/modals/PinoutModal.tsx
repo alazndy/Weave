@@ -1,7 +1,8 @@
 
 
 import React from 'react';
-import { Connection, Junction, ProductInstance, ProductTemplate, CONNECTOR_LABELS } from '../../types';
+import { useTranslation } from 'react-i18next';
+import { Connection, Junction, ProductInstance, ProductTemplate, connectorLabel } from '../../types';
 import { cablePairs } from '../../utils/junctions';
 import { X, Network } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface PinoutModalProps {
 }
 
 export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, connections, instances, templates, junctions = [] }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
     const pairs = cablePairs(connections, new Set(junctions.map(j => j.id)));
 
@@ -26,9 +28,9 @@ export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, conne
                         <div className="bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
                             <Network className="text-blue-400 w-6 h-6" />
                         </div>
-                        Pin Haritası (Pinout Matrix)
+                        {t('pinout.title')}
                     </h3>
-                    <button onClick={onClose} aria-label="Kapat" className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+                    <button onClick={onClose} aria-label={t('common.close')} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -37,27 +39,27 @@ export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, conne
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-zinc-700 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Kablo ID</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Kaynak Cihaz</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Kaynak Port</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0 text-center">Yön</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Hedef Cihaz</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Hedef Port</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Konnektör Tipi</th>
-                                <th className="p-3 bg-zinc-900/80 sticky top-0">Sinyal/Güç</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.cableId')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.fromDevice')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.fromPort')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0 text-center">{t('pinout.direction')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.toDevice')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.toPort')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('portDialog.connectorType')}</th>
+                                <th className="p-3 bg-zinc-900/80 sticky top-0">{t('pinout.signalPower')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800 text-sm text-zinc-300">
                             {pairs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="p-8 text-center text-zinc-500 italic">Henüz bağlantı yapılmamış.</td>
+                                    <td colSpan={8} className="p-8 text-center text-zinc-500 italic">{t('pinout.empty')}</td>
                                 </tr>
                             ) : (
                                 pairs.map(pair => {
                                     const fromInst = instances.find(i => i.id === pair.from.instanceId);
                                     const toInst = instances.find(i => i.id === pair.to.instanceId);
-                                    const fromTemp = templates.find(t => t.id === fromInst?.templateId);
-                                    const toTemp = templates.find(t => t.id === toInst?.templateId);
+                                    const fromTemp = templates.find(item => item.id === fromInst?.templateId);
+                                    const toTemp = templates.find(item => item.id === toInst?.templateId);
                                     const fromPort = fromTemp?.ports.find(p => p.id === pair.from.portId);
                                     const toPort = toTemp?.ports.find(p => p.id === pair.to.portId);
 
@@ -65,20 +67,20 @@ export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, conne
 
                                     return (
                                         <tr key={pair.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-3 font-mono font-bold text-teal-400">{pair.label || '-'}{pair.via && <span className="block font-sans text-[10px] font-normal text-zinc-500">birleşme noktası üzerinden</span>}</td>
+                                            <td className="p-3 font-mono font-bold text-teal-400">{pair.label || '-'}{pair.via && <span className="block font-sans text-[10px] font-normal text-zinc-500">{t('pinout.via')}</span>}</td>
                                             <td className="p-3 font-medium">{fromTemp.name} <span className="text-zinc-600 text-xs">({fromTemp.modelNumber})</span></td>
                                             <td className="p-3 font-bold">{fromPort.label}</td>
                                             <td className="p-3 text-center text-zinc-600">→</td>
                                             <td className="p-3 font-medium">{toTemp.name} <span className="text-zinc-600 text-xs">({toTemp.modelNumber})</span></td>
                                             <td className="p-3 font-bold">{toPort.label}</td>
-                                            <td className="p-3 text-xs text-zinc-400">{CONNECTOR_LABELS[fromPort.connectorType]}</td>
+                                            <td className="p-3 text-xs text-zinc-400">{connectorLabel(fromPort.connectorType, t)}</td>
                                             <td className="p-3 text-xs font-mono">
                                                 {fromPort.isPower ? (
                                                     <span className={fromPort.isGround ? 'text-zinc-500' : 'text-yellow-500'}>
                                                         {fromPort.isGround ? 'GND' : `${fromPort.voltage}V ${fromPort.powerType}`}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-blue-400">Sinyal</span>
+                                                    <span className="text-blue-400">{t('pinout.signal')}</span>
                                                 )}
                                             </td>
                                         </tr>

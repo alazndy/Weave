@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 /**
  * libraryStore - product library persistence (IndexedDB).
  *
@@ -72,7 +73,7 @@ export async function loadLibraries(): Promise<LibraryMetadata[]> {
     return legacyMeta;
   }
 
-  const lib: LibraryMetadata = { id: crypto.randomUUID(), name: 'Varsayılan Kütüphane', createdAt: new Date().toISOString() };
+  const lib: LibraryMetadata = { id: crypto.randomUUID(), name: i18n.t('library.defaultName'), createdAt: new Date().toISOString() };
   await saveTemplates(lib.id, readJson<ProductTemplate[]>(LS_LEGACY) ?? []);
   await saveLibraryMeta([lib]);
   return [lib];
