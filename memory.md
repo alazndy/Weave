@@ -38,3 +38,4 @@
 - [2026-11-27] [Claude Kaira]: Published release v0.2.0 (Windows only) from commit 6762e6f. Browser tests: 168 passed and
   33 failed in the full run under load; all 33 passed when run with one worker. The local Linux install is older (876774f).
   Releases: push a `v*` tag; `.github/workflows/desktop-windows.yml` builds and publishes. No Linux update feed exists.
+- [2026-11-27] [Claude Kaira]: Installed 0.2.0 (commit 38f8666) on this machine. Data backup: `~/.local/share/weave-backups/config-20261127-014553`.
