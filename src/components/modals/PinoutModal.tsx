@@ -1,7 +1,8 @@
 
 
 import React from 'react';
-import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS } from '../../types';
+import { Connection, Junction, ProductInstance, ProductTemplate, CONNECTOR_LABELS } from '../../types';
+import { cablePairs } from '../../utils/junctions';
 import { X, Network } from 'lucide-react';
 
 interface PinoutModalProps {
@@ -10,10 +11,12 @@ interface PinoutModalProps {
     connections: Connection[];
     instances: ProductInstance[];
     templates: ProductTemplate[];
+    junctions?: Junction[];
 }
 
-export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, connections, instances, templates }) => {
+export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, connections, instances, templates, junctions = [] }) => {
     if (!isOpen) return null;
+    const pairs = cablePairs(connections, new Set(junctions.map(j => j.id)));
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[150] no-print" onClick={onClose}>
@@ -25,7 +28,7 @@ export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, conne
                         </div>
                         Pin Haritası (Pinout Matrix)
                     </h3>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+                    <button onClick={onClose} aria-label="Kapat" className="text-zinc-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -45,24 +48,24 @@ export const PinoutModal: React.FC<PinoutModalProps> = ({ isOpen, onClose, conne
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800 text-sm text-zinc-300">
-                            {connections.length === 0 ? (
+                            {pairs.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="p-8 text-center text-zinc-500 italic">Henüz bağlantı yapılmamış.</td>
                                 </tr>
                             ) : (
-                                connections.map(conn => {
-                                    const fromInst = instances.find(i => i.id === conn.fromInstanceId);
-                                    const toInst = instances.find(i => i.id === conn.toInstanceId);
+                                pairs.map(pair => {
+                                    const fromInst = instances.find(i => i.id === pair.from.instanceId);
+                                    const toInst = instances.find(i => i.id === pair.to.instanceId);
                                     const fromTemp = templates.find(t => t.id === fromInst?.templateId);
                                     const toTemp = templates.find(t => t.id === toInst?.templateId);
-                                    const fromPort = fromTemp?.ports.find(p => p.id === conn.fromPortId);
-                                    const toPort = toTemp?.ports.find(p => p.id === conn.toPortId);
+                                    const fromPort = fromTemp?.ports.find(p => p.id === pair.from.portId);
+                                    const toPort = toTemp?.ports.find(p => p.id === pair.to.portId);
 
                                     if (!fromPort || !toPort || !fromTemp || !toTemp) return null;
 
                                     return (
-                                        <tr key={conn.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-3 font-mono font-bold text-teal-400">{conn.label || '-'}</td>
+                                        <tr key={pair.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-3 font-mono font-bold text-teal-400">{pair.label || '-'}{pair.via && <span className="block font-sans text-[10px] font-normal text-zinc-500">birleşme noktası üzerinden</span>}</td>
                                             <td className="p-3 font-medium">{fromTemp.name} <span className="text-zinc-600 text-xs">({fromTemp.modelNumber})</span></td>
                                             <td className="p-3 font-bold">{fromPort.label}</td>
                                             <td className="p-3 text-center text-zinc-600">→</td>

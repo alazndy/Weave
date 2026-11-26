@@ -19,10 +19,18 @@ const points = (c: Connection, junctions: { id: string; x: number; y: number }[]
 describe('junctions', () => {
   it('puts a junction end exactly on the junction and leaves toward the other end', () => {
     const v = withJunctions(parts, [tpl], [{ id: 'j', x: 300, y: 50 }]);
-    const e = getRouteEnds(conn('c', 'j', J, 'b', 'l'), v.instances, v.templates)!;
+    const e = getRouteEnds(conn('c', 'j', J, 'b', 'l', { shape: 'orthogonal' }), v.instances, v.templates)!;
     expect(e.start).toEqual({ x: 300, y: 50 });
     expect(e.sN.x).toBeCloseTo(1);
     expect(e.sLen).toBe(12);
+  });
+
+  it('leaves a junction straight toward the other end on curved cables, so there is no hook', () => {
+    const v = withJunctions(parts, [tpl], [{ id: 'j', x: 300, y: 50 }]);
+    const e = getRouteEnds(conn('c', 'j', J, 'b', 'l'), v.instances, v.templates)!;
+    const d = Math.hypot(300, 200);
+    expect(e.sN.x).toBeCloseTo(300 / d);
+    expect(e.sN.y).toBeCloseTo(200 / d);
   });
 
   it('splits an orthogonal cable on a segment without changing the drawn route', () => {

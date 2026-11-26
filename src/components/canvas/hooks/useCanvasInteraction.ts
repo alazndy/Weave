@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { 
-  ProjectMetadata, ProductInstance, Connection, ProductTemplate, Zone, TextNode, Comment 
+  ProjectMetadata, ProductInstance, Connection, ProductTemplate, Zone, TextNode, Comment, Junction 
 } from '../../../types';
 import { snapToGrid, calculateSnapGuides } from '../../../utils/canvasHelpers';
 import { ActiveTool } from '../CanvasToolbar';
@@ -34,12 +34,14 @@ interface UseCanvasInteractionProps {
   scale: number;
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  junctions: Junction[];
+  onJunctionsChange?: (junctions: Junction[]) => void;
 }
 
 export function useCanvasInteraction({
   instances, connections, templates, zones, textNodes, comments, projectMetadata, selectedIds,
   onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange, onSelectIds, onUndoCheckpoint, onSetActiveTool,
-  canvasState, activeTool, scale, setPan, containerRef
+  canvasState, activeTool, scale, setPan, containerRef, junctions, onJunctionsChange
 }: UseCanvasInteractionProps) {
 
   const {
@@ -80,9 +82,9 @@ export function useCanvasInteraction({
   const trackPointerDown = (e: React.MouseEvent) => { lastDownRef.current = getMouseCoords(e); };
 
   /** Starts dragging a zone / text / comment so it keeps its grab point under the cursor. */
-  const startItemDrag = (id: string) => {
-      const item = zones.find(z => z.id === id) || textNodes.find(t => t.id === id) || comments.find(c => c.id === id);
-      const p = lastDownRef.current;
+  const startItemDrag = (id: string, at?: { x: number; y: number }) => {
+      const item = zones.find(z => z.id === id) || textNodes.find(t => t.id === id) || comments.find(c => c.id === id) || junctions.find(j => j.id === id);
+      const p = at ?? lastDownRef.current;
       setDragOffset(item ? { x: p.x - item.x, y: p.y - item.y } : { x: 0, y: 0 });
       dragGateRef.current = { x: p.x, y: p.y, open: false };
       setDraggedInstance(id);
@@ -118,7 +120,8 @@ export function useCanvasInteraction({
 
     switch (activeTool) {
         case 'manual-route':
-             if (connectingStart) {
+             // a click on a cable joins it (handled by the cable), it is not a bend
+             if (connectingStart && !(e.target as HTMLElement).closest('[data-connection-id]')) {
                  // Add waypoint
                  let pX = x;
                  let pY = y;
@@ -170,7 +173,7 @@ export function useCanvasInteraction({
         case 'move':
             // The paper frame sits between the container and the click target, so
             // "empty canvas" means: not on any selectable item.
-            if (!(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id],[data-group-scale]')) {
+            if (!(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id],[data-junction-id],[data-group-scale]')) {
                 additiveBoxRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
                 if (onSelectIds && !additiveBoxRef.current) onSelectIds([], false);
                 if (e.button !== 0) break;
@@ -251,6 +254,8 @@ export function useCanvasInteraction({
          if (gate && !gate.open) {
              if (Math.hypot(x - gate.x, y - gate.y) * scale < DRAG_THRESHOLD_PX) return;
              gate.open = true;
+             // tapping a junction starts a branch, so its undo step is only taken once it really moves
+             if (junctions.some(j => j.id === draggedInstance)) onUndoCheckpoint();
          }
          let newX = x - dragOffset.x;
          let newY = y - dragOffset.y;
@@ -281,6 +286,7 @@ export function useCanvasInteraction({
              onInstancesChange(instances.map(i => itemsToMove.has(i.id) ? { ...i, x: i.x + dx, y: i.y + dy } : i));
              if (onZonesChange) onZonesChange(zones.map(z => itemsToMove.has(z.id) ? { ...z, x: z.x + dx, y: z.y + dy } : z));
              if (onTextNodesChange) onTextNodesChange(textNodes.map(t => itemsToMove.has(t.id) ? { ...t, x: t.x + dx, y: t.y + dy } : t));
+             if (onJunctionsChange && junctions.some(j => itemsToMove.has(j.id))) onJunctionsChange(junctions.map(j => itemsToMove.has(j.id) ? { ...j, x: j.x + dx, y: j.y + dy } : j));
              if (onCommentsChange) onCommentsChange(comments.map(c => itemsToMove.has(c.id) ? { ...c, x: c.x + dx, y: c.y + dy } : c));
          };
 
@@ -288,7 +294,8 @@ export function useCanvasInteraction({
             instances.find(i => i.id === draggedInstance) || 
             zones.find(z => z.id === draggedInstance) ||
             textNodes.find(t => t.id === draggedInstance) ||
-            comments.find(c => c.id === draggedInstance);
+            comments.find(c => c.id === draggedInstance) ||
+            junctions.find(j => j.id === draggedInstance);
             
          if (currentObj) {
              const dx = newX - currentObj.x;
@@ -341,6 +348,7 @@ export function useCanvasInteraction({
               textNodes.forEach(tn => {
                   if (!tn.hidden && hit(tn.x, tn.y, Math.max(20, tn.content.length * tn.fontSize * 0.6), tn.fontSize * 1.4)) newSelectedIds.push(tn.id);
               });
+              junctions.forEach(j => { if (hit(j.x, j.y, 0, 0)) newSelectedIds.push(j.id); });
               onSelectIds(newSelectedIds, additiveBoxRef.current);
           }
           setSelectionBox(null);

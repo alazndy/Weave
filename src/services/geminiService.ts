@@ -1,7 +1,8 @@
+import { cablePairs } from '../utils/junctions';
 
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, ExternalPart } from "../types";
+import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, ExternalPart, Junction } from "../types";
 
 // The key is supplied by the user at runtime (App Settings) and never bundled
 // into the build, where it would be readable by anyone with the app.
@@ -22,7 +23,8 @@ export const analyzeSchematic = async (
   apiKey: string | undefined,
   instances: ProductInstance[],
   connections: Connection[],
-  templates: ProductTemplate[]
+  templates: ProductTemplate[],
+  junctions: Junction[] = []
 ) => {
   if (!apiKey) {
     return {
@@ -41,18 +43,20 @@ export const analyzeSchematic = async (
         position: { x: inst.x, y: inst.y }
       };
     }),
-    cabling: connections.map(conn => {
-      const fromInst = instances.find(i => i.id === conn.fromInstanceId);
-      const toInst = instances.find(i => i.id === conn.toInstanceId);
+    cabling: cablePairs(connections, new Set(junctions.map(j => j.id))).map(pair => {
+      const conn = connections.find(c => c.id === pair.id);
+      const fromInst = instances.find(i => i.id === pair.from.instanceId);
+      const toInst = instances.find(i => i.id === pair.to.instanceId);
       const fromTemplate = templates.find(t => t.id === fromInst?.templateId);
       const toTemplate = templates.find(t => t.id === toInst?.templateId);
       
-      const fromPort = fromTemplate?.ports.find(p => p.id === conn.fromPortId);
-      const toPort = toTemplate?.ports.find(p => p.id === conn.toPortId);
+      const fromPort = fromTemplate?.ports.find(p => p.id === pair.from.portId);
+      const toPort = toTemplate?.ports.find(p => p.id === pair.to.portId);
 
       return {
-        cableLabel: conn.label || "No Label",
-        cableColor: conn.color || "Default",
+        cableLabel: pair.label || "No Label",
+        viaJunction: pair.via,
+        cableColor: conn?.color || "Default",
         fromDevice: fromTemplate?.name,
         fromPort: fromPort?.label,
         fromPortType: fromPort?.type,

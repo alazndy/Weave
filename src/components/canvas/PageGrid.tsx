@@ -1,3 +1,4 @@
+import { withJunctions } from '../../utils/junctions';
 
 import React from 'react';
 import { Page, ProductTemplate } from '../../types';
@@ -33,6 +34,8 @@ const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: Product
         maxY = Math.max(maxY, inst.y + h);
     });
 
+    const wiring = withJunctions(page.instances, templates, page.junctions);
+
     // Add padding
     const padding = 100;
     minX -= padding; minY -= padding; maxX += padding; maxY += padding;
@@ -43,10 +46,10 @@ const MiniCanvasPreview = ({ page, templates }: { page: Page, templates: Product
         <svg viewBox={`${minX} ${minY} ${width} ${height}`} className="w-full h-full bg-zinc-900 pointer-events-none">
              {/* Connections */}
              {page.connections.map(conn => {
-                 const fromInst = page.instances.find(i => i.id === conn.fromInstanceId);
-                 const toInst = page.instances.find(i => i.id === conn.toInstanceId);
-                 const fromTemp = templates.find(t => t.id === fromInst?.templateId);
-                 const toTemp = templates.find(t => t.id === toInst?.templateId);
+                 const fromInst = wiring.instances.find(i => i.id === conn.fromInstanceId);
+                 const toInst = wiring.instances.find(i => i.id === conn.toInstanceId);
+                 const fromTemp = wiring.templates.find(t => t.id === fromInst?.templateId);
+                 const toTemp = wiring.templates.find(t => t.id === toInst?.templateId);
                  if(!fromInst || !toInst || !fromTemp || !toTemp) return null;
                  
                  const start = getPortPosition(fromInst, fromTemp, conn.fromPortId);

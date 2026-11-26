@@ -26,7 +26,7 @@ Cables must join at one point, or split from it, on the drawing.
 - A branch is a normal `Connection`. A junction end uses `instanceId = junction.id`, `portId = 'junction'`.
 - One resolver gives position and exit direction for both kinds of end. All code that reads cable ends uses it:
   routing, line drawing and jumps, minimap, page grid, pin map, AI review, validation, delete, copy and block save.
-- At a junction a branch leaves toward its other end (main axis). It has no clearance stub for a part body.
+- At a junction a branch leaves toward its other end (main axis if orthogonal, else straight). It has no clearance stub for a part body.
 
 ## Behaviour
 - Right-click a cable > "Birleşme noktası ekle": split it there into two branches. Both keep the cable style.

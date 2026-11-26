@@ -182,6 +182,7 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
          connections={connections}
          instances={instances}
          templates={templates}
+         junctions={pages.find(p => p.id === activePageId)?.junctions}
       />
 
       <HistoryModal 

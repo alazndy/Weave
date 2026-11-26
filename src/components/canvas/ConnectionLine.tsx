@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, Point } from '../../types';
+import { Connection, ProductInstance, ProductTemplate, CONNECTOR_LABELS, Point, PortDefinition } from '../../types';
 import { getPortPosition, getPortNormal, getRoutePath, validateConnection, getOrthogonalSegments, findIntersection } from '../../utils/canvasHelpers';
 import { getRouteEnds, normalizeInner, getHandles, curvedPathThrough, type Handle } from '../../utils/connectionRoute';
 import { Activity, ArrowDownToLine, Zap, Network, Video, ArrowRight, Cable, Edit2, Trash2, AlertTriangle, Lock } from 'lucide-react';
@@ -20,10 +20,18 @@ interface ConnectionLineProps {
   handleControlPointDoubleClick: (e: React.MouseEvent, id: string, idx: number) => void;
   removeConnection: (id: string) => void;
   selected?: boolean;
-  onSelect?: (id: string) => void;
+  onSelect?: (id: string, e: React.MouseEvent) => void;
+  onCableMenu?: (e: React.MouseEvent, id: string) => void;
   onHandleDown?: (e: React.MouseEvent, id: string, handle: Handle) => void;
   onHandleDoubleClick?: (e: React.MouseEvent, id: string, handle: Handle) => void;
 }
+
+/** Drawn colour of a cable: ground and power ports override the chosen colour. */
+export const wireColor = (conn: Connection, from: PortDefinition | undefined, to: PortDefinition | undefined, theme: 'light' | 'dark') => {
+    if (from?.isGround || to?.isGround) return theme === 'light' ? '#000000' : '#71717a';
+    if (from?.isPower || to?.isPower) return '#ff0000';
+    return conn.color || '#6366f1';
+};
 
 const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
   conn, connections = [], instances, templates, theme,
@@ -31,7 +39,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
   editingConnectionId, setEditingConnectionId,
   handleConnectionDoubleClick, handleControlPointMouseDown,
   handleControlPointDoubleClick, removeConnection,
-  selected = false, onSelect, onHandleDown, onHandleDoubleClick
+  selected = false, onSelect, onCableMenu, onHandleDown, onHandleDoubleClick
 }) => {
     const fromInst = instances.find(i => i.id === conn.fromInstanceId);
     const toInst = instances.find(i => i.id === conn.toInstanceId);
@@ -142,15 +150,7 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
     const isGnd = fromPort.isGround || toPort.isGround;
     const isPower = fromPort.isPower || toPort.isPower;
     const connType = fromPort.connectorType || 'generic';
-    
-    let strokeColor;
-    if (isGnd) {
-       strokeColor = theme === 'light' ? '#000000' : '#71717a';
-    } else if (isPower) {
-       strokeColor = '#ff0000'; 
-    } else {
-       strokeColor = conn.color || '#6366f1';
-    }
+    const strokeColor = wireColor(conn, fromPort, toPort, theme);
 
     const haloColor = theme === 'light' ? '#ffffff' : '#09090b';
     const thickness = conn.strokeWidth === 'thick' ? 5 : conn.strokeWidth === 'thin' ? 1.5 : 3;
@@ -182,7 +182,8 @@ const ConnectionLineComponent: React.FC<ConnectionLineProps> = ({
         <g 
           data-connection-id={conn.id}
           className={`group pointer-events-auto ${conn.locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          onClick={(e) => { e.stopPropagation(); onSelect?.(conn.id); }}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(conn.id, e); }}
+          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onCableMenu?.(e, conn.id); }}
           onDoubleClick={(e) => !conn.locked && handleConnectionDoubleClick(e, conn.id)}
           onMouseEnter={() => setHoveredConnectionId(conn.id)}
           onMouseLeave={() => setHoveredConnectionId(null)}

@@ -1,4 +1,5 @@
 
+import { withJunctions, removeJunction, pruneJunctions } from './utils/junctions';
 import { numberBySpace } from './utils/numbering';
 import { buildPdf, type PdfPageImage } from './utils/pdfWriter';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -16,6 +17,7 @@ import {
   ProductTemplate, 
   Comment,
   PortCard,
+  Junction,
   PaperSize,
   HistoryState, 
   Page, 
@@ -241,8 +243,13 @@ export default function App() {
   };
   const setConnections = (val: Connection[] | ((prev: Connection[]) => Connection[])) => {
       const newConnections = typeof val === 'function' ? val(connections) : val;
-      updateActivePage({ connections: newConnections });
+      setPages(prev => prev.map(p => p.id === activePageId
+          ? { ...p, connections: newConnections, junctions: p.junctions && pruneJunctions(p.junctions, newConnections) }
+          : p));
   };
+  const setJunctions = (junctions: Junction[]) => updateActivePage({ junctions });
+  const setWiring = (connections: Connection[], junctions: Junction[]) =>
+      updateActivePage({ connections, junctions: pruneJunctions(junctions, connections) });
   const setZones = (val: Zone[] | ((prev: Zone[]) => Zone[])) => {
       const newZones = typeof val === 'function' ? val(zones) : val;
       updateActivePage({ zones: newZones });
@@ -386,12 +393,13 @@ export default function App() {
       }});
 
       // Include connections in bounds
+      const wiring = withJunctions(instances, templates, activePage.junctions);
       connections.forEach(conn => {
           if (selectedIds.has(conn.fromInstanceId) && selectedIds.has(conn.toInstanceId)) {
-              const fromInst = instances.find(i => i.id === conn.fromInstanceId);
-              const toInst = instances.find(i => i.id === conn.toInstanceId);
-              const fromTemp = templates.find(t => t.id === fromInst?.templateId);
-              const toTemp = templates.find(t => t.id === toInst?.templateId);
+              const fromInst = wiring.instances.find(i => i.id === conn.fromInstanceId);
+              const toInst = wiring.instances.find(i => i.id === conn.toInstanceId);
+              const fromTemp = wiring.templates.find(t => t.id === fromInst?.templateId);
+              const toTemp = wiring.templates.find(t => t.id === toInst?.templateId);
 
               if (fromInst && toInst && fromTemp && toTemp) {
                   const p1 = getPortPosition(fromInst, fromTemp, conn.fromPortId);
@@ -468,12 +476,13 @@ export default function App() {
   const handleAutoRoute = () => {
       performCheckpoint();
       const obstacles = instances.map(inst => getInstanceRect(inst, templates));
+      const wiring = withJunctions(instances, templates, activePage.junctions);
 
       const newConnections = connections.map(conn => {
-          const fromInst = instances.find(i => i.id === conn.fromInstanceId);
-          const toInst = instances.find(i => i.id === conn.toInstanceId);
-          const fromTemp = templates.find(t => t.id === fromInst?.templateId);
-          const toTemp = templates.find(t => t.id === toInst?.templateId);
+          const fromInst = wiring.instances.find(i => i.id === conn.fromInstanceId);
+          const toInst = wiring.instances.find(i => i.id === conn.toInstanceId);
+          const fromTemp = wiring.templates.find(t => t.id === fromInst?.templateId);
+          const toTemp = wiring.templates.find(t => t.id === toInst?.templateId);
 
           if (!fromInst || !toInst || !fromTemp || !toTemp) return conn;
 
@@ -501,7 +510,12 @@ export default function App() {
       setTextNodes(prev => prev.filter(t => !selectedIds.has(t.id)));
       setZones(prev => prev.filter(z => !selectedIds.has(z.id)));
       setComments(prev => prev.filter(c => !selectedIds.has(c.id)));
-      setConnections(prev => prev.filter(c => !selectedIds.has(c.fromInstanceId) && !selectedIds.has(c.toInstanceId)));
+      // parts take their own branches; a selected junction then joins (2 branches) or drops them
+      const junctions = activePage.junctions ?? [];
+      const partIds = new Set(instances.filter(i => selectedIds.has(i.id)).map(i => i.id));
+      let wires = connections.filter(c => !partIds.has(c.fromInstanceId) && !partIds.has(c.toInstanceId));
+      for (const j of junctions) if (selectedIds.has(j.id)) wires = removeJunction(j.id, wires, { x: j.x, y: j.y });
+      setWiring(wires, junctions.filter(j => !selectedIds.has(j.id)));
       setSelectedIds(new Set());
   };
 
@@ -515,10 +529,12 @@ export default function App() {
       setPages(prevPages => prevPages.map(page => {
            const instancesToRemove = page.instances.filter(i => i.templateId === templateId).map(i => i.id);
            const instancesToRemoveSet = new Set(instancesToRemove);
+           const connections = page.connections.filter(c => !instancesToRemoveSet.has(c.fromInstanceId) && !instancesToRemoveSet.has(c.toInstanceId));
            return {
                ...page,
                instances: page.instances.filter(i => i.templateId !== templateId),
-               connections: page.connections.filter(c => !instancesToRemoveSet.has(c.fromInstanceId) && !instancesToRemoveSet.has(c.toInstanceId))
+               connections,
+               junctions: page.junctions && pruneJunctions(page.junctions, connections)
            }
       }));
       setTemplates(prev => prev.filter(t => t.id !== templateId));
@@ -650,7 +666,7 @@ export default function App() {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     try {
-      setAnalysisResult(await analyzeSchematic(appSettings.geminiApiKey, instances, connections, templates));
+      setAnalysisResult(await analyzeSchematic(appSettings.geminiApiKey, instances, connections, templates, activePage.junctions));
     } finally {
       setIsAnalyzing(false);
     }
@@ -660,7 +676,7 @@ export default function App() {
 
   const handleClearConfirm = () => {
       performCheckpoint();
-      updateActivePage({ instances: [], connections: [], zones: [], textNodes: [], comments: [] });
+      updateActivePage({ instances: [], connections: [], zones: [], textNodes: [], comments: [], junctions: [], portCards: [] });
       setSelectedIds(new Set()); setAnalysisResult(null); setIsClearModalOpen(false);
   }
 
@@ -1054,6 +1070,9 @@ export default function App() {
                         onZonesChange={setZones}
                         onTextNodesChange={setTextNodes}
                         onCommentsChange={setComments}
+                        junctions={activePage.junctions}
+                        onJunctionsChange={setJunctions}
+                        onWiringChange={setWiring}
                         portCards={activePage.portCards}
                         onPortCardsChange={setPortCards}
                         onTemplateChange={handleTemplateUpdate}

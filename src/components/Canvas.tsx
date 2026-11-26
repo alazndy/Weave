@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment, PortCard } from '../types';
+import { ProductInstance, ProductTemplate, Connection, Point, ProjectMetadata, Zone, TextNode, PaperSize, Comment, PortCard, Junction } from '../types';
 import { getPortPosition } from '../utils/canvasHelpers';
 import { EditPortModal } from './modals/EditPortModal';
 import { EditConnectionModal } from './modals/EditConnectionModal';
@@ -26,13 +26,21 @@ import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
 import { useCanvasInteraction } from './canvas/hooks/useCanvasInteraction';
 import { snapToGrid, validatePortCompatibility } from '../utils/canvasHelpers';
+import { JunctionNode } from './canvas/JunctionNode';
+import { wireColor } from './canvas/ConnectionLine';
+import { withJunctions, splitConnection, hasCable, JUNCTION_PORT } from '../utils/junctions';
 import { PortCardNode } from './canvas/PortCardNode';
 import { usePortCards } from './canvas/hooks/usePortCards';
 import { useStableHandlers } from '../hooks/useStableHandlers';
 
 const NO_CARDS: PortCard[] = [];
+const NO_JUNCTIONS: Junction[] = [];
 
 interface CanvasProps {
+  junctions?: Junction[];
+  onJunctionsChange?: (junctions: Junction[]) => void;
+  /** Changes cables and junctions together (split). */
+  onWiringChange?: (connections: Connection[], junctions: Junction[]) => void;
   portCards?: PortCard[];
   onPortCardsChange?: (cards: PortCard[]) => void;
   instances: ProductInstance[];
@@ -93,6 +101,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   onTemplateChange, onEditMetadata, onMetadataChange, onRenameActivePage, onUndoCheckpoint, onSelectInstance, onCopyInstance, onRemovePort,
   isLegendCollapsed, onToggleLegend, onEditTemplate,
   portCards = NO_CARDS, onPortCardsChange,
+  junctions = NO_JUNCTIONS, onJunctionsChange, onWiringChange,
   onGroupSelected, onUngroupSelected, onSaveBlock,
   activePageName = 'Sayfa 1', activePageDrawingNo, onPageDrawingNoChange, activePageHideBom, onPageHideBomChange, activePageNumber = 1, totalPages = 1,
   activeTool, onSetActiveTool,
@@ -101,6 +110,8 @@ export const Canvas: React.FC<CanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const dupNumbers = duplicateNumbers(instances);
+  // parts plus junctions-as-parts: use these wherever a cable end has to be resolved
+  const wiring = React.useMemo(() => withJunctions(instances, templates, junctions), [instances, templates, junctions]);
   const canvasState = useCanvasState();
   const { scale, pan, setPan, handleWheel, handleFitScreen, zoomAt, panBy } = useCanvasView(window.innerWidth, window.innerHeight);
 
@@ -117,7 +128,8 @@ export const Canvas: React.FC<CanvasProps> = ({
   } = useCanvasInteraction({
       instances, connections, templates, zones, textNodes, comments, projectMetadata, selectedIds,
       onInstancesChange, onConnectionsChange, onZonesChange, onTextNodesChange, onCommentsChange, onSelectIds, onUndoCheckpoint, onSetActiveTool,
-      canvasState, activeTool, scale, setPan, containerRef
+      canvasState, activeTool, scale, setPan, containerRef,
+      junctions, onJunctionsChange
   });
 
   const {
@@ -198,7 +210,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   };
 
   const routeOf = (conn: Connection) => {
-      const ends = getRouteEnds(conn, instances, templates);
+      const ends = getRouteEnds(conn, wiring.instances, wiring.templates);
       return ends ? { ends, inner: normalizeInner(conn.shape || 'curved', ends, conn.controlPoints) } : null;
   };
 
@@ -224,7 +236,7 @@ export const Canvas: React.FC<CanvasProps> = ({
           const d = connDragRef.current;
           if (!d) return;
           const conn = connectionsRef.current.find(c => c.id === d.id);
-          const ends = conn && getRouteEnds(conn, instances, templates);
+          const ends = conn && getRouteEnds(conn, wiring.instances, wiring.templates);
           if (!conn || !ends) return;
           let p = getMouseCoords(ev as unknown as React.MouseEvent);
           if (isGridSnapEnabled && !ev.altKey) p = { x: snapToGrid(p.x), y: snapToGrid(p.y) };
@@ -240,7 +252,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', up);
       return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
-  }, [instances, templates, isGridSnapEnabled, scale]);
+  }, [wiring, isGridSnapEnabled, scale]);
 
   const handleHandleDoubleClick = (e: React.MouseEvent, id: string, handle: Handle) => {
       e.stopPropagation();
@@ -341,8 +353,8 @@ export const Canvas: React.FC<CanvasProps> = ({
   }, [templates, scale]);
 
   const findPort = (instId: string, portId: string) => {
-      const inst = instances.find(i => i.id === instId);
-      return templates.find(t => t.id === inst?.templateId)?.ports.find(p => p.id === portId);
+      const inst = wiring.instances.find(i => i.id === instId);
+      return wiring.templates.find(t => t.id === inst?.templateId)?.ports.find(p => p.id === portId);
   };
 
   /** Returns true (and shows why) when the two ports must not be wired together. */
@@ -356,6 +368,87 @@ export const Canvas: React.FC<CanvasProps> = ({
       setConnectionWarning(`Bağlantı kurulamadı: ${problems.join(' • ')}`);
       return true;
   };
+
+  const styleOf = ({ color, shape, lineStyle, strokeWidth, cornerRadius }: Connection) => ({ color, shape, lineStyle, strokeWidth, cornerRadius });
+
+  /** At a junction a new branch copies a branch that is already there; false when that cable exists. */
+  const junctionBranch = (conn: Connection): Connection | false => {
+      const ids = [conn.fromInstanceId, conn.toInstanceId].filter(id => junctions.some(j => j.id === id));
+      if (!ids.length) return conn;
+      if (hasCable(connections, { instanceId: conn.fromInstanceId, portId: conn.fromPortId }, { instanceId: conn.toInstanceId, portId: conn.toPortId })) return false;
+      const sibling = connections.find(c => ids.includes(c.fromInstanceId) || ids.includes(c.toInstanceId));
+      return sibling ? { ...conn, ...styleOf(sibling), shape: conn.controlPoints?.length ? conn.shape : sibling.shape } : conn;
+  };
+
+  const splitCable = (id: string, point: Point) => {
+      const conn = connections.find(c => c.id === id);
+      const r = conn && routeOf(conn);
+      if (!conn || conn.locked || !r) return null;
+      return { conn, ...splitConnection(conn, point, r.ends, crypto.randomUUID(), [crypto.randomUUID(), crypto.randomUUID()]) };
+  };
+
+  const addJunctionOnCable = (id: string, point: Point) => {
+      const split = splitCable(id, point);
+      if (!split) return;
+      onUndoCheckpoint();
+      onWiringChange?.(connections.flatMap(c => c.id === id ? split.branches : [c]), [...junctions, split.junction]);
+      setSelectedConnectionId(null);
+  };
+
+  /** Finishes the cable being drawn on an existing cable: split it and connect to the new junction. */
+  const joinCable = (id: string, point: Point) => {
+      if (!connectingStart) return;
+      const split = splitCable(id, point);
+      if (!split) return;
+      const { junction, branches, conn } = split;
+      const next = connections.flatMap(c => c.id === id ? branches : [c]);
+      if (hasCable(next, connectingStart, { instanceId: junction.id, portId: JUNCTION_PORT })) return;
+      const manual = activeTool === 'manual-route';
+      onUndoCheckpoint();
+      onWiringChange?.([...next, {
+          id: crypto.randomUUID(),
+          fromInstanceId: connectingStart.instanceId, fromPortId: connectingStart.portId,
+          toInstanceId: junction.id, toPortId: JUNCTION_PORT,
+          label: '',
+          ...styleOf(conn),
+          ...(manual ? { shape: 'orthogonal' as const, controlPoints: [...manualRoutePoints] } : {}),
+      }], [...junctions, junction]);
+      setConnectingStart(null);
+      setManualRoutePoints([]);
+  };
+
+  const [cableMenu, setCableMenu] = useState<{ x: number; y: number; id: string; point: Point } | null>(null);
+  useEffect(() => {
+      if (!cableMenu) return;
+      const close = (ev: Event) => {
+          if (ev instanceof KeyboardEvent ? ev.key === 'Escape' : !(ev.target as HTMLElement).closest('[data-testid="cable-menu"]')) setCableMenu(null);
+      };
+      window.addEventListener('mousedown', close);
+      window.addEventListener('keydown', close);
+      return () => { window.removeEventListener('mousedown', close); window.removeEventListener('keydown', close); };
+  }, [cableMenu]);
+
+  // a junction is "tapped" (start or finish a branch) when it is released without having moved
+  const junctionDownRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const handleJunctionDown = (e: React.MouseEvent, id: string) => {
+      if (e.button !== 0 || !['cursor', 'move', 'manual-route'].includes(activeTool)) return;
+      e.stopPropagation(); e.preventDefault();
+      junctionDownRef.current = { id, x: e.clientX, y: e.clientY };
+      setSelectedConnectionId(null);
+      if (e.shiftKey || e.ctrlKey) onSelectIds?.([id], true);
+      else if (!selectedIds.has(id)) onSelectIds?.([id], false);
+      if (activeTool !== 'manual-route') { trackPointerDown(e); startItemDrag(id, getMouseCoords(e)); }
+  };
+  const handleJunctionUp = (e: React.MouseEvent, id: string) => {
+      const down = junctionDownRef.current;
+      junctionDownRef.current = null;
+      if (down?.id !== id || Math.hypot(e.clientX - down.x, e.clientY - down.y) >= 4) return;
+      if (activeTool !== 'move') handlePortClick(e, id, JUNCTION_PORT);
+  };
+
+  useEffect(() => {
+      if (connectingStart && !wiring.instances.some(i => i.id === connectingStart.instanceId)) setConnectingStart(null);
+  }, [wiring, connectingStart]);
 
   const handlePortClick = (e: React.MouseEvent, instId: string, portId: string) => {
       e.stopPropagation();
@@ -384,7 +477,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                   cornerRadius: toolSettings.route.cornerRadius,
                   controlPoints: [...manualRoutePoints]
               };
-              onConnectionsChange([...connections, newConn]);
+              const branch = junctionBranch(newConn);
+              if (branch) onConnectionsChange([...connections, branch]);
               setConnectingStart(null);
               setManualRoutePoints([]);
           } else {
@@ -411,7 +505,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                   label: '',
                   color: '#6366f1' // Default for cursor tool connection
               };
-              onConnectionsChange([...connections, newConn]);
+              const branch = junctionBranch(newConn);
+              if (branch) onConnectionsChange([...connections, branch]);
               setConnectingStart(null);
           } else {
               setConnectingStart({ instanceId: instId, portId });
@@ -602,8 +697,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     key={conn.id} 
                     conn={conn}
                     connections={connections}
-                    instances={instances}
-                    templates={templates}
+                    instances={wiring.instances}
+                    templates={wiring.templates}
                     theme={theme}
                     hoveredConnectionId={hoveredConnectionId}
                     setHoveredConnectionId={setHoveredConnectionId}
@@ -611,7 +706,11 @@ export const Canvas: React.FC<CanvasProps> = ({
                     setEditingConnectionId={setEditingConnectionId}
                     handleConnectionDoubleClick={(e, id) => setEditingConnectionId(id)}
                     selected={selectedConnectionId === conn.id}
-                    onSelect={setSelectedConnectionId}
+                    onSelect={(id, e) => { if (connectingStart) joinCable(id, getMouseCoords(e)); else setSelectedConnectionId(id); }}
+                    onCableMenu={(e, id) => {
+                        if (connectingStart || connections.find(c => c.id === id)?.locked || !onWiringChange) return;
+                        setCableMenu({ x: e.clientX, y: e.clientY, id, point: getMouseCoords(e) });
+                    }}
                     onHandleDown={handleConnectionHandleDown}
                     onHandleDoubleClick={handleHandleDoubleClick}
                     handleControlPointMouseDown={() => {}} 
@@ -620,12 +719,23 @@ export const Canvas: React.FC<CanvasProps> = ({
                 />
             ))}
             
+            {junctions.map(junction => {
+                const branch = connections.find(c => !c.hidden && !hiddenInstanceIds.has(c.fromInstanceId) && !hiddenInstanceIds.has(c.toInstanceId)
+                    && (c.fromInstanceId === junction.id || c.toInstanceId === junction.id));
+                if (!branch) return null;
+                return (
+                    <JunctionNode key={junction.id} junction={junction} theme={theme} selected={selectedIds.has(junction.id)}
+                        color={wireColor(branch, findPort(branch.fromInstanceId, branch.fromPortId), findPort(branch.toInstanceId, branch.toPortId), theme)}
+                        onMouseDown={handleJunctionDown} onMouseUp={handleJunctionUp} />
+                );
+            })}
+
             {/* Live Connection Drawing */}
             {connectingStart && (
                 <>
                 {(() => {
-                    const i = instances.find(inst => inst.id === connectingStart.instanceId);
-                    const t = templates.find(temp => temp.id === i?.templateId);
+                    const i = wiring.instances.find(inst => inst.id === connectingStart.instanceId);
+                    const t = wiring.templates.find(temp => temp.id === i?.templateId);
                     if (!i || !t) return null;
                     const startPos = getPortPosition(i, t, connectingStart.portId);
                     
@@ -820,8 +930,8 @@ export const Canvas: React.FC<CanvasProps> = ({
       {isMinimapVisible && (
           <div data-testid="minimap" className="contents">
           <Minimap 
-              instances={instances} 
-              templates={templates} 
+              instances={wiring.instances} 
+              templates={wiring.templates} 
               connections={connections} 
               canvasWidth={finalW} 
               canvasHeight={finalH} 
@@ -831,6 +941,16 @@ export const Canvas: React.FC<CanvasProps> = ({
               theme={theme}
               visible={isMinimapVisible}
           />
+          </div>
+      )}
+
+      {cableMenu && (
+          <div data-testid="cable-menu" className="fixed z-[130] rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-2xl no-print"
+              style={{ left: cableMenu.x, top: cableMenu.y }} onContextMenu={e => e.preventDefault()}>
+              <button type="button" className="rounded px-3 py-2 text-sm font-bold text-zinc-200 hover:bg-white/10"
+                  onClick={() => { addJunctionOnCable(cableMenu.id, cableMenu.point); setCableMenu(null); }}>
+                  Birleşme noktası ekle
+              </button>
           </div>
       )}
 

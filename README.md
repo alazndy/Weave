@@ -21,6 +21,8 @@ Everything runs locally. There is no account, no backend and no telemetry.
 - **Port details**: add a connector picture and a pin table (pin, wire colour, function) to any port.
   Double-click a port on the sheet and choose *Detayı sayfada göster* to place a movable, resizable card
   that appears in exports.
+- **Junctions**: right-click a cable and choose *Birleşme noktası ekle*, or click a cable while drawing from a
+  port, to split and join cables at a movable point. Port compatibility warnings are not checked through junctions.
 - **Pages**: multiple sheets per project, A3/A4/A6 in portrait or landscape, with a title block and technical notes.
 - **Undo/redo and snapshots**: checkpoint history of up to 50 steps, plus named snapshots.
 - **Saving**: projects autosave to IndexedDB and appear on the welcome screen. A `.weave` file

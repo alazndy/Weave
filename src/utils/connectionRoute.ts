@@ -68,8 +68,9 @@ export function getRouteEnds(conn: Connection, instances: ProductInstance[], tem
   // A junction has no body: its branch leaves toward the neighbouring waypoint (keeps a split route intact).
   const stored = conn.controlPoints ?? [];
   const sJ = conn.fromPortId === JUNCTION_PORT, eJ = conn.toPortId === JUNCTION_PORT;
-  const sN = sJ ? axisToward(start, stored[0] ?? end) : getPortNormal(fi, ft, conn.fromPortId);
-  const eN = eJ ? axisToward(end, stored[stored.length - 1] ?? start) : getPortNormal(ti, tt, conn.toPortId);
+  const orthogonal = conn.shape === 'orthogonal';
+  const sN = sJ ? directionToward(start, stored[0] ?? end, orthogonal) : getPortNormal(fi, ft, conn.fromPortId);
+  const eN = eJ ? directionToward(end, stored[stored.length - 1] ?? start, orthogonal) : getPortNormal(ti, tt, conn.toPortId);
   return {
     start, end, sN, eN,
     sLen: sJ ? MIN_STUB_DRAG : stubLength(start, sN, instanceBounds(fi, ft)),
@@ -77,8 +78,11 @@ export function getRouteEnds(conn: Connection, instances: ProductInstance[], tem
   };
 }
 
-const axisToward = (from: Point, to: Point): Point => {
+/** Exit direction at a junction: along an axis for orthogonal cables, otherwise straight at the target. */
+const directionToward = (from: Point, to: Point, orthogonal: boolean): Point => {
   const dx = to.x - from.x, dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (!orthogonal && length > EPS) return { x: dx / length, y: dy / length };
   return Math.abs(dx) >= Math.abs(dy) ? { x: Math.sign(dx) || 1, y: 0 } : { x: 0, y: Math.sign(dy) || 1 };
 };
 
