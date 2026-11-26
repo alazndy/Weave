@@ -13,6 +13,8 @@
 - Memoized canvas children get stable handlers (`useStableHandlers`); stale closures caused jumps and bad undo.
 - App language drives the interface. `ProjectMetadata.docLanguage` drives sheet text and exports (user decision).
   Rules: `docs/superpowers/plans/2026-11-26-i18n.md`.
+- User rule: every title-block heading follows the document language. A typed heading is stored per language
+  (`legendHeadings`, `CustomField.labels`). The old `legendLabels` stays in the file but is not shown.
 - A junction is passed to cable code as a zero-size virtual part (`src/utils/junctions.ts`).
 - Port compatibility is not checked through junctions (accepted by the user).
 
@@ -31,3 +33,4 @@
   in the full run; the other 5 passed when run alone (machine load about 15).
 - [2026-11-26] [Claude Kaira]: Installed the build of commit 876774f on this machine. The app took more than 30 s to quit.
   Data backup: `~/.local/share/weave-backups/config-20261126-180655`.
+- [2026-11-26] [Claude Kaira]: Fixed title-block headings that did not follow the document language. Not installed yet.

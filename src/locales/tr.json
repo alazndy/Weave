@@ -173,7 +173,6 @@
     "customFields": "Özel Alanlar",
     "addField": "Alan Ekle",
     "noCustomFields": "Ekstra bilgi alanı eklenmedi.",
-    "fieldLabelPlaceholder": "Başlık (Örn: Kontrol Eden)",
     "fieldValue": "Değer",
     "externalParts": "Harici Parçalar (PDF/AI Taraması)",
     "part": "Parça",
@@ -181,7 +180,8 @@
     "technicalNotes": "Teknik Notlar",
     "notesPlaceholder": "Örn: 1. Tüm ölçüler mm'dir...",
     "unlistedCode": "Listede yok — özel kod olarak kullanılır",
-    "newField": "Yeni Alan"
+    "fieldHeading_tr": "Başlık (Türkçe çizim)",
+    "fieldHeading_en": "Başlık (İngilizce çizim)"
   },
   "docNumbering": {
     "originator": "Hazırlayan kuruluş (3 harf)",

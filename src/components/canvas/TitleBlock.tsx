@@ -3,6 +3,8 @@ import { ProjectMetadata } from '../../types';
 import { documentNoFor } from '../../utils/docNumbering';
 import { useTranslation } from 'react-i18next';
 import { useDocumentT } from '../../i18nDocument';
+import { docLanguageOf } from '../../utils/documentDefaults';
+import { headingOverride, withHeading, fieldHeading, withFieldHeading } from '../../utils/titleBlockText';
 import { Edit, ChevronLeft, ChevronRight, Trash2, Undo2 } from 'lucide-react';
 
 interface TitleBlockProps {
@@ -108,8 +110,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const set = (patch: Partial<ProjectMetadata>, opts?: { silent?: boolean }) => onMetadataChange?.(patch, opts);
     const bd = { borderColor: line } as React.CSSProperties;
 
-    const labels = metadata.legendLabels || {};
-    const lbl = (k: string) => labels[k] || defaultLabel(k);
+    const language = docLanguageOf(metadata);
+    const lbl = (k: string) => headingOverride(metadata, k, language) || defaultLabel(k);
     /** Editable heading. Clearing it restores the default. */
     const hidden = metadata.legendHidden || [];
     const hide = (id: string) => set({ legendHidden: [...hidden.filter(x => x !== id), id] });
@@ -117,9 +119,8 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
     const H = (k: string, className = '', style?: React.CSSProperties) => hidden.includes(k) ? null : (
         <Ed key={k} onHide={edit ? () => hide(k) : undefined} label={t('titleBlock.headingAria', { name: defaultLabel(k) })} value={lbl(k)} testid={`lbl-${k}`}
             onCommit={edit ? (v) => {
-                const next = { ...labels };
-                if (v.trim() && v.trim() !== defaultLabel(k)) next[k] = v.trim(); else delete next[k];
-                set({ legendLabels: next });
+                const text = v.trim();
+                set(withHeading(metadata, k, language, text === defaultLabel(k) ? '' : text));
             } : undefined}
             className={className} style={style} />
     );
@@ -312,11 +313,11 @@ export const TitleBlock: React.FC<TitleBlockProps> = ({ metadata, theme, pageNam
         extras[`cf:${f.id}`] = (
             <div key={f.id} className={cell} style={{ ...bd, ...wStyle(`cf:${f.id}`) }} data-testid="legend-custom-field">
                 {Mover(`cf:${f.id}`, extraOrder, 'legendExtraOrder')}{Resizer(`cf:${f.id}`, 'x')}
-                {!hidden.includes(`cf:${f.id}`) && <Ed label={t('titleBlock.fieldHeadingAria', { name: f.label })} value={f.label} display={f.label || td('doc.field')} onCommit={edit ? (v) => upd({ label: v }) : undefined}
+                {!hidden.includes(`cf:${f.id}`) && <Ed label={t('titleBlock.fieldHeadingAria', { name: fieldHeading(f, language) })} value={fieldHeading(f, language)} display={fieldHeading(f, language) || td('doc.field')} onCommit={edit ? (v) => upd(withFieldHeading(f, language, v.trim())) : undefined}
                     onHide={edit ? () => hide(`cf:${f.id}`) : undefined}
                     className="text-[10px] font-bold uppercase tracking-wide leading-none" style={{ color: labelColor }} />}
                 <div className="text-[11px] font-bold break-words mt-0.5 min-h-[1.25rem]">
-                    <Ed label={t('titleBlock.fieldValueAria', { name: f.label })} value={f.value} display={f.value || '-'} className="block w-full min-h-[1.25rem]" onCommit={edit ? (v) => upd({ value: v }) : undefined} />
+                    <Ed label={t('titleBlock.fieldValueAria', { name: fieldHeading(f, language) })} value={f.value} display={f.value || '-'} className="block w-full min-h-[1.25rem]" onCommit={edit ? (v) => upd({ value: v }) : undefined} />
                 </div>
             </div>
         );

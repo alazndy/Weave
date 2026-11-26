@@ -139,7 +139,7 @@ test.describe('Antet / proje detayları', () => {
     await openApp(page);
     const modal = await openTitleBlockEditor(page);
     await modal.getByRole('button', { name: 'Alan Ekle' }).click();
-    const label = modal.getByPlaceholder('Başlık (Örn: Kontrol Eden)');
+    const label = modal.getByPlaceholder('Başlık (Türkçe çizim)');
     await expect(label).toHaveCount(1);
     await label.fill('Kontrol Eden');
     await modal.getByPlaceholder('Değer').fill('A. Yılmaz');
@@ -261,7 +261,7 @@ test.describe('Lejant: hiçbir alan kesilmez', () => {
     await modal.locator('textarea').fill(notes);
     for (let i = 0; i < 5; i++) {
       await modal.getByRole('button', { name: 'Alan Ekle' }).click();
-      await modal.getByPlaceholder('Başlık (Örn: Kontrol Eden)').nth(i).fill(`Alan ${i + 1}`);
+      await modal.getByPlaceholder('Başlık (Türkçe çizim)').nth(i).fill(`Alan ${i + 1}`);
       await modal.getByPlaceholder('Değer').nth(i).fill(`Değer numarası ${i + 1} biraz uzun bir metin`);
     }
     await modal.getByRole('button', { name: 'Kaydet' }).click();

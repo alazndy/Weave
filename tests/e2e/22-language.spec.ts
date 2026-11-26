@@ -106,4 +106,32 @@ test.describe('Dil seçimi', () => {
     await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
     await expect(page.getByTestId('lbl-drawingName')).toHaveText('Çizim Adı:');
   });
+
+  test('elle değiştirilen antet başlığı yalnızca yazıldığı belge dilinde görünür; tüm başlıklar dili izler', async ({ page }) => {
+    const errors = trackErrors(page);
+    await openApp(page);
+    const block = page.getByTestId('title-block');
+    const headings = () => block.locator('[data-testid^="lbl-"]').allInnerTexts();
+    const setDocumentLanguage = async (value: 'tr' | 'en') => {
+      await block.getByTitle('Anteti Düzenle').click({ force: true });
+      await page.getByLabel('Belge dili').selectOption(value);
+      await page.getByRole('button', { name: 'Kaydet', exact: true }).last().click();
+    };
+    const turkish = await headings();
+    await block.getByTestId('lbl-scale').click();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.type('Skala');
+    await page.keyboard.press('Enter');
+    await expect(block.getByTestId('lbl-scale')).toHaveText('Skala');
+
+    await setDocumentLanguage('en');
+    await expect(block.getByTestId('lbl-scale')).toHaveText('Scale');
+    const english = await headings();
+    expect(english).toHaveLength(turkish.length);
+    expect(english.filter(h => /[çğışÇĞİŞ]/.test(h))).toEqual([]);
+
+    await setDocumentLanguage('tr');
+    await expect(block.getByTestId('lbl-scale')).toHaveText('Skala');
+    errors.expectNone();
+  });
 });

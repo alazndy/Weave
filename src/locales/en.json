@@ -173,7 +173,6 @@
     "customFields": "Custom Fields",
     "addField": "Add Field",
     "noCustomFields": "No extra fields added.",
-    "fieldLabelPlaceholder": "Heading (e.g. Checked by)",
     "fieldValue": "Value",
     "externalParts": "External Parts (PDF/AI Scan)",
     "part": "Part",
@@ -181,7 +180,8 @@
     "technicalNotes": "Technical Notes",
     "notesPlaceholder": "E.g. 1. All dimensions are in mm...",
     "unlistedCode": "Not in the list: used as a custom code",
-    "newField": "New Field"
+    "fieldHeading_tr": "Heading (Turkish drawing)",
+    "fieldHeading_en": "Heading (English drawing)"
   },
   "docNumbering": {
     "originator": "Originator (3 letters)",

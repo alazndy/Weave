@@ -192,6 +192,8 @@ export interface AnalysisResult {
 export interface CustomField {
   id: string;
   label: string;
+  /** Heading per document language; `label` is used when a language has none. */
+  labels?: { tr?: string; en?: string };
   value: string;
 }
 
@@ -321,8 +323,10 @@ export interface ProjectMetadata {
   approvedDate?: string;
   revisions?: RevisionEntry[];
   docNumbering?: DocNumbering;
-  /** Title-block heading overrides, keyed by heading id (see TitleBlock LABEL_DEFAULTS). */
+  /** @deprecated Headings without a language, written by older versions. Kept in the file, not shown. */
   legendLabels?: Record<string, string>;
+  /** Title-block headings the user typed, per document language and keyed by heading id (`doc.title.*`). */
+  legendHeadings?: Partial<Record<'tr' | 'en', Record<string, string>>>;
   /** Order of the three main title-block sections / of the extra-info cells. */
   /** Hidden heading ids (deleted headings; restorable from the legend toolbar). */
   legendHidden?: string[];

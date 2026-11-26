@@ -6,7 +6,9 @@ import { Settings, Upload, RefreshCw, LayoutTemplate, ArrowLeftRight, Plus, Tras
 import { PremiumModal } from '../ui/PremiumModal';
 import { useTranslation } from 'react-i18next';
 import { generateDocNo } from '../../utils/docNo';
+import { documentT } from '../../i18n';
 import { docLanguageOf } from '../../utils/documentDefaults';
+import { withFieldHeading } from '../../utils/titleBlockText';
 
 interface ProjectSettingsModalProps {
   metadata: ProjectMetadata;
@@ -68,7 +70,7 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
   const addCustomField = () => {
     const newField: CustomField = {
       id: crypto.randomUUID(),
-      label: t('projectSettings.newField'),
+      label: documentT(docLanguageOf(formData))('doc.field'),
       value: ''
     };
     setFormData(prev => ({ ...prev, customFields: [...prev.customFields, newField] }));
@@ -78,7 +80,18 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
     setFormData(prev => ({ ...prev, customFields: prev.customFields.filter(f => f.id !== id) }));
   };
 
-  const updateCustomField = (id: string, key: 'label' | 'value', val: string) => {
+  const updateCustomHeading = (id: string, language: 'tr' | 'en', value: string) =>
+    setFormData(prev => ({
+      ...prev,
+      customFields: prev.customFields.map(f => {
+        if (f.id !== id) return f;
+        const next = withFieldHeading(f, language, value);
+        // `label` stays the fallback, so it follows the heading of the document language
+        return language === docLanguageOf(prev) ? { ...next, label: value } : next;
+      })
+    }));
+
+  const updateCustomField = (id: string, key: 'value', val: string) => {
     setFormData(prev => ({
       ...prev,
       customFields: prev.customFields.map(f => f.id === id ? { ...f, [key]: val } : f)
@@ -461,13 +474,19 @@ export const ProjectSettingsModal: React.FC<ProjectSettingsModalProps> = ({ meta
               <div className="space-y-3">
                 {formData.customFields.map((field) => (
                   <div key={field.id} className="flex gap-3 items-center animate-in fade-in slide-in-from-bottom-2">
-                     <input 
-                       type="text"
-                       placeholder={t('projectSettings.fieldLabelPlaceholder')}
-                       value={field.label}
-                       onChange={e => updateCustomField(field.id, 'label', e.target.value)}
-                       className="w-1/3 bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 focus:border-teal-500/50 outline-none transition-colors"
-                     />
+                     <div className="w-1/3 flex flex-col gap-1.5">
+                       {(['tr', 'en'] as const).map(language => (
+                         <input
+                           key={language}
+                           type="text"
+                           aria-label={t(`projectSettings.fieldHeading_${language}`)}
+                           placeholder={t(`projectSettings.fieldHeading_${language}`)}
+                           value={field.labels?.[language] ?? (language === docLanguageOf(formData) ? field.label : '')}
+                           onChange={e => updateCustomHeading(field.id, language, e.target.value)}
+                           className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 focus:border-teal-500/50 outline-none transition-colors"
+                         />
+                       ))}
+                     </div>
                      <input 
                        type="text"
                        placeholder={t('projectSettings.fieldValue')}
