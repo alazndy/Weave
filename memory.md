@@ -35,3 +35,6 @@
   Data backup: `~/.local/share/weave-backups/config-20261126-180655`.
 - [2026-11-26] [Claude Kaira]: Fixed title-block headings that did not follow the document language. Not installed yet.
 - [2026-11-26] [Claude Kaira]: Set version 0.2.0 for the GitHub release (user request).
+- [2026-11-27] [Claude Kaira]: Published release v0.2.0 (Windows only) from commit 6762e6f. Browser tests: 168 passed and
+  33 failed in the full run under load; all 33 passed when run with one worker. The local Linux install is older (876774f).
+  Releases: push a `v*` tag; `.github/workflows/desktop-windows.yml` builds and publishes. No Linux update feed exists.
