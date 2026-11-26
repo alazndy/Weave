@@ -26,6 +26,7 @@ import { useCanvasView } from '../hooks/useCanvasView';
 import { useCanvasState } from './canvas/hooks/useCanvasState';
 import { useCanvasInteraction } from './canvas/hooks/useCanvasInteraction';
 import { snapToGrid, validatePortCompatibility } from '../utils/canvasHelpers';
+import { useStableHandlers } from '../hooks/useStableHandlers';
 
 interface CanvasProps {
   instances: ProductInstance[];
@@ -435,6 +436,29 @@ export const Canvas: React.FC<CanvasProps> = ({
       zoomAt(target, r ? r.width / 2 : window.innerWidth / 2, r ? r.height / 2 : window.innerHeight / 2);
   };
 
+  // ProductNode is memoized, so everything it calls from DOM events must go through stable wrappers.
+  const nodeHandlers = useStableHandlers({
+      onRenumber: (id: string, value: string) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, number: value || undefined } : i)); },
+      handleInstanceMouseDown,
+      handleInstanceContextMenu,
+      toggleMirrorInstance: (id: string) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, mirrored: !i.mirrored } : i)); },
+      removeInstance: (id: string) => { onUndoCheckpoint(); onInstancesChange(instances.filter(i => i.id !== id)); onConnectionsChange(connections.filter(c => c.fromInstanceId !== id && c.toInstanceId !== id)); },
+      handleResizeMouseDown: (e: React.MouseEvent, id: string) => handleResizeStart(e, id, 'instance'),
+      handlePortClick,
+      handlePortDoubleClick: (e: React.MouseEvent, tId: string, pId: string) => { e.stopPropagation(); setEditingPortData({ port: templates.find(t => t.id === tId)!.ports.find(p => p.id === pId)!, templateId: tId }); },
+      onUndoCheckpoint,
+  });
+
+  /** Canvas gestures start on the sheet layer or the bare viewport, never on toolbars, minimap or dialogs. */
+  const handleViewportMouseDown = (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const onLayer = !!containerRef.current?.contains(target);
+      if (!onLayer && target !== viewportRef.current) return;
+      if (!onLayer) trackPointerDown(e);
+      if (!target.closest('[data-connection-id]')) setSelectedConnectionId(null);
+      handleMouseDown(e, onLayer);
+  };
+
   const cursorClass = isMiddlePanning ? 'cursor-grabbing' :
                       activeTool === 'move' || activeTool === 'pan' ? 'cursor-grab active:cursor-grabbing' : 
                       activeTool === 'zone' || activeTool === 'select-box' || activeTool === 'manual-route' ? 'cursor-crosshair' : 'cursor-default';
@@ -444,7 +468,11 @@ export const Canvas: React.FC<CanvasProps> = ({
       data-testid="canvas-viewport"
       ref={viewportRef}
       className={`relative w-full h-full overflow-hidden bg-zinc-950 select-none print:overflow-visible print:bg-white ${cursorClass}`}
-      onWheel={(e) => handleWheel(e, containerRef.current!.getBoundingClientRect())}
+      onWheel={(e) => handleWheel(e, viewportRef.current!.getBoundingClientRect())}
+      onMouseDown={handleViewportMouseDown}
+      onMouseMove={handleMouseMoveWrapper}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -453,15 +481,11 @@ export const Canvas: React.FC<CanvasProps> = ({
         className="absolute w-full h-full origin-top-left print:transform-none"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
         onMouseDownCapture={trackPointerDown}
-        onMouseDown={(e) => { if (!(e.target as HTMLElement).closest('[data-connection-id],[data-testid="connection-toolbar"]')) setSelectedConnectionId(null); handleMouseDown(e); }}
-        onMouseMove={handleMouseMoveWrapper}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
         id="canvas-export-area"
       >
         {/* Paper Frame */}
         {projectMetadata && (
-            <div className="absolute top-0 left-0 bg-zinc-900 border border-zinc-800 shadow-2xl transition-colors duration-500 print:border-none print:shadow-none"
+            <div data-paper className="absolute top-0 left-0 bg-zinc-900 border border-zinc-800 shadow-2xl transition-colors duration-500 print:border-none print:shadow-none"
                 style={{ width: finalW, height: finalH, backgroundColor: theme === 'light' ? '#ffffff' : '#18181b' }}
             >
                 <ISOFrame width={finalW} height={finalH} theme={theme} />
@@ -531,7 +555,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     template={t}
                     itemIndex={instanceNumber(inst, idx)}
                     isDuplicateNumber={dupNumbers.has(instanceNumber(inst, idx).toLowerCase())}
-                    onRenumber={(id, value) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, number: value || undefined } : i)); }}
+                    onRenumber={nodeHandlers.onRenumber}
                     isSelected={selectedIds.has(inst.id)}
                     isDragged={draggedInstance === inst.id}
                     isScaleToolActive={activeTool === 'scale'}
@@ -539,15 +563,15 @@ export const Canvas: React.FC<CanvasProps> = ({
                     theme={theme}
                     connectingStart={connectingStart}
                     startPort={startPort}
-                    handleInstanceMouseDown={handleInstanceMouseDown}
-                    handleInstanceContextMenu={handleInstanceContextMenu}
-                    toggleMirrorInstance={(id) => { onUndoCheckpoint(); onInstancesChange(instances.map(i => i.id === id ? { ...i, mirrored: !i.mirrored } : i)); }}
+                    handleInstanceMouseDown={nodeHandlers.handleInstanceMouseDown}
+                    handleInstanceContextMenu={nodeHandlers.handleInstanceContextMenu}
+                    toggleMirrorInstance={nodeHandlers.toggleMirrorInstance}
                     setRotatingInstance={setRotatingInstance}
-                    removeInstance={(id) => { onUndoCheckpoint(); onInstancesChange(instances.filter(i => i.id !== id)); onConnectionsChange(connections.filter(c => c.fromInstanceId !== id && c.toInstanceId !== id)); }}
-                    handleResizeMouseDown={(e) => handleResizeStart(e, inst.id, 'instance')}
-                    handlePortClick={handlePortClick}
-                    handlePortDoubleClick={(e, tId, pId) => { e.stopPropagation(); setEditingPortData({ port: templates.find(t=>t.id===tId)!.ports.find(p=>p.id===pId)!, templateId: tId }); }}
-                    onUndoCheckpoint={onUndoCheckpoint}
+                    removeInstance={nodeHandlers.removeInstance}
+                    handleResizeMouseDown={nodeHandlers.handleResizeMouseDown}
+                    handlePortClick={nodeHandlers.handlePortClick}
+                    handlePortDoubleClick={nodeHandlers.handlePortDoubleClick}
+                    onUndoCheckpoint={nodeHandlers.onUndoCheckpoint}
                 />
             );
         })}

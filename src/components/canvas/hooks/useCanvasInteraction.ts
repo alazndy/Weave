@@ -62,6 +62,7 @@ export function useCanvasInteraction({
   const dragGateRef = useRef<{ x: number; y: number; open: boolean } | null>(null);
   const DRAG_THRESHOLD_PX = 4;
   const additiveBoxRef = useRef(false);
+  const panPointRef = useRef({ x: 0, y: 0 });
   // Pointer position of the latest mouse-down (children stop propagation, so it is captured separately).
   const lastDownRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -87,11 +88,17 @@ export function useCanvasInteraction({
       setDraggedInstance(id);
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const startPan = (e: React.MouseEvent) => {
+      e.preventDefault();
+      panPointRef.current = { x: e.clientX, y: e.clientY };
+      setIsMiddlePanning(true);
+  };
+
+  /** `onLayer` is false for the bare viewport around the sheet layer, where only panning and deselecting apply. */
+  const handleMouseDown = (e: React.MouseEvent, onLayer = true) => {
     // Middle Mouse Button PAN Logic
     if (e.button === 1 || (e.button === 0 && activeTool === 'pan')) {
-        e.preventDefault();
-        setIsMiddlePanning(true);
+        startPan(e);
         return;
     }
 
@@ -106,6 +113,8 @@ export function useCanvasInteraction({
     }
 
     const { x, y } = getMouseCoords(e);
+
+    if (!onLayer && activeTool !== 'cursor' && activeTool !== 'move' && activeTool !== 'scale') return;
 
     switch (activeTool) {
         case 'manual-route':
@@ -164,10 +173,12 @@ export function useCanvasInteraction({
             if (!(e.target as HTMLElement).closest('[data-instance-id],[data-zone-id],[data-text-id],[data-comment-id],[data-connection-id],[data-group-scale]')) {
                 additiveBoxRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
                 if (onSelectIds && !additiveBoxRef.current) onSelectIds([], false);
+                if (e.button !== 0) break;
+                // Dragging outside the sheet moves the view; Shift/Ctrl keeps box selection available there.
+                const onPaper = !projectMetadata || !!(e.target as HTMLElement).closest('[data-paper]');
+                if (!onPaper && !additiveBoxRef.current) startPan(e);
                 // Rubber-band selection straight from empty paper with the cursor tool.
-                if (activeTool === 'cursor' && e.button === 0 && (e.target as HTMLElement).closest('#canvas-export-area')) {
-                    setSelectionBox({ startX: x, startY: y, currentX: x, currentY: y });
-                }
+                else if (activeTool === 'cursor') setSelectionBox({ startX: x, startY: y, currentX: x, currentY: y });
             }
             break;
     }
@@ -175,10 +186,12 @@ export function useCanvasInteraction({
 
   const handleMouseMove = (e: React.MouseEvent) => {
      if (isMiddlePanning) {
-         setPan(prev => ({
-             x: prev.x + e.movementX,
-             y: prev.y + e.movementY
-         }));
+         if (e.buttons === 0) { handleMouseUp(); return; }
+         // client deltas, not movementX/Y: those are unreliable under display scaling
+         const dx = e.clientX - panPointRef.current.x;
+         const dy = e.clientY - panPointRef.current.y;
+         panPointRef.current = { x: e.clientX, y: e.clientY };
+         setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
          return;
      }
 
@@ -422,7 +435,7 @@ export function useCanvasInteraction({
   useEffect(() => {
       const up = (ev: MouseEvent) => {
           // inside the canvas the regular React onMouseUp already handles it
-          if (ev.target instanceof Node && containerRef.current?.contains(ev.target)) return;
+          if (ev.target instanceof Node && containerRef.current?.parentElement?.contains(ev.target)) return;
           mouseUpRef.current();
       };
       window.addEventListener('mouseup', up);
