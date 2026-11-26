@@ -96,6 +96,13 @@ export interface PortCard {
   scale: number; // 0.5 .. 3
 }
 
+/** A point where cable branches meet. A branch end uses `instanceId = junction.id`, `portId = 'junction'`. */
+export interface Junction {
+  id: string;
+  x: number;
+  y: number;
+}
+
 export interface PortDefinition {
   id: string;
   label: string;
@@ -243,6 +250,7 @@ export interface Page {
     comments: Comment[];
     order: number;
     portCards?: PortCard[];
+    junctions?: Junction[];
     /** Per-page drawing number; when empty the number comes from the project protocol/document no. */
     drawingNo?: string;
     /** Per-page parts table visibility; when unset the project-level hideBom applies. */

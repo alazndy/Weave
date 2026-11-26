@@ -10,6 +10,9 @@
 import type { Connection, ConnectionShape, Point, ProductInstance, ProductTemplate } from '../types';
 import { getPortNormal, getPortPosition } from './geometry';
 
+/** Port id of a junction end. */
+export const JUNCTION_PORT = 'junction';
+
 export interface Rect { x: number; y: number; w: number; h: number }
 export interface RouteEnds {
   start: Point; end: Point;
@@ -62,14 +65,22 @@ export function getRouteEnds(conn: Connection, instances: ProductInstance[], tem
   if (!fi || !ti || !ft || !tt) return null;
   const start = getPortPosition(fi, ft, conn.fromPortId);
   const end = getPortPosition(ti, tt, conn.toPortId);
-  const sN = getPortNormal(fi, ft, conn.fromPortId);
-  const eN = getPortNormal(ti, tt, conn.toPortId);
+  // A junction has no body: its branch leaves toward the neighbouring waypoint (keeps a split route intact).
+  const stored = conn.controlPoints ?? [];
+  const sJ = conn.fromPortId === JUNCTION_PORT, eJ = conn.toPortId === JUNCTION_PORT;
+  const sN = sJ ? axisToward(start, stored[0] ?? end) : getPortNormal(fi, ft, conn.fromPortId);
+  const eN = eJ ? axisToward(end, stored[stored.length - 1] ?? start) : getPortNormal(ti, tt, conn.toPortId);
   return {
     start, end, sN, eN,
-    sLen: stubLength(start, sN, instanceBounds(fi, ft)),
-    eLen: stubLength(end, eN, instanceBounds(ti, tt)),
+    sLen: sJ ? MIN_STUB_DRAG : stubLength(start, sN, instanceBounds(fi, ft)),
+    eLen: eJ ? MIN_STUB_DRAG : stubLength(end, eN, instanceBounds(ti, tt)),
   };
 }
+
+const axisToward = (from: Point, to: Point): Point => {
+  const dx = to.x - from.x, dy = to.y - from.y;
+  return Math.abs(dx) >= Math.abs(dy) ? { x: Math.sign(dx) || 1, y: 0 } : { x: 0, y: Math.sign(dy) || 1 };
+};
 
 const stubPoints = (e: RouteEnds) => ({
   s1: add(e.start, mul(e.sN, e.sLen)),
